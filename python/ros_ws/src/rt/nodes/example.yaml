@@ -1,0 +1,10 @@
+fsr:
+    feats:
+        - ch0_max
+        - ch1_rms
+    opts:
+        TD: True
+        window: 50
+    topic: /record/eris/fsr
+    msgType: custom_msgs/FSR2CH
+

@@ -1,0 +1,7 @@
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/lib/pkgconfig/recorder.pc
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/lib/python2.7/dist-packages/recorder/__init__.py
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/recorder/cmake/recorderConfig.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/recorder/cmake/recorder-msg-paths.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/recorder/cmake/recorderConfig-version.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/recorder/cmake/recorder-msg-extras.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/roseus/ros/recorder/manifest.l

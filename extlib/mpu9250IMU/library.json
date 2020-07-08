@@ -1,0 +1,19 @@
+{
+  "name": "YostIMU",
+  "frameworks": "Arduino",
+  "keywords": "SPI",
+  "description": "Yost imu library using spi communication",
+  "url": "",
+  "authors":,
+  "paragraph": "Yost imu library using spi communication"
+  {
+    "name": "Jonathan Camargo",
+    "maintainer": true
+  },
+  "repository":
+  {
+    "type": "git",
+    "url": ""
+  },
+  "version": "0.1"
+}

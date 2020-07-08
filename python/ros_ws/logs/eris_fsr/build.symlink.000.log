@@ -1,0 +1,7 @@
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/lib/pkgconfig/eris_fsr.pc
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/lib/python2.7/dist-packages/eris_fsr/__init__.py
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_fsr/cmake/eris_fsrConfig-version.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_fsr/cmake/eris_fsr-msg-extras.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_fsr/cmake/eris_fsrConfig.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_fsr/cmake/eris_fsr-msg-paths.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/roseus/ros/eris_fsr/manifest.l

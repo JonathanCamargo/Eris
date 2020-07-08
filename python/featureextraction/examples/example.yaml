@@ -1,0 +1,17 @@
+emg:
+    feats:
+        - ch0_rms
+        - ch2_std
+    opts:
+        TD: True
+        window: 250
+        slide: 50
+    msgType: custom_msgs/EMG8CH
+fsr:
+    feats:
+        - data_rms
+    opts:
+        TD: True
+        window: 250
+        slide: 50
+    msgType: custom_msgs/Float32

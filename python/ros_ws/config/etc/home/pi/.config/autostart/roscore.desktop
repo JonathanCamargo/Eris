@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Roscore
+Exec=./home/pi/ros_ws/scripts/run
+Icon=<full path to icon>
+Comment=Ros master core
+X-GNOME-Autostart-enabled=true

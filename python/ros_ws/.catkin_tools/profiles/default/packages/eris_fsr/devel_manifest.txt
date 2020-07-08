@@ -1,0 +1,9 @@
+eris_fsr
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_fsr/cmake.lock /home/ossip/my_git/Eris/python/ros_ws/devel/./cmake.lock
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_fsr/lib/pkgconfig/eris_fsr.pc /home/ossip/my_git/Eris/python/ros_ws/devel/lib/pkgconfig/eris_fsr.pc
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_fsr/lib/python2.7/dist-packages/eris_fsr/__init__.py /home/ossip/my_git/Eris/python/ros_ws/devel/lib/python2.7/dist-packages/eris_fsr/__init__.py
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_fsr/share/eris_fsr/cmake/eris_fsrConfig-version.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_fsr/cmake/eris_fsrConfig-version.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_fsr/share/eris_fsr/cmake/eris_fsr-msg-extras.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_fsr/cmake/eris_fsr-msg-extras.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_fsr/share/eris_fsr/cmake/eris_fsrConfig.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_fsr/cmake/eris_fsrConfig.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_fsr/share/eris_fsr/cmake/eris_fsr-msg-paths.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_fsr/cmake/eris_fsr-msg-paths.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_fsr/share/roseus/ros/eris_fsr/manifest.l /home/ossip/my_git/Eris/python/ros_ws/devel/share/roseus/ros/eris_fsr/manifest.l

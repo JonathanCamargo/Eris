@@ -1,0 +1,7 @@
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/lib/pkgconfig/eris_emg.pc
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/lib/python2.7/dist-packages/eris_emg/__init__.py
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/roseus/ros/eris_emg/manifest.l
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_emg/cmake/eris_emg-msg-paths.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_emg/cmake/eris_emg-msg-extras.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_emg/cmake/eris_emgConfig-version.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_emg/cmake/eris_emgConfig.cmake

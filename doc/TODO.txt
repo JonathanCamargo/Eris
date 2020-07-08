@@ -1,0 +1,5 @@
+- Create a diagram explaining the use of ErisBuffers
+- Do some tests to find the limits of the communication and aquisition of eris
+- Create a document with  a dictionary of supported commands in serial command
+
+

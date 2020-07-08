@@ -1,0 +1,18 @@
+{
+  "name": "ADS1256_4CH",
+  "frameworks": "Arduino",
+  "keywords": "Analog",
+  "description": "ADS1256",
+  "url": "",
+  "authors":
+  {
+    "name": "Teddy Johnson, Jonathan Camargo, Will Flanagan",
+    "maintainer": true
+  },
+  "repository":
+  {
+    "type": "git",
+    "url": ""
+  },
+  "version": "1.0"
+}

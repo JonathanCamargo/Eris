@@ -1,0 +1,4 @@
+emg_features
+	Ch0_rms
+	Ch0_zeroCross
+	Ch1_rms

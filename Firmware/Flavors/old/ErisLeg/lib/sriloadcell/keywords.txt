@@ -1,0 +1,25 @@
+#######################################
+# Syntax Coloring Map For PID Library
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SRILoadcell	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+connect	KEYWORD2
+disconnect	KEYWORD2
+isConnected	KEYWORD2
+setId	KEYWORD2
+getId	KEYWORD2
+get_data	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

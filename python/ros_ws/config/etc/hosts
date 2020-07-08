@@ -1,0 +1,3 @@
+# Host definitions
+192.168.1.7 basestation
+192.168.1.10 pi

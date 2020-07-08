@@ -1,0 +1,8 @@
+imu:
+    feats:
+        - ax_std
+        - az_mean
+    opts: 
+        TD: True
+    msgType: custom_msgs/IMU
+    topic: /eris/imu

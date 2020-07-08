@@ -1,0 +1,3 @@
+<launch>
+<node name="erisimu" pkg="eris_imu" type="eris_imu.py" respawn="false" output="screen" />
+</launch>

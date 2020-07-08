@@ -1,0 +1,7 @@
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/lib/pkgconfig/eris_imu.pc
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/lib/python2.7/dist-packages/eris_imu/__init__.py
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/roseus/ros/eris_imu/manifest.l
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_imu/cmake/eris_imuConfig-version.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_imu/cmake/eris_imuConfig.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_imu/cmake/eris_imu-msg-extras.cmake
+Symlinking /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_imu/cmake/eris_imu-msg-paths.cmake

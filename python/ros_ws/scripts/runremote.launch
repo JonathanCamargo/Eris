@@ -1,0 +1,14 @@
+<?xml version='1.0'?>
+
+<launch>
+	<group>
+	<machine name="pi" address="pi" env-loader="/home/pi/.bash_aliases" user="pi" password="epicpswd" />
+	<machine name="basestation" address="basestation" env-loader="/home/ossip/.bash_aliases" user="ossip"/>
+   
+	<!-- Run recorder to have the remote recording data locally as a backup in cases
+	of bad  WIFI-->
+	<node name="recorder" pkg="recorder" type="recorder" respawn="true" machine="pi"/>
+
+	</group>
+</launch>
+

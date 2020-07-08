@@ -1,0 +1,1 @@
+External libraries for Arduino consolidated here for convenience.
