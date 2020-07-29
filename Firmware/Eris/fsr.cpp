@@ -4,9 +4,9 @@
 #include "configuration.h"
 #include "serialcommand.h"
 
-#include <IntervalTimer.h>
+//#include <IntervalTimer.h>
 
-#include <FeatureExtractor.h>
+//#include <FeatureExtractor.h>
 
 namespace FSR{
   

@@ -1,36 +1,36 @@
 // Eris is a firmware that handles low level control
 // It is based on RTOS and ported to Arduino
-// Flavor: ErisNextFlexAnalog: to read analog and TI information straight from the amplifier cable
 
 #include "configuration.h"
 #include "Eris.h"
-#include "emg.h"
 #include "sinewave.h"
 #include "serialcommand.h"
-#include "serialeti.h"
-#include "fsr.h"
+
+#include <SPI.h>
+
 
 long t0=0; // Global start time for all modules 
-
 thread_t *thread1 = NULL;
-
-
- const char firmwareInfo[]=FIRMWARE_INFO;
+const char firmwareInfo[]=FIRMWARE_INFO;
 
 /* ******************************** Global threads ************************************************** */
+
+// Mutex to enable or disable heartbeat
 static THD_WORKING_AREA(waThread1, 32);
 static THD_FUNCTION(Thread1, arg) {
   while (1) {
     // Sleep for 1000 milliseconds.
-    chThdSleepMilliseconds(1000);
     // Toggle pin to show heartbeat    
-    //digitalWrite(PIN_LED,!digitalRead(PIN_LED));           
+    //digitalWrite(PIN_LED,!digitalRead(PIN_LED));
+    chThdSleepMilliseconds(250);
   }
 }
 /* ************************************************************************************************* */
 
 
 void start(){
+  // Initialize mutex for heartbeat
+  //chMtxObjectInit(&mtxhb);
   /*************** Start Threads ************************/    
   chThdCreateStatic(waThread1, sizeof(waThread1),
                                    NORMALPRIO, Thread1, NULL);
@@ -38,34 +38,34 @@ void start(){
 
   // start special tasks from external sources
   SineWave::start();
-  EMG::start();
-  FSR::start();
-  SerialETI::start();  
   // Command interfaces   
-  SerialCom::start();   
-  /******************************************************/  
- 
+  SerialCom::start();
+
 }
 
 void setup(){  
   Serial.begin(115200);
-  delay(1000);
+  // Wait for USB Serial.
+  while (!Serial) {}
+  delay(500);
   // Setup the initial configuration  
   Serial.println("HELLO, This is Eris");
   /*************** Configure HW pins *******************/
   pinMode(PIN_LED,OUTPUT); 
-  digitalWrite(PIN_LED,HIGH);     
-  /******************************************************/  
-  /******************************************************/
+  pinMode(PIN_LED_R,OUTPUT); 
+  digitalWrite(PIN_LED,LOW); 
+  digitalWrite(PIN_LED_R,LOW); 
+  analogWrite(3, 10);
+  
   //Start threads
-  chBegin(start);
+  chBegin(start);   
+   
   while(true){}
-     
 }
 
 
 
 
-void loop(){  
-      chThdSleepMilliseconds(10000);
+void loop(){    
+    chThdSleepMilliseconds(10000);
 }

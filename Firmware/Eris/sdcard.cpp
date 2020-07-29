@@ -35,7 +35,7 @@ ErisBuffer<uint8_tSample_t> syncbuffer;
 static THD_WORKING_AREA(waWriteFiles_T, 8192);
 static THD_FUNCTION(WriteFiles_T, arg) {  
   while(true){            
-    msg_t msg = chBSemWaitTimeout(&xwriteDataSemaphore, MS2ST(TIME_IMMEDIATE));
+    msg_t msg = chBSemWaitTimeout(&xwriteDataSemaphore, TIME_MS2I(TIME_IMMEDIATE));
     if (msg == MSG_TIMEOUT) {  
       chThdSleepMilliseconds(10);            
       continue;

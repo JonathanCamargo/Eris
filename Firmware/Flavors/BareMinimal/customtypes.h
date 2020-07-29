@@ -11,6 +11,16 @@ typedef struct EMGSample{
   float ch[EMG_NUMCHANNELS];    
 } EMGSample_t;
 
+typedef struct IMUSample{
+  float timestamp;
+  float ax;
+  float ay;
+  float az;  
+  float wx;
+  float wy;
+  float wz;
+} IMUSample_t;
+
 typedef struct FSRSample{
   float timestamp;
   float ch[FSR_NUMCHANNELS];    
@@ -21,15 +31,10 @@ typedef struct floatSample{
   float value;    
 } floatSample_t;
 
-typedef struct TISample{
-  float timestamp;
-  float temperature[ETI_NUMCHANNELS];
-  float impedance[ETI_NUMCHANNELS];  
-} TISample_t;
-
 typedef struct  __attribute((__packed__)) uint8_tSample{
   float timestamp;
   uint8_t value;    
 } uint8_tSample_t;
+
 
 #endif

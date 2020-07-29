@@ -5,11 +5,11 @@
 import rospy
 import threading
 
-from custom_msgs.msg import EMG2CH, String, Float32, Bool, Float32MultiArray, ETI
+from custom_msgs.msg import Signal1CH, String, Float32, Bool, Float32MultiArray, ETI
 from std_msgs.msg import Header, MultiArrayDimension
 
 from eris.eris import Eris
-from eris.customtypes import EMG2CHSample_t, floatSample_t, uint8_tSample_t
+from eris.customtypes import Signal1CHSample_t, floatSample_t, uint8_tSample_t
 
 from threading import Thread,Lock
 
@@ -26,7 +26,12 @@ dataMutex=Lock()
 #Upcoming data is length and samples
 emgformat=Struct(
     "len" / Int8ub,
-    "emgdata" / Array(this.len,EMG2CHSample_t)
+    "emgdata" / Array(this.len,Signal1CHSample_t)
+)
+
+fsrformat=Struct(
+    "len" / Int8ub,
+    "fsrdata" / Array(this.len,Signal1CHSample_t)
 )
 
 sineformat=Struct(
@@ -53,16 +58,18 @@ else:
     port='/dev/ttyACM0'
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
-emgmsg=EMG2CH()
+emgmsg=Signal1CH()
 sinemsg=Float32()
 etimsg=ETI()
+fsrmsg=Signal1CH()
 
 featuresmsg=Float32MultiArray()
 
 textpub = rospy.Publisher('/eris/print', String, queue_size=50)
 sinepub = rospy.Publisher('/eris/sine', Float32, queue_size=50)
 etipub = rospy.Publisher('/eris/ti', ETI, queue_size=50)
-emgpub = rospy.Publisher('/eris/emg', EMG2CH, queue_size=100)
+emgpub = rospy.Publisher('/eris/emg', Signal1CH, queue_size=100)
+fsrpub = rospy.Publisher('/eris/fsr', Signal1CH, queue_size=50)
 featurespub = rospy.Publisher('/record/eris/features', Float32MultiArray, queue_size=1)
 
 t0=0 #global variable to store time reference to linux time
@@ -72,7 +79,7 @@ def publishEMG(sample):
     #print(timestamp)
     emgmsg.header=Header(stamp=t0+rospy.Duration(timestamp))
     emgmsg.ch0=sample['ch'][0]
-    emgmsg.ch1=sample['ch'][1]
+    #emgmsg.ch1=sample['ch'][1]
     #emgmsg.ch2=sample['ch'][2]
     #emgmsg.ch3=sample['ch'][3]
     #emgmsg.ch4=sample['ch'][4]
@@ -80,6 +87,22 @@ def publishEMG(sample):
     #emgmsg.ch6=sample['ch'][6]
     #emgmsg.ch7=sample['ch'][7]
     emgpub.publish(emgmsg)
+    #print(emgmsg)
+
+def publishFSR(sample):
+    '''Publish data for FSR'''
+    timestamp=sample['timestamp']/1000.0
+    #print(timestamp)
+    fsrmsg.header=Header(stamp=t0+rospy.Duration(timestamp))
+    fsrmsg.ch0=sample['ch'][0]
+    #emgmsg.ch1=sample['ch'][1]
+    #emgmsg.ch2=sample['ch'][2]
+    #emgmsg.ch3=sample['ch'][3]
+    #emgmsg.ch4=sample['ch'][4]
+    #emgmsg.ch5=sample['ch'][5]
+    #emgmsg.ch6=sample['ch'][6]
+    #emgmsg.ch7=sample['ch'][7]
+    fsrpub.publish(fsrmsg)
     #print(emgmsg)
 
 def publishSine(sample):
@@ -119,8 +142,10 @@ def command_callback(msg):
 
 ################################################################################
 #Create an eris object
-streams=['SINE','EMG','ETI']
-streamsformat=[sineformat,emgformat,etiformat]
+streams=['SINE','EMG','ETI','FSR']
+#streams=['FSR']
+streamsformat=[sineformat,emgformat,etiformat,fsrformat]
+#streamsformat=[fsrformat]
 e=Eris(streams,streamsformat,port)
 
 ######################## HELPER FUNCTIONS ######################################
@@ -149,21 +174,30 @@ def publishData(data):
             #TODO publish a missing data message under eris/errors
             continue
 
-        emgdata=packetData['EMG']['emgdata']
-        n=packetData['EMG']['len']
-        for sample in emgdata: #all channels should have same lenght
-            publishEMG(sample)
+        if 'EMG' in packetData:
+            emgdata=packetData['EMG']['emgdata']
+            n=packetData['EMG']['len']
+            for sample in emgdata: #all channels should have same lenght
+                publishEMG(sample)
 
-        sinedata=packetData['SINE']['sinedata']
-        n=packetData['SINE']['len']
-        for sample in sinedata: #all channels should have same lenght
-            publishSine(sample)
+        if 'FSR' in packetData:
+            fsrdata=packetData['FSR']['fsrdata']
+            n=packetData['FSR']['len']
+            for sample in fsrdata: #all channels should have same lenght
+                publishFSR(sample)
 
-        etidata=packetData['ETI']['etidata']
-        n=packetData['ETI']['len']
-        for sample in etidata: #all channels should have same lenght
-            publishETI(sample)
-     
+        if 'SINE' in packetData:
+            sinedata=packetData['SINE']['sinedata']
+            n=packetData['SINE']['len']
+            for sample in sinedata: #all channels should have same lenght
+                publishSine(sample)
+
+        if 'ETI' in packetData:
+            etidata=packetData['ETI']['etidata']
+            n=packetData['ETI']['len']
+            for sample in etidata: #all channels should have same lenght
+                publishETI(sample)
+
 
 def regression(data):
     ''' Read the features sent for regression and run a model '''
@@ -185,12 +219,11 @@ def regression(data):
     publishFeatures(packetdata)
 
 
-
 ################################################################################
 
 ''' Main loop'''
 dataMutex=Lock();
-rospy.init_node('imunode', anonymous=True)
+rospy.init_node('nextflexAnalog', anonymous=True)
 cmdsub = rospy.Subscriber('eris/command',String,command_callback)
 
 ROSRATE=50 #Hz

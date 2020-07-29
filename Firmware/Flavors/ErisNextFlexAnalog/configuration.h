@@ -21,25 +21,28 @@
 /////////// MEMORY CONFIGURATION
 #define EMG_TXBUFFERSIZE 10
 #define ETI_TXBUFFERSIZE 2
+#define FSR_TXBUFFERSIZE 10
 #define TXBUFFERSIZE 16 // Size for transmision buffer last 16 points
-#define SDBUFFERSIZE 512 // Size of storage buffer for SD data
-#define SDBUFFERSIZE_FSR 100
-#define SDBUFFERSIZE_ETI 1 // Size of storage buffer for ETI (is less as it is collected at very low freq)
+
 #define STRBUFFERSIZE 128
 
 
 ///////////////////////////////////////////////////
-/// SPI inputs
 /// EMG ANALOG CONFIGURATION
-#define EMG_NUMCHANNELS 2
+#define EMG_NUMCHANNELS 1
 #define EMG_PERIOD_US 1000
-#define PIN_EMG_A0 A9
+#define PIN_EMG A21
+
+/// FSR ANALOG CONFIGURATION
+#define FSR_NUMCHANNELS 1
+#define FSR_PERIOD_US 10000 // FSR @100Hz
+#define PIN_FSR A20
 
 ////////////////////////////////////////////////////
 /// Serial inputs
 /// Impedance and temperature using Serial port
 #define ETI_NUMCHANNELS 1
-#define ETI_SERIAL0 Serial1
+#define ETI_SERIAL0 Serial2
 
 // DEBUGGING FLAGS
 //#define DEBUG_TIME false
@@ -51,7 +54,5 @@
 #define FIRMWARE_INFO TOSTRING(FIRMWARE_VERSION) "NFEris by ossip"
 
 #define PIN_LED 13
-// Enable SD Card
-#define SDCARD false
 
 #endif

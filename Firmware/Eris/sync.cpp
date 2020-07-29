@@ -6,7 +6,7 @@
 
 #include <IntervalTimer.h>
 
-#include <FeatureExtractor.h>
+//#include <FeatureExtractor.h>
 
 namespace Sync{
   

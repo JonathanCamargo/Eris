@@ -11,8 +11,7 @@ namespace SerialETI{
 
   ErisBuffer<TISample_t> buffer;
     
-  static char charbuffer0[64]; //Buffer for string chars
-  static char charbuffer1[64]; //Buffer for string chars
+  static char charbuffer0[64]; //Buffer for string chars  
   
   static uint8_t bufPos[ETI_NUMCHANNELS];
   static HardwareSerial* serialArr[ETI_NUMCHANNELS] = {&ETI_SERIAL0}; //{&ETI_SERIAL0, &ETI_SERIAL1};   

@@ -27,11 +27,10 @@ static void ISR_NewSample(){
   EMGSample_t currSample; // Current sample
   float timestamp = ((float)(micros() - t0))/1.0e3;     
   currSample.timestamp=timestamp;
-  int a=analogRead(PIN_EMG_A0);  
+  int a=analogRead(PIN_EMG);  
   currSample.ch[0]=(float)(a)*3.3/1024;
   currSample.ch[1]=0.0;
-  buffer.append(currSample);          
-  
+  buffer.append(currSample);            
   chSysUnlockFromISR();
 }
 

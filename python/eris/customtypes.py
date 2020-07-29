@@ -8,6 +8,11 @@ EMGSample_t = Struct(
     "ch" / Float32l[NUMEMGCHANNELS]
     )
 
+Signal1CHSample_t = Struct(
+    "timestamp" / Float32l,
+    "ch" / Float32l[1]
+    )
+    
 EMG2CHSample_t = Struct(
     "timestamp" / Float32l,
     "ch" / Float32l[2]

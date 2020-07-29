@@ -47,7 +47,8 @@ add_message_files(
 	FILES
 
     classDecisionmsg.msg
-    classmsg.msg
+    classmsg.msg    
+    EMG1CH.msg
     EMG2CH.msg
     EMG3CH.msg
     EMG4CH.msg	
@@ -69,6 +70,9 @@ add_message_files(
     String.msg
     ETI.msg
     Uint8.msg
+    Signal1CH.msg
+    Signal2CH.msg    
+
 		
 #   Message1.msg
 #   Message2.msg

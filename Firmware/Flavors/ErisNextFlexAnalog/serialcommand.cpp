@@ -1,6 +1,7 @@
 #include "Eris.h"
 #include "serialcommand.h"
 #include "emg.h"
+#include "fsr.h"
 #include "sinewave.h"
 #include "serialeti.h"
 #include "streaming.h"
@@ -11,7 +12,6 @@ namespace SerialCom{
 
   thread_t *readSerial = NULL;
   thread_t *streamSerial = NULL;
-  static char strbuffer[128]; 
   static bool stream_en=false;
 
   long startTime = 0;
@@ -55,6 +55,7 @@ namespace SerialCom{
     sCmd.addCommand("SINE",TransmitSineWave); // Transmit the current sinewave buffer    
     sCmd.addCommand("EMG",TransmitEMG); // Transmit the current EMG buffer      
     sCmd.addCommand("ETI",TransmitETI); // Transmit the current ETI buffer
+    sCmd.addCommand("FSR",TransmitFSR); // Transmit the current ETI buffer
            
     sCmd.addCommand("S_F",StreamingSetFeatures); // Configure the streaming functions
     sCmd.addCommand("S_ON",StreamingStart); // Stream the buffers' data
@@ -134,6 +135,36 @@ void LED_off() {
   digitalWrite(PIN_LED, LOW);
 }
 
+void TransmitFSR(){
+   chSysLockFromISR();
+   floatSample_t samples[MEMBUFFERSIZE];   
+   int num=SineWave::buffer.FetchData(samples,(char*)"FSR",MEMBUFFERSIZE);
+   long missed=FSR::buffer.missed();   
+   chSysUnlockFromISR();   
+   Serial.print("FSR:");   
+   // Show number of missed points
+   Serial.print("(missed:");
+   Serial.print(missed);
+   Serial.print(") ");   
+   // Show the data
+   if (num>0){
+     uint8_t i=0;
+     Serial.print("(@");
+     Serial.print(samples[0].timestamp,2);
+     Serial.print("ms)");         
+     for (i=0;i<num-1;i++){
+        Serial.print(samples[i].value,2);
+        Serial.print(",");
+     }     
+     Serial.print(samples[i].value,2);
+     Serial.print("(@");
+     Serial.print(samples[i].timestamp,2);
+     Serial.println("ms)");   
+   } 
+   else {
+     Serial.println();
+   }         
+}
 void TransmitSineWave(){
    chSysLockFromISR();
    floatSample_t samples[MEMBUFFERSIZE];   
