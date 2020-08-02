@@ -18,6 +18,7 @@ void ClearFunctions();
 
 // Sinusoidal wave
 void SineWave();
+void Potentiometer();
 
 void Sync();
 

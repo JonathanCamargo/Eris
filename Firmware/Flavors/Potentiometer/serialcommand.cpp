@@ -1,6 +1,7 @@
 #include "Eris.h"
 #include "serialcommand.h"
 
+#include "potentiometer.h"
 #include "sinewave.h"
 #include "streaming.h"
 
@@ -49,6 +50,7 @@ namespace SerialCom{
     sCmd.addCommand("OFF",LED_off);        // Turns LED off
     
     sCmd.addCommand("SINE",TransmitSineWave); // Transmit the current sinewave buffer    
+    sCmd.addCommand("POT",TransmitPotentiometer); // Transmit the current sinewave buffer    
 
     sCmd.addCommand("S_F",StreamingSetFeatures); // Configure the streaming functions
     sCmd.addCommand("S_TIME",SynchronizeTime); //Synchronize time       
@@ -70,7 +72,7 @@ namespace SerialCom{
 
 void INFO() {
   char temp[50]; 
-  int num = sprintf(temp, "Firmware: %s", FIRMWARE_INFO); 
+  sprintf(temp, "Firmware: %s", FIRMWARE_INFO); 
   eriscommon::print(temp);
   
 }
@@ -146,6 +148,39 @@ void TransmitSineWave(){
    long missed=SineWave::buffer.missed();   
    chSysUnlockFromISR();   
    Serial.print("SineWave:");   
+   // Show number of missed points
+   Serial.print("(missed:");
+   Serial.print(missed);
+   Serial.print(") ");   
+   // Show the data
+   if (num>0){
+     uint8_t i=0;
+     Serial.print("(@");
+     Serial.print(samples[0].timestamp,2);
+     Serial.print("ms)");         
+     for (i=0;i<num-1;i++){
+        Serial.print(samples[i].value,2);
+        Serial.print(",");
+     }     
+     Serial.print(samples[i].value,2);
+     Serial.print("(@");
+     Serial.print(samples[i].timestamp,2);
+     Serial.println("ms)");   
+   } 
+   else {
+     Serial.println();
+   }         
+}
+
+
+
+void TransmitPotentiometer(){
+   chSysLockFromISR();
+   floatSample_t samples[MEMBUFFERSIZE];   
+   int num=Potentiometer::buffer.FetchData(samples,(char*)"POTENTIOMETER",MEMBUFFERSIZE);
+   long missed=Potentiometer::buffer.missed();   
+   chSysUnlockFromISR();   
+   Serial.print("Potentiometer:");   
    // Show number of missed points
    Serial.print("(missed:");
    Serial.print(missed);

@@ -1,6 +1,7 @@
 #include "Eris.h"
 #include "streaming.h"
 
+#include "potentiometer.h"
 #include "sinewave.h"
 
 #include <string.h>
@@ -29,6 +30,13 @@ bool AddFunction(char * arg){
     streamfnc[Nfunctions]=&SineWave;
     Nfunctions=Nfunctions+1;
   }    
+  else if (!strncmp("POT",arg,MAXSTRCMP)){
+    #if DEBUG
+      Serial.println("Potentiometer selected");
+    #endif
+    streamfnc[Nfunctions]=&Potentiometer;
+    Nfunctions=Nfunctions+1;
+  }    
   else {
     return false;
   }
@@ -41,6 +49,11 @@ bool AddFunction(char * arg){
 void SineWave(){
     StreamSamples<floatSample_t,TXBUFFERSIZE>(SineWave::buffer,packet);
 }
+
+void Potentiometer(){
+    StreamSamples<floatSample_t,TXBUFFERSIZE>(Potentiometer::buffer,packet);
+}
+
 
 void Stream(){
   //Fetch data from desired buffers and send via serial

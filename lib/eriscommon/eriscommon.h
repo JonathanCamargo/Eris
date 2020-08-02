@@ -98,17 +98,6 @@ class PrintHelper : public Print {
 
 #endif
 
-// 
-// erisprint(3.1231,3)
-//print()
-
-//eriscommon::Print("ji");
-// eriscommon::startprinting();
-// erircommon::endprinting();
-
-//Serial.print("Ji");
-//eriscommon::print("Ji");
-//
 
 
 

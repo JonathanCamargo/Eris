@@ -1,0 +1,3 @@
+<launch>
+<node name="eris_tapok" pkg="eris_emg" type="eris_tapok.py" respawn="false" output="screen" />
+</launch>

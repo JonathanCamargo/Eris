@@ -1,0 +1,3 @@
+<launch>
+<node name="eris_ads131" pkg="eris_emg" type="eris_ads131.py" respawn="false" output="screen" />
+</launch>
