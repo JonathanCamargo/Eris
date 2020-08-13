@@ -1,0 +1,4 @@
+<launch>
+<node name="recorder" pkg="recorder" type="recorder.py" />
+<node name="trigger" pkg="recorder" type="trigger_joystick.py" />
+</launch>
