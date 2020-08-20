@@ -137,8 +137,8 @@ void LED_off() {
 
 void TransmitFSR(){
    chSysLockFromISR();
-   floatSample_t samples[MEMBUFFERSIZE];   
-   int num=SineWave::buffer.FetchData(samples,(char*)"FSR",MEMBUFFERSIZE);
+   FSRSample_t samples[MEMBUFFERSIZE];   
+   int num=FSR::buffer.FetchData(samples,(char*)"FSR",MEMBUFFERSIZE);
    long missed=FSR::buffer.missed();   
    chSysUnlockFromISR();   
    Serial.print("FSR:");   
@@ -153,10 +153,10 @@ void TransmitFSR(){
      Serial.print(samples[0].timestamp,2);
      Serial.print("ms)");         
      for (i=0;i<num-1;i++){
-        Serial.print(samples[i].value,2);
+        Serial.print(samples[i].ch[0],2);
         Serial.print(",");
      }     
-     Serial.print(samples[i].value,2);
+     Serial.print(samples[i].ch[0],2);
      Serial.print("(@");
      Serial.print(samples[i].timestamp,2);
      Serial.println("ms)");   

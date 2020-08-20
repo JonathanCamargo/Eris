@@ -8,9 +8,7 @@ thread_t *sampleFSR = NULL;
 //Buffer for readings 
 ErisBuffer<FSRSample_t> buffer;
 
-
-static const float FREQ=1;
-  
+ 
 static THD_WORKING_AREA(waSampleFSR_T, 128);
 static THD_FUNCTION(SampleFSR_T, arg) {  
   static long idx=0;
@@ -19,7 +17,8 @@ static THD_FUNCTION(SampleFSR_T, arg) {
     float timestamp = ((float)(micros() - t0))/1.0e3;  
     
     float value=3.3*analogRead(PIN_FSR)/1024.0;
-    //float value=timestamp;
+    //float value=timestamp;    
+    //Serial.println(value);
     
     FSRSample_t thisSample;
     thisSample.timestamp=timestamp;
