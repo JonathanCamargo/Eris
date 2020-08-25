@@ -46,32 +46,28 @@ find_package(catkin REQUIRED std_msgs message_generation roscpp)
 add_message_files(
 	FILES
 
+    Bool.msg
     classDecisionmsg.msg
     classmsg.msg    
-    EMG1CH.msg
-    EMG2CH.msg
-    EMG3CH.msg
-    EMG4CH.msg	
     featmsg.msg
     regmsg.msg
     gaitmsg.msg
     maskmsg.msg
     regDecisionmsg.msg   
-    EMG8CH.msg	
     Float32.msg
     Float32MultiArray.msg
-    FSR2CH.msg
-    FSR4CH.msg
     IMU.msg
     JointState.msg
     Loadcell.msg
-    Bool.msg
     ScaledParameters.msg
     String.msg
     ETI.msg
     Uint8.msg
     Signal1CH.msg
     Signal2CH.msg    
+    Signal8CH.msg
+    
+
 
 		
 #   Message1.msg

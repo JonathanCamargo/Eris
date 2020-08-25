@@ -19,12 +19,12 @@ void ClearFunctions(){
 
 bool AddFunction(char * arg){
   #if DEBUG
-    Serial.print("Function requested: ");
-    Serial.println(arg);
+    eriscommon::print("Function requested: ");
+    eriscommon::println(arg);
   #endif
   if (!strncmp("SINE",arg,MAXSTRCMP)){
     #if DEBUG
-      Serial.println("SineWave selected");
+      eriscommon::println("SineWave selected");
     #endif
     streamfnc[Nfunctions]=&SineWave;
     Nfunctions=Nfunctions+1;

@@ -26,6 +26,8 @@
 #define SDBUFFERSIZE_FSR 100
 #define STRBUFFERSIZE 64
 
+
+
 ////////////////////////////////////////////////
 /// FSR analog input
 ///
@@ -56,6 +58,10 @@
 #define IMU_PERIOD_US ((1.0/IMU_FREQUENCY_HZ)*1000000)
 
 /////////////////////////////////////////////////////
+/// STREAMING
+#define STREAMING_PERIOD_MS 10
+
+/////////////////////////////////////////////////////
 //
 // SYNC CONFIGURATION (Sync is a digital input that records time on change
 //
@@ -73,8 +79,5 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define FIRMWARE_INFO TOSTRING(FIRMWARE_VERSION) "Eris by ossip"
 
-
-// Enable SD Card
-#define SDCARD true
 
 #endif

@@ -8,6 +8,7 @@
 
 //Static allocation to avoid moving a lot of memory in RTOS
 static FSRSample_t fsrsamples[MEMBUFFERSIZE];
+static EMGSample_t emgsamples[MEMBUFFERSIZE];
 static uint8_tSample_t syncsamples[MEMBUFFERSIZE];
 
 
@@ -17,7 +18,6 @@ namespace SerialCom{
 
   thread_t *readSerial = NULL;
   thread_t *streamSerial = NULL;
-
   static bool stream_en=false;
 
   
@@ -38,7 +38,7 @@ namespace SerialCom{
       if (stream_en){
         stream();  
       }                        
-      chThdSleepMilliseconds(8);
+      chThdSleepMilliseconds(STREAMING_PERIOD_MS);
     }
   }
  
@@ -47,10 +47,9 @@ namespace SerialCom{
 	void start(void){ 
 
     //COMMANDS:
-     sCmd.addCommand("INFO",Info);       // Display information about the firmware
+     sCmd.addCommand("INFO",INFO);       // Display information about the firmware
     sCmd.addCommand("ON",LED_on);       // Turns LED on
-    sCmd.addCommand("OFF",LED_off);        // Turns LED off
-    
+    sCmd.addCommand("OFF",LED_off);        // Turns LED off    
     
     sCmd.addCommand("SINE",TransmitSineWave); // Transmit the current sinewave buffer
     
@@ -59,7 +58,7 @@ namespace SerialCom{
     sCmd.addCommand("SYNC",TransmitSync); // Transmit the current EMG buffer  
       
 
-    sCmd.addCommand("S_T0",ResetT0); // Restart t0 to 0
+    sCmd.addCommand("S_TIME",SynchronizeTime); // Synchronize time       
     sCmd.addCommand("S_F",StreamingSetFeatures); // Configure the streaming functions
     sCmd.addCommand("S_ON",StreamingStart); // Stream the buffers' data
     sCmd.addCommand("S_OFF",StreamingStop); // Stop streaming
@@ -76,27 +75,57 @@ namespace SerialCom{
 
 	}
 
-void Info(){
-   Serial.print("Firmware:");
-   Serial.println(FIRMWARE_INFO);
+void INFO() {
+  char temp[50]; 
+  int num = sprintf(temp, "Firmware: %s", FIRMWARE_INFO); 
+  eriscommon::print(temp);  
 }
+
 
 void ResetT0(){
   t0=0;
   }
   
 void StartThreads(){
-  Serial.println("Starting threads manually");
+  eriscommon::print("Starting threads manually");  
   KillThreads(); 
 }
 
 void StreamingStart(){  
+  eriscommon::setPrintPacketMode(true);
   stream_en=true;
 }
 
 void StreamingStop(){
-  stream_en=false;
-  Serial.println("Streaming off");
+  stream_en=false;  
+  eriscommon::print("Streaming off");  
+  eriscommon::setPrintPacketMode(false);
+}
+
+
+void SynchronizeTime(){  
+  // Reset the start time
+  chSysLockFromISR();
+  t0=micros();
+  chSysUnlockFromISR();
+}
+
+void KillThreads(){
+  eriscommon::print("Killing threads");  
+}
+
+void stream(){
+  Streaming::Stream();
+}
+
+void LED_on() {
+  eriscommon::print("LED on");
+  digitalWrite(PIN_LED, HIGH);
+}
+
+void LED_off() {
+  eriscommon::print("LED off");
+  digitalWrite(PIN_LED, LOW);
 }
 
 void StreamingSetFeatures(){   
@@ -110,32 +139,15 @@ void StreamingSetFeatures(){
       if (!found){
         Error::RaiseError(COMMAND,(char *)"StreamingSetFeatures");
         Streaming::ClearFunctions();
-        chSysUnlockFromISR();        
+        chSysUnlockFromISR();     
         return;
       }
       arg = sCmd.next();
   }      
   chSysUnlockFromISR();
-  Serial.println("Features Ready");   
+  eriscommon::print("Features Ready");   
 }
 
-void KillThreads(){
-  Serial.println("Killing threads");  
-}
-
-void stream(){
-  Streaming::Stream();
-}
-
-void LED_on() {
-  Serial.println("LED on");
-  digitalWrite(PIN_LED, HIGH);
-}
-
-void LED_off() {
-  Serial.println("LED off");
-  digitalWrite(PIN_LED, LOW);
-}
 
 void TransmitSineWave(){
    chSysLockFromISR();
@@ -177,19 +189,19 @@ void TransmitEMG(){
    long missed=EMG::buffer.missed();   
    chSysUnlockFromISR();
    // Show number of missed points
-   Serial.print("(");
-   Serial.print(missed);
-   Serial.print(") ");
+   eriscommon::print("(");
+   eriscommon::print(missed);
+   eriscommon::print(") ");
    // Show the data
    if (num<=0){
     return;
    }
    uint8_t i=0;
    for (i=0;i<num-1;i++){
-      Serial.print(values[i].ch[0],2);
-      Serial.print(",");
+      eriscommon::print(values[i].ch[0],2);
+      eriscommon::print(",");
    }
-   Serial.println(values[i].ch[0],2);
+   eriscommon::println(values[i].ch[0],2);
 
 }
 
@@ -234,25 +246,25 @@ void TransmitSync(){
    long missed=Sync::buffer.missed();   
    chSysUnlockFromISR();
    // Show number of missed points
-   Serial.print("(");
-   Serial.print(missed);
-   Serial.print(") ");
+   eriscommon::print("(");
+   eriscommon::print(missed);
+   eriscommon::print(") ");
    // Show the data
    if (num<=0){
     return;
    }
    uint8_t i=0;
    for (i=0;i<num-1;i++){
-      Serial.print("(");      
-      Serial.print(samples[i].timestamp,2);
-      Serial.print(")");
-      Serial.print(samples[i].value);
-      Serial.print(",");
+      eriscommon::print("(");      
+      eriscommon::print(samples[i].timestamp,2);
+      eriscommon::print(")");
+      eriscommon::print(samples[i].value);
+      eriscommon::print(",");
    }
-   Serial.print("(");      
-   Serial.print(samples[i].timestamp,2);
-   Serial.print(")");
-   Serial.println(samples[i].value);
+   eriscommon::print("(");      
+   eriscommon::print(samples[i].timestamp,2);
+   eriscommon::print(")");
+   eriscommon::println(samples[i].value);
 }
 
 
@@ -260,26 +272,26 @@ void SayHello() {
   char *arg;
   arg = sCmd.next();    // Get the next argument from the //SerialCommand object buffer
   if (arg != NULL) {    // As long as it existed, take it
-    Serial.print("Hello ");
-    Serial.println(arg);
+    eriscommon::print("Hello ");
+    eriscommon::println(arg);
   }
   else {
-    Serial.println("Hello!");
+    eriscommon::println("Hello!");
   }
 }
 
 
 void GetID() {
-  Serial.print("Firmware:");
-  Serial.println(FIRMWARE_INFO);
+  eriscommon::print("Firmware:");
+  eriscommon::println(FIRMWARE_INFO);
 
 }
 
 // This gets set as the default handler, and gets called when no other command matches.
 void unrecognized(const char *command) {
-  Serial.println(command);
+  eriscommon::println(command);
   Error::RaiseError(COMMAND);
-  Serial.println("What?");
+  eriscommon::println("What?");
 }
 
 

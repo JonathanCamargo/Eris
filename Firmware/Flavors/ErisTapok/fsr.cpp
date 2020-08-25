@@ -35,7 +35,7 @@ static THD_FUNCTION(NewSample_T, arg) {
       thisSample.ch[chan]=v;     
     } 
     buffer.append(thisSample);   
-  chThdSleepMilliseconds(10);   
+  chThdSleepMilliseconds(FSR_ADC_PERIOD_MS);   
   }
 }
  

@@ -132,7 +132,7 @@ cmdsub = rospy.Subscriber('eris/command',String,command_callback)
 
 ROSRATE=50 #Hz
 rate = rospy.Rate(ROSRATE)
-e.sendCommand('S_T0') #Reset time to 0
+e.sendCommand('S_TIME') #Reset time to 0
 t0=rospy.Time.now()
 rate.sleep()
 

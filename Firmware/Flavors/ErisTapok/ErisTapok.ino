@@ -11,14 +11,9 @@
 #include "serialcommand.h"
 
 long t0=0; // Global start time for all modules 
-
 thread_t *thread1 = NULL;
-
-
-
  const char firmwareInfo[]=FIRMWARE_INFO;
- char strbuffer[STRBUFFERSIZE]="\0";
- 
+  
 /* ******************************** Global threads ************************************************** */
 static THD_WORKING_AREA(waThread1, 32);
 static THD_FUNCTION(Thread1, arg) {
@@ -31,8 +26,7 @@ static THD_FUNCTION(Thread1, arg) {
 }
 /* ************************************************************************************************* */
 
-void start(){
-  sprintf(strbuffer,"%1.2f",12.0); // Initialize buffer
+void start(){  
   /*************** Start Threads ************************/    
   chThdCreateStatic(waThread1, sizeof(waThread1),
                                    NORMALPRIO, Thread1, NULL);
@@ -44,14 +38,13 @@ void start(){
   FSR::start();
   Sync::start();
   // Command interfaces   
-  SerialCom::start();
-  
- 
-  /******************************************************/  
- 
+  SerialCom::start();  
+  /******************************************************/   
 }
 
 void setup(){  
+  // Initialize mutex for heartbeat
+  //chMtxObjectInit(&mtxhb);
   Serial.begin(115200);
   //while (!Serial) {
   //  ; // wait for //Serial port to connect. Needed for native USB
@@ -77,5 +70,5 @@ void setup(){
 
 
 void loop(){  
-  //This is not used since FreeRTOS takes charge
+  chThdSleepMilliseconds(10000);
 }

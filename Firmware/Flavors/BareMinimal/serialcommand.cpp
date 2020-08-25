@@ -14,10 +14,7 @@ namespace SerialCom{
   thread_t *readSerial = NULL;
   thread_t *streamSerial = NULL;
   static bool stream_en=false;
-
-  long startTime = 0;
-
-  
+    
   /********************** Threads *********************************/
   //To process //Serial commands
   static THD_WORKING_AREA(waReadSerial_T, 1024);
@@ -35,7 +32,7 @@ namespace SerialCom{
       if (stream_en){
         stream();  
       }                        
-      chThdSleepMilliseconds(10);
+      chThdSleepMilliseconds(STREAMING_PERIOD_MS);
     }
   }
  
@@ -71,8 +68,7 @@ namespace SerialCom{
 void INFO() {
   char temp[50]; 
   int num = sprintf(temp, "Firmware: %s", FIRMWARE_INFO); 
-  eriscommon::print(temp);
-  
+  eriscommon::print(temp);  
 }
 
 void StartThreads(){
@@ -138,61 +134,59 @@ void StreamingSetFeatures(){
   eriscommon::print("Features Ready");   
 }
 
-
 void TransmitSineWave(){
    chSysLockFromISR();
-   floatSample_t samples[MEMBUFFERSIZE];   
+   floatSample_t samples[MEMBUFFERSIZE];
    int num=SineWave::buffer.FetchData(samples,(char*)"SINEWAVE",MEMBUFFERSIZE);
-   long missed=SineWave::buffer.missed();   
-   chSysUnlockFromISR();   
-   Serial.print("SineWave:");   
+   long missed=SineWave::buffer.missed();
+   chSysUnlockFromISR();
+   eriscommon::print("SineWave:");
    // Show number of missed points
-   Serial.print("(missed:");
-   Serial.print(missed);
-   Serial.print(") ");   
+   eriscommon::print("(missed:");
+   eriscommon::print(missed);
+   eriscommon::print(") ");
    // Show the data
    if (num>0){
      uint8_t i=0;
-     Serial.print("(@");
-     Serial.print(samples[0].timestamp,2);
-     Serial.print("ms)");         
+     eriscommon::print("(@");
+     eriscommon::print(samples[0].timestamp,2);
+     eriscommon::print("ms)");
      for (i=0;i<num-1;i++){
-        Serial.print(samples[i].value,2);
-        Serial.print(",");
-     }     
-     Serial.print(samples[i].value,2);
-     Serial.print("(@");
-     Serial.print(samples[i].timestamp,2);
-     Serial.println("ms)");   
-   } 
+        eriscommon::print(samples[i].value,2);
+        eriscommon::print(",");
+     }
+     eriscommon::print(samples[i].value,2);
+     eriscommon::print("(@");
+     eriscommon::print(samples[i].timestamp,2);
+     eriscommon::println("ms)");
+   }
    else {
-     Serial.println();
-   }         
+     eriscommon::println("num < 0");
+   }
 }
-
 void SayHello() {
   char *arg;
   arg = sCmd.next();    // Get the next argument from the //SerialCommand object buffer
   if (arg != NULL) {    // As long as it existed, take it
-    Serial.print("Hello ");
-    Serial.println(arg);
+    eriscommon::print("Hello ");
+    eriscommon::println(arg);
   }
   else {
-    Serial.println("Hello!");
+    eriscommon::println("Hello!");
   }
 }
 
 
 void GetID() {
-  Serial.print("Firmware:");
-  Serial.println(FIRMWARE_INFO);
+  eriscommon::print("Firmware:");
+  eriscommon::println(FIRMWARE_INFO);
 
 }
 
 // This gets set as the default handler, and gets called when no other command matches.
 void unrecognized(const char *command) {
   Error::RaiseError(COMMAND);
-  Serial.println("What?");
+  eriscommon::println("What?");
 }
 
 

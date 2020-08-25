@@ -2,37 +2,21 @@
 
 from construct import Struct,Float32l,Int8ub
 
-NUMEMGCHANNELS=8
-EMGSample_t = Struct(
-    "timestamp" / Float32l,
-    "ch" / Float32l[NUMEMGCHANNELS]
-    )
-
 Signal1CHSample_t = Struct(
     "timestamp" / Float32l,
     "ch" / Float32l[1]
     )
-    
-EMG2CHSample_t = Struct(
+
+Signal2CHSample_t = Struct(
     "timestamp" / Float32l,
     "ch" / Float32l[2]
     )
 
-EMG3CHSample_t = Struct(
-    "timestamp" / Float32l,
-    "ch" / Float32l[3]
-    )
-
-EMG4CHSample_t = Struct(
-    "timestamp" / Float32l,
-    "ch" / Float32l[4]
-    )
-
-EMG8CHSample_t = Struct(
+Signal8CHSample_t = Struct(
     "timestamp" / Float32l,
     "ch" / Float32l[8]
     )
-
+    
 floatSample_t = Struct(
     "timestamp" / Float32l,
     "value" / Float32l

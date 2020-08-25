@@ -4,17 +4,11 @@
 
 #include <Arduino.h>
 
-#define FIRMWARE_VERSION "v2.0"
+#define FIRMWARE_VERSION "v3.0"
 
 /* Global configuration such as pins, rates etc */
 
 /***********************************************/
-////////////////////////////////////////////////
-// SPI ADC
-// Brand and part number*
-//
-//
-
 ////////////////////////////////////////////////
 /// LED
 /// (classic arduino led)
@@ -39,43 +33,29 @@
 #define FSR_NUMCHANNELS 1
 #define PIN_FSR A2
 
-#define EMG_ADC_FREQUENCY_US 125 // 8kHz
-#define FSR_ADC_FREQUENCY_US 2000 // 500Hz
+#define FSR_ADC_FREQUENCY_HZ 100
+#define FSR_ADC_PERIOD_MS ((1.0/FSR_ADC_FREQUENCY_HZ)*1000)
 
 //// SYNC signals
 #define SYNC_FREQUENCY_US 5000000 // 0.2Hz
 #define PIN_SYNC 28
 
 /////////// MEMORY CONFIGURATION
-#define TXBUFFERSIZE 16 // Size for transmision buffer last 85 points this should allways be smaller than erisbuffers MEMBUFFERSIZE
+#define TXBUFFERSIZE 16 // Default size for transmision buffer for streaming
 #define FSR_TXBUFFERSIZE 10 // To reduce bandwith transmit fewer FSR samples
 #define EMG_TXBUFFERSIZE 24 
 #define SYNC_TXBUFFERSIZE 10 //
-#define STREAMING_PERIOD_MS 8 // With streaming period of 8ms @10kHz we get 80 samples per period
-
-
-
+#define STREAMING_PERIOD_MS 10 // Period of
 
 // DEBUGGING FLAGS
+#define DEBUG true
 //#define DEBUG_TIME false
-//#define DEBUG_SYSCLK 180.0
-#define DEBUG_ADS1256
+#define DEBUG_SYSCLK 180000000.0
+
 
 // FIRMWARE INFO STRING
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 #define FIRMWARE_INFO TOSTRING(FIRMWARE_VERSION) "Eris by ossip"
-
-#define STRBUFFERSIZE 128
-
-#define PIN_ADC0_SS 6
-#define PIN_ADC0_DRDY 28
-
-// Impedance and temperature using Serial port
-#define ETI_SERIAL Serial1
-
-//Enable Feature extraction
-#define FEATURES true
-
 
 #endif

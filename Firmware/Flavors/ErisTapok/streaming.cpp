@@ -21,25 +21,25 @@ void ClearFunctions(){
 }
 
 bool AddFunction(char * arg){  
-    Serial.print("Function requested: ");
-    Serial.println(arg);
+    eriscommon::print("Function requested: ");
+    eriscommon::println(arg);
   if (!strncmp("SINEWAVE",arg,MAXSTRCMP)){
-      Serial.println("SineWave selected");
+      eriscommon::println("SineWave selected");
     streamfnc[Nfunctions]=&SineWave;
     Nfunctions=Nfunctions+1;
   }
   else if (!strncmp("EMG",arg,MAXSTRCMP)){
-      Serial.println("EMG selected");
+      eriscommon::println("EMG selected");
     streamfnc[Nfunctions]=&EMG;
     Nfunctions=Nfunctions+1;
   }  
   else if (!strncmp("SYNC",arg,MAXSTRCMP)){
-      Serial.println("Sync selected");
+      eriscommon::println("Sync selected");
       streamfnc[Nfunctions]=&Sync;
       Nfunctions=Nfunctions+1;
   }  
   else if (!strncmp("FSR",arg,MAXSTRCMP)){
-    Serial.println("FSR selected");
+    eriscommon::println("FSR selected");
     streamfnc[Nfunctions]=&FSR;
     Nfunctions=Nfunctions+1;
   }  

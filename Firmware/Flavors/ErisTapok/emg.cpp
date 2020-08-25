@@ -27,7 +27,6 @@ static void ISR_NewSample(){
       thisSample.ch[chan]=v;      
   }  
   buffer.append(thisSample); 
-  //Serial.println(thisSample.timestamp);
   chSysUnlockFromISR();  
 }
 
@@ -35,8 +34,7 @@ void start(void){
     CANTAPOK.begin(1000000); 
 
     // Start ErisBuffers
-    buffer.init();                       
-    
+    buffer.init();                           
     // Initialize interrupt to take the samples 
     emg.subscribeFun(&ISR_NewSample);    
     emg.connect();  

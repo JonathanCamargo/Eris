@@ -13,10 +13,10 @@ void start(void);
 
 
 // Callback function for specific //Serial commands
-void Info();
+void INFO();
 void LED_on();
 void LED_off();
-void ResetT0();
+void SynchronizeTime();
 void SayHello();
 void TransmitSineWave();
 void TransmitEMG();
