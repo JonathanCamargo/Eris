@@ -3,10 +3,10 @@
 # read EMG and ETI only
 
 import rospy
-from custom_msgs.msg import Signal1CH, String, Float32, Bool, Float32MultiArray, ETI
-from std_msgs.msg import Header, MultiArrayDimension
 from eris.eris import Eris
 from eris.customtypes import Signal1CHSample_t, floatSample_t, uint8_tSample_t
+from custom_msgs.msg import Signal1CH, String, Float32, Bool, Float32MultiArray, ETI
+from std_msgs.msg import Header, MultiArrayDimension
 
 from construct import Struct,Float32l,Int8ub
 import numpy as np
@@ -33,12 +33,12 @@ fsrmsg=Signal1CH()
 
 featuresmsg=Float32MultiArray()
 
-textpub = rospy.Publisher('/eris/print', String, queue_size=50)
-sinepub = rospy.Publisher('/eris/sine', Float32, queue_size=50)
-etipub = rospy.Publisher('/eris/ti', ETI, queue_size=50)
-emgpub = rospy.Publisher('/eris/emg', Signal1CH, queue_size=100)
-fsrpub = rospy.Publisher('/eris/fsr', Signal1CH, queue_size=50)
-featurespub = rospy.Publisher('/record/eris/features', Float32MultiArray, queue_size=1)
+textpub = rospy.Publisher('/print', String, queue_size=50)
+sinepub = rospy.Publisher('/sine', Float32, queue_size=50)
+etipub = rospy.Publisher('/ti', ETI, queue_size=50)
+emgpub = rospy.Publisher('/emg', Signal1CH, queue_size=100)
+fsrpub = rospy.Publisher('/fsr', Signal1CH, queue_size=50)
+featurespub = rospy.Publisher('/features', Float32MultiArray, queue_size=1)
 
 t0=0 #global variable to store time reference to linux time
 def publishEMG(sample):
@@ -143,7 +143,7 @@ e.start()
 while True:
 
     try:
-    	out = e.read()        
+    	out = e.read()
     except Exception as ex:
         print('Problem')
         print(ex)
@@ -152,11 +152,16 @@ while True:
         e.sendCommand('S_ON')
         rate.sleep()
         continue
-        
+
     for p in out['D']:
         for sample in p['SINE']:
             publishSine(sample)
-
+        for sample in p['EMG']:
+            publishEMG(sample)
+        for sample in p['ETI']:
+            publishETI(sample)
+        for sample in p['FSR']:
+            publishFSR(sample)
     #rospy.loginfo_once("This message will print only once")
     rate.sleep()
 e.sendCommand('S_OFF')

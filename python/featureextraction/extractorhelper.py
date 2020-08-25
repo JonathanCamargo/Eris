@@ -21,9 +21,9 @@ class SensorExtractor:
             self.window=250
 
         self.subscriber=Subscriber(topicname, msgtype, self.window+100)
-        self.channelNames = self.subscriber.getChannels() 
-        self.excludeIndex = self.channelNames.index('header') 
-        
+        self.channelNames = self.subscriber.getChannels()
+        self.excludeIndex = self.channelNames.index('header')
+
         #Create and configure the extractor based on channel names
         self.extractor=FeatureExtractor(extractorOpts)
         self.extractor.configureHeader([v for i,v in enumerate(self.channelNames) if i != self.excludeIndex])
@@ -35,29 +35,32 @@ class SensorExtractor:
         data_mutex.acquire(1)
         local=self.subscriber.getQueue()
         data_mutex.release()
-            
+
         local=np.array(local)
-        
+
         if local.size != 0:
             local=np.delete(local,self.excludeIndex,1)[-self.window:]
             return self.extractor.extract(local).tolist()
-        else:   
+        else:
             return []
 
 class ExtractorHelper:
     ''' Doc '''
 
 
-    def __init__(self, configList): 
+    def __init__(self, configList):
         ''' Create an extractor helper from a list of configuration files.
-         Each configuration file contains the definitions to set up subscribers, buffers    and selected features. Configuration "Blocks" are mapped to configIndex in the features() method.       
+         Each configuration file contains the definitions to set up subscribers, buffers    and selected features. Configuration "Blocks" are mapped to configIndex in the features() method.
          '''
         self.data_mutex=Lock()
         self.sensors={}
         self.header=[]
         self.indices=[]
         self.topics=[]
-        
+
+        if not(configList is list):
+            configList=[configList]
+
         for i,config in enumerate(configList):
             # Parse file to get Topic, requested features, extractor opts, and message type
             data=self.parseConfig(config)
@@ -71,13 +74,20 @@ class ExtractorHelper:
                     self.topics.append(topic)
 
                 # generate global header, convert requested features to indices for this config
+                n=len(self.header)
                 self.header=self.header+self.sensors[topic].header
-                self.indices[i]=self.indices[i]+[self.header.index(v) for v in vals['feats']]
-  
+                print(self.header)
+                try:
+                    self.indices[i]=self.indices[i]+[self.header.index(v,n) for v in vals['feats']]
+                except Exception as e:
+                    msger='\nPossible features are: {}'.format(self.header)
+                    raise type(e)(str(e)+msger)
+
+
         print('Feature Helper ready!\nConfig indices:')
         for i in range(0, len(self.indices)):
             print('\t\t' + str(i) + ':\t' + str(self.indices[i]))
-        
+
 
     def subscribe(self):
         ''' Start the subscription to topics and create and enable callbacks '''
@@ -97,9 +107,9 @@ class ExtractorHelper:
 
     def parseConfig(self, config):
         ''' config is a yaml file. Each topic is a dictionary containing fields 'feats',
-        'opts', and 'msgType', 'topic'. feats is a list, opts is a dictionary, and msgtype is a single value. See  
+        'opts', and 'msgType', 'topic'. feats is a list, opts is a dictionary, and msgtype is a single value. See
         example.yaml. the topic is stored as the key for the entry
-        ''' 
+        '''
         with open(config, 'r') as f:
             data=yaml.safe_load(f)
         print(data)
@@ -111,7 +121,7 @@ class ExtractorHelper:
         for key in keys:
             missing=([v for v in requiredKeys if v not in data[key]])
             if any(missing):
-                error_msg='Invalid config! Required keys are missing...' 
+                error_msg='Invalid config! Required keys are missing...'
                 for miss in missing:
                     error_msg=error_msg+' '+miss
                 raise Exception(error_msg)

@@ -1,5 +1,7 @@
 <launch>
 <param name="/recorder/filename" type="string" value="/home/ossip/scratch/testitolaunch"/>
+<param name="/features" type="string" value="$(find eris_emg)/config/extractor_etiprotocol.yaml"/>
 <include file="$(find recorder)/launch/record_joysticktrigger.launch"/>
 <node name="eti" pkg="eris_emg" type="eris_nextFlexAnalog.py"/>
+<node name="featmonitor" pkg="features" type="extractfeatures.py"/>
 </launch>

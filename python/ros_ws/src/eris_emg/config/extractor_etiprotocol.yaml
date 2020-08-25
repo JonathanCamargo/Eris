@@ -1,0 +1,18 @@
+emg:
+    topic: /emg
+    feats:
+        - ch0_rms
+    opts:
+        TD: True
+        window: 250
+        slide: 50
+    msgType: custom_msgs/Signal1CH
+fsr:
+    topic: /fsr
+    feats:
+        - ch0_rms
+    opts:
+        TD: True
+        window: 250
+        slide: 50
+    msgType: custom_msgs/Signal1CH

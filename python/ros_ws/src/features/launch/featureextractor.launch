@@ -1,0 +1,3 @@
+<launch>
+<node name="featureextractor" pkg="features" type="extractfeatures.py" />
+</launch>
