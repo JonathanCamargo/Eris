@@ -101,15 +101,12 @@ class FeatureExtractor:
         features = np.transpose(features)
         return features
 
-    # Auto recursive based feature extraction
+    # Auto regressive based feature extraction
     @staticmethod
     def AR_extract(self, window, AROrder):
         r,lg = self.autocorr(window)
-        for i in range(len(lg)-1,-1, -1):
-            if lg[i] < 0:
-                del r[i]
-        ar = linalg.solve_toeplitz(r, AROrder)
-        features = ar[2:-1]
+                
+        features = self.LEVINSON(r[lg>0],order=AROrder,allow_singularity=True)
         return features
 
     @staticmethod
@@ -301,10 +298,71 @@ class FeatureExtractor:
             return 1
 
     def autocorr(self, x):
-        result = np.correlate(x, x, mode = 'full')
-        # lag = np.argmax(np.correlate(x, x, mode = 'full'))
-        lag = range(len(result) - 1)
-        return result[result.size/2:], lag
+        r=np.correlate(x,x,mode='full')/len(x)
+        lag=np.arange(-len(x)+1,len(x),1)
+        return r, lag
+        
+    
+    def LEVINSON(self,r, order=None, allow_singularity=False):    
+        #from numpy import isrealobj
+        T0  = np.real(r[0])
+        T = r[1:]
+        M = len(T)
+        if order is None:
+            M = len(T)
+        else:
+            assert order <= M, 'order must be less than size of the input data'
+            M = order
+
+        realdata = np.isrealobj(r)
+        if realdata is True:
+            A = np.zeros(M, dtype=float)
+            ref = np.zeros(M, dtype=float)
+        else:
+            A = np.zeros(M, dtype=complex)
+            ref = np.zeros(M, dtype=complex)
+
+        P = T0
+
+        for k in range(0, M):
+            save = T[k]
+            if k == 0:
+                temp = -save / P
+            else:
+                #save += sum([A[j]*T[k-j-1] for j in range(0,k)])
+                for j in range(0, k):
+                    save = save + A[j] * T[k-j-1]
+                temp = -save / P
+            if realdata:
+                P = P * (1. - temp**2.)
+            else:
+                P = P * (1. - (temp.real**2+temp.imag**2))
+            if P <= 0 and allow_singularity==False:
+                raise ValueError("singular matrix")
+            A[k] = temp
+            ref[k] = temp # save reflection coeff at each step
+            if k == 0:
+                continue
+
+            khalf = (k+1)//2
+            if realdata is True:
+                for j in range(0, khalf):
+                    kj = k-j-1
+                    save = A[j]
+                    A[j] = save + temp * A[kj]
+                    if j != kj:
+                        A[kj] += temp*save
+            else:
+                for j in range(0, khalf):
+                    kj = k-j-1
+                    save = A[j]
+                    A[j] = save + temp * A[kj].conjugate()
+                    if j != kj:
+                        A[kj] = A[kj] + temp * save.conjugate()
+
+        return A, P, ref
+
+
 
     ##############################################################
 
