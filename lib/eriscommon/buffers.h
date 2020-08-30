@@ -31,6 +31,7 @@ public:
   void init(); // Initialize buffer (Do this after the chibi kernel is launched)
 
   uint8_t FetchData(DataType* dest,char * text,uint8_t numSamples); // Request nsamples of data in the buffer
+  uint8_t PeekData(DataType* dest,char * text); // Request last sample
   void clear(); // Clears the buffer removing all it's contents
  
 };
@@ -115,5 +116,21 @@ uint8_t ErisBuffer<DataType>::FetchData(DataType* dest,char text[],uint8_t numSa
     return num;
 }
 
-
+template <typename DataType>
+uint8_t ErisBuffer<DataType>::PeekData(DataType* dest,char text[]){  
+   chSysLockFromISR();
+   uint8_t num=chMBGetUsedCountI(&(this->buffer));   
+   
+   if (num==0){
+    return 0;
+   }
+   msg_t msg;
+   
+   msg=chMBPeekI(&(this->buffer));        
+   dest=(*(buffer_t *)msg).data;
+   (*(buffer_t *)msg).inuse=false;
+   
+   chSysUnlockFromISR();      
+   return num;
+}
 #endif
