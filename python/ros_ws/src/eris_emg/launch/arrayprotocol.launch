@@ -2,6 +2,6 @@
 <param name="/recorder/filepath" type="string" value="/home/ossip/testito/"/>
 <!--<param name="/features" type="string" value="$(find eris_emg)/config/extractor_etiprotocol.yaml"/>
 <include file="$(find recorder)/launch/record_joysticktrigger.launch"/>-->
-<node name="protocol" pkg="eris_emg" type="nextFlexArrayProtocol.py"/>
-<node name="eris" pkg="eris_emg" type="eris_nextFlexArray.py"/>
+<node name="protocol" pkg="eris_emg" type="nextFlexArrayProtocol.py" output="screen"/>
+<node name="eris" pkg="eris_emg" type="eris_nextFlexArray.py" output="screen"/>
 </launch>

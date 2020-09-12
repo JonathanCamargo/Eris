@@ -11,7 +11,8 @@ import threading
 
 import os
 from EpicToolbox import FileManager
-from std_msgs.msg import String
+from custom_msgs.msg import String
+from std_msgs.msg import Header
 from roshandlers.rosbag import Rosbag
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
@@ -51,6 +52,8 @@ signal.signal(signal.SIGINT,signal_handler)
 
 def SetPin(reference):
     #Set the pin reference by sending a command to eris
+    stringmsg.header=Header()
+    stringmsg.header.stamp=rospy.Time.now()
     stringmsg.data='NEG {:01d}'.format(reference)
 
 ################################################################################
@@ -125,6 +128,13 @@ while True:
             state='ref{:01d}'.format(reference)
             lasttime=rospy.Time.now()
     elif state=='ref6':
+        #Chill until it's time to switch to next ref
+        if elapsed.to_sec()>SESSION_DURATION_S:
+           reference=7
+           SetPin(reference)
+           state='ref{:01d}'.format(reference)
+           lasttime=rospy.Time.now()
+    elif state=='ref7':
         #Chill until is time to switch to next ref
         if elapsed.to_sec()>SESSION_DURATION_S:
             state='idle'

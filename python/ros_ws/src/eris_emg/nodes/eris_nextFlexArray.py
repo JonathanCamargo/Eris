@@ -22,9 +22,8 @@ else:
     port='/dev/ttyACM0'
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
-emgmsg=Signal1CH()
+emgmsg=Signal8CH()
 sinemsg=Float32()
-etimsg=ETI()
 fsrmsg=Signal1CH()
 
 featuresmsg=Float32MultiArray()
@@ -34,7 +33,7 @@ sinepub = rospy.Publisher('/sine', Float32, queue_size=50)
 emgpub = rospy.Publisher('/emg', Signal8CH, queue_size=100)
 fsrpub = rospy.Publisher('/fsr', Signal1CH, queue_size=50)
 featurespub = rospy.Publisher('/features', Float32MultiArray, queue_size=1)
-monitor1pub = rospy.Publisher('/monitor1', Float32)
+monitor1pub = rospy.Publisher('/monitor1', Float32, queue_size=50)
 
 t0=0 #global variable to store time reference to linux time
 def publishEMG(sample):
@@ -75,14 +74,6 @@ def publishSine(sample):
     sinemsg.header=Header(stamp=t0+rospy.Duration(timestamp))
     sinemsg.data=sample['value']
     sinepub.publish(sinemsg)
-
-def publishETI(sample):
-    '''Publish data for ETI'''
-    timestamp=sample['timestamp']/1000.0
-    etimsg.header=Header(stamp=t0+rospy.Duration(timestamp))
-    etimsg.temperature=sample['temperature'][0]
-    etimsg.impedance=sample['impedance'][0]
-    etipub.publish(etimsg)
 
 def publishText(data):
     textmsg.data = data[0];
@@ -155,8 +146,6 @@ while True:
             publishSine(sample)
         for sample in p['EMG']:
             publishEMG(sample)
-        for sample in p['ETI']:
-            publishETI(sample)
         for sample in p['FSR']:
             publishFSR(sample)
     #rospy.loginfo_once("This message will print only once")
