@@ -42,6 +42,7 @@ void start(){
   FSR::start();
   // Command interfaces   
   SerialCom::start();   
+  SerialSelector::start();
   /******************************************************/  
  
 }

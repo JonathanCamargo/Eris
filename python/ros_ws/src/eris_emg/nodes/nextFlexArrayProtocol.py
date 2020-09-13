@@ -10,10 +10,13 @@ import sys
 import threading
 
 import os
-from EpicToolbox import FileManager
+from EpicToolbox import FileManager,mkdirfile
 from custom_msgs.msg import String
 from std_msgs.msg import Header
 from roshandlers.rosbag import Rosbag
+from roshandlers.params import Rosparam
+
+from datetime import date
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
 stringmsg=String()
@@ -23,17 +26,22 @@ print('Inicio')
 states=['idle','recording','ref0','ref1','ref2','ref3','ref4','ref5','ref6','ref7']
 state='idle'
 # Setup a Rosbag
-path=os.path.join(os.environ['HOME'],'09_12_2020')
+path=os.path.join(os.environ['HOME'],date.today().strftime('%m_%d_%y'))
+mkdirfile(path)
 f=FileManager(path)
 allbags=f.fileList({'File':'*.bag'})
 print(allbags)
 nextbag=f.genList({'File':'{:01d}.bag'.format(len(allbags)+1)})
 rosbag=Rosbag(path=nextbag[0])
+rosparam=Rosparam('/')
 
 ############################ ROS CALLBACKS #####################################
 def command_callback(msg):
-    global state, rosbag
+    global state, rosbag, SESSION_DURATION_S
     if msg.data=='START' and state=='idle':
+        session_duration_seconds=rosparam.get('/session_duration_seconds')
+        SESSION_DURATION_S= (30 if session_duration_seconds==[] else session_duration_seconds)
+        allbags=f.fileList({'File':'*.bag'})
         nextbag=f.genList({'File':'{:01d}.bag'.format(len(allbags)+1)})
         rosbag=Rosbag(path=nextbag[0])
         rosbag.record()
@@ -61,7 +69,8 @@ def SetPin(reference):
 rospy.init_node('nextflexArrayProtocol', anonymous=True)
 cmdsub = rospy.Subscriber('/arrayprotocol',String,command_callback)
 ROSRATE= 1 #Hz
-SESSION_DURATION_S=1
+session_duration_seconds=rosparam.get('/session_duration_seconds')
+SESSION_DURATION_S= (30 if session_duration_seconds==[] else session_duration_seconds)
 rate = rospy.Rate(ROSRATE)
 rate.sleep()
 

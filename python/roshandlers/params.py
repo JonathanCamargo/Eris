@@ -27,7 +27,7 @@ import warnings
 
 
 
-class ROSParam(object):
+class Rosparam(object):
 
     def __init__(self,name):
         self.name=name
