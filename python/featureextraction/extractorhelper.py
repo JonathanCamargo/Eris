@@ -1,58 +1,30 @@
 # Feature extraction helper that configures feature extractors and organizes
 from numpy_ringbuffer import RingBuffer
 from featureextraction.subscriber import Subscriber
-from featureextraction.featureextractor import *
-from threading import Lock
+from featureextraction.featureextractor import FeatureExtractor
 
 import numpy as np
 import yaml
 
-class SensorExtractor:
-    ''' Doc'''
-
-    def __init__(self,topicname,msgtype,extractorOpts): #James, Jonathan (ros msgs)
-        self.topicname=topicname
-        self.msgtype=msgtype
-        #Use the ros msgtype to determine the number of channels and their names
-
-        if 'window' in extractorOpts:
-            self.window=extractorOpts['window']
-        else:
-            self.window=250
-
-        self.subscriber=Subscriber(topicname, msgtype, self.window+100)
-        self.channelNames = self.subscriber.getChannels()
-        self.excludeIndex = self.channelNames.index('header')
-
-        #Create and configure the extractor based on channel names
-        self.extractor=FeatureExtractor(extractorOpts)
-        self.extractor.configureHeader([v for i,v in enumerate(self.channelNames) if i != self.excludeIndex])
-        self.header=self.extractor.header.tolist()
-
-
-    def extract(self, data_mutex): # James
-        #may need to look at the deque->list->np.array transformation to see if it bottlenecks
-        data_mutex.acquire(1)
-        local=self.subscriber.getQueue()
-        data_mutex.release()
-
-        local=np.array(local)
-
-        if local.size != 0:
-            local=np.delete(local,self.excludeIndex,1)[-self.window:]
-            return self.extractor.extract(local).tolist()
-        else:
-            return []
-
 class ExtractorHelper:
-    ''' Doc '''
+    ''' Extractor helper is a class that facilitates the saving and configuration of multiple
+    SensorExtractors with different configurations in yaml files. Please refer to SensorExtractor
+    first before you use this advance functionality. 
+    
+    Create an ExtractorHelper using a list of configuration yaml files each yaml file contains 
+    a possible combination of features to be extracted.
+    
+    TODO THIS CLASS IS REALLY INNEFFICIENT AND OVERCOMPLICATED FOR NO REASON REWORK AS EITHER
+    ONE Extractor per yaml file or a extractor with multiple yaml files but shared subscribers
+    to minimize bandwidth.
+    
+    '''
 
 
     def __init__(self, configList):
         ''' Create an extractor helper from a list of configuration files.
          Each configuration file contains the definitions to set up subscribers, buffers    and selected features. Configuration "Blocks" are mapped to configIndex in the features() method.
          '''
-        self.data_mutex=Lock()
         self.sensors={}
         self.header=[]
         self.indices=[]
@@ -70,7 +42,13 @@ class ExtractorHelper:
             for topic in data:
                 if topic not in self.sensors:
                     vals=data[topic]
-                    self.sensors[topic]= SensorExtractor(vals['topic'],vals['msgType'],vals['opts'])
+                    if 'window' in vals['opts']:                        
+                        self.sensors[topic]=SensorExtractor(
+                            vals['topic'],vals['msgType'],vals['opts']['window'],vals['opts'])
+                    else:
+                        self.sensors[topic]=SensorExtractor(
+                            vals['topic'],vals['msgType'],vals['opts'])
+                    
                     self.topics.append(topic)
 
                 # generate global header, convert requested features to indices for this config
@@ -99,7 +77,7 @@ class ExtractorHelper:
         ''' Extract the features based on the current buffers' data'''
         features=[]
         for topic in self.topics:
-            features=features+self.sensors[topic].extract(self.data_mutex)
+            features=features+self.sensors[topic].extract()
         if len(features) == len(self.header):
             return [features[i] for i in self.indices[configIndex]]
         return []

@@ -26,14 +26,10 @@ emgmsg=Signal8CH()
 sinemsg=Float32()
 fsrmsg=Signal1CH()
 
-featuresmsg=Float32MultiArray()
-
 textpub = rospy.Publisher('/print', String, queue_size=50)
 sinepub = rospy.Publisher('/sine', Float32, queue_size=50)
 emgpub = rospy.Publisher('/emg', Signal8CH, queue_size=100)
 fsrpub = rospy.Publisher('/fsr', Signal1CH, queue_size=50)
-featurespub = rospy.Publisher('/features', Float32MultiArray, queue_size=1)
-monitor1pub = rospy.Publisher('/monitor1', Float32, queue_size=50)
 
 t0=0 #global variable to store time reference to linux time
 def publishEMG(sample):
@@ -79,17 +75,6 @@ def publishText(data):
     textmsg.data = data[0];
     textmsg.header=Header(stamp=rospy.Time.now())
     textpub.publish(textmsg)
-
-def publishFeatures(sample):
-    '''Publish features data'''
-    timestamp=sample['timestamp']/1000.0
-    featuresmsg.data=sample['features']
-    featuresmsg.header=Header(stamp=t0+rospy.Duration(timestamp))
-    featuresmsg.layout.dim=[MultiArrayDimension()]
-    featuresmsg.layout.dim[0].size=sample['len']
-    featuresmsg.layout.dim[0].stride=1
-    featuresmsg.layout.dim[0].label='index'
-    featurespub.publish(featuresmsg)
 
 def command_callback(msg):
     ''' A callback to transmit a command to eris'''
@@ -148,6 +133,8 @@ while True:
             publishEMG(sample)
         for sample in p['FSR']:
             publishFSR(sample)
+
+
     #rospy.loginfo_once("This message will print only once")
     rate.sleep()
 e.sendCommand('S_OFF')

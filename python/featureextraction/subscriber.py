@@ -9,11 +9,22 @@ def Subscriber(topic_name,type_str, window):
 #creates a subscriber for topic topic_name
 #using the class given as a string: type_str
 # in the form package_name/message_type
+# or in the form package_name.msg.message_type
+# alternatively type_str can be passed not as an str, but as the actual msg class
 # returns the subscriber instance
     try:
-        split_type=type_str.split('/')
-        package_name=split_type[0]
-        class_name=split_type[1]
+        if not (type(type_str)==str):
+            type_str=type_str.__module__
+        if type(type_str)==str:
+            if '/' in type_str:
+                split_type=type_str.split('/')
+                package_name=split_type[0]
+                class_name=split_type[1]                
+            if '.' in type_str:
+                split_type=type_str.split('.')
+                package_name=split_type[0]
+                class_name=split_type[2]
+                class_name=class_name[1:]
         module_=importlib.import_module(package_name+'.msg')
         data_class=getattr(module_,class_name)
         subscriber=GenericSubscriber(topic_name,data_class, window)
@@ -51,11 +62,11 @@ class GenericSubscriber(object):
             pass
         #rospy.loginfo(rospy.get_caller_id()+" %s",msg)
 
-        if self.paused is False:
+        if self.paused==False:
             #Get each field in the message
             data=[]
             for channel in self.channels:
-                if channel is 'header':
+                if channel == 'header':
                     #If header just take the timestamp
                     time=msg.header.stamp.secs+msg.header.stamp.nsecs/1.0E9
                     data.append(time)
