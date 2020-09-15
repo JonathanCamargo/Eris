@@ -16,12 +16,12 @@ import sys
 
 import threading
 
-if rospy.has_param('eris/port'):
-    port=rospy.get_param('eris/port')
+if rospy.has_param('eris_emg/port'):
+    port=rospy.get_param('eris_emg/port')
 else:
     port='/dev/ttyACM0'
 
-namespace='eris_nextFlexArray'
+namespace='eris_emg'
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
 emgmsg=Signal8CH()
@@ -29,9 +29,7 @@ sinemsg=Float32()
 fsrmsg=Signal1CH()
 
 textpub = rospy.Publisher(namespace+'/print', String, queue_size=50)
-sinepub = rospy.Publisher(namespace+'/sine', Float32, queue_size=50)
 emgpub = rospy.Publisher(namespace+'/emg', Signal8CH, queue_size=100)
-fsrpub = rospy.Publisher(namespace+'/fsr', Signal1CH, queue_size=50)
 
 t0=0 #global variable to store time reference to linux time
 def publishEMG(sample):
@@ -86,9 +84,10 @@ def command_callback(msg):
 ################################################################################
 #Create an eris object
 #What to read from Eris?
-streams=['SINE','EMG','FSR']
-#streams=['FSR']
-streamsformat=[floatSample_t,Signal8CHSample_t,Signal1CHSample_t]
+#streams=['SINE','EMG','FSR']
+streams=['EMG']
+#streamsformat=[floatSample_t,Signal8CHSample_t,Signal1CHSample_t]
+streamsformat=[Signal8CHSample_t]
 e=Eris(streams,streamsformat,port)
 
 ######################## HELPER FUNCTIONS ######################################
@@ -102,7 +101,7 @@ signal.signal(signal.SIGINT,signal_handler)
 ################################################################################
 
 ''' Main loop'''
-rospy.init_node('nextflexAnalog', anonymous=True)
+rospy.init_node('eris_emg', anonymous=True)
 cmdsub = rospy.Subscriber(namespace+'eris/command',String,command_callback)
 
 ROSRATE=50 #Hz
@@ -129,12 +128,12 @@ while True:
         continue
 
     for p in out['D']:
-        for sample in p['SINE']:
-            publishSine(sample)
+        #for sample in p['SINE']:
+        #    publishSine(sample)
         for sample in p['EMG']:
             publishEMG(sample)
-        for sample in p['FSR']:
-            publishFSR(sample)
+        #for sample in p['FSR']:
+        #    publishFSR(sample)
 
 
     #rospy.loginfo_once("This message will print only once")

@@ -27,7 +27,7 @@
 ///
 // EMG CONFIGURATION
 #define EMG_NUMCHANNELS 8
-#define CANTAPOK Can0
+#define CANTAPOK Can1
 
 /// FSR signals
 #define FSR_NUMCHANNELS 1
