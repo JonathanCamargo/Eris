@@ -13,6 +13,7 @@ import os
 from EpicToolbox import FileManager,mkdirfile
 from custom_msgs.msg import String
 from std_msgs.msg import Header
+from std_msgs.msg import String as stdString
 from roshandlers.rosbag import Rosbag
 from roshandlers.params import Rosparam
 
@@ -69,6 +70,8 @@ def SetPin(reference):
 ''' Main loop'''
 rospy.init_node('nextflexArrayProtocol', anonymous=True)
 cmdsub = rospy.Subscriber('/arrayprotocol',String,command_callback)
+cmdsub_std = rospy.Subscriber('/arrayprotocolstd',stdString,command_callback)
+
 ROSRATE= 1 #Hz
 session_duration_seconds=rosparam.get('/session_duration_seconds')
 SESSION_DURATION_S= (30 if session_duration_seconds==[] else session_duration_seconds)
