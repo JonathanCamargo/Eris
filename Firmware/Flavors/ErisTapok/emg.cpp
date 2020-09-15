@@ -8,7 +8,7 @@ namespace EMG{
   
 thread_t *readAnalog = NULL;
 
-Tapok emg(2); //Tapok object to read the data
+Tapok emg(2,CANTAPOK); //Tapok object to read the data
 
 //Buffer for readings 
 ErisBuffer<EMGSample_t> buffer;

@@ -25,7 +25,7 @@ stringmsg=String()
 commandpub = rospy.Publisher('/eris/command', String, queue_size=50)
 ################################################################################
 print('Inicio')
-states=['idle','recording','ref0','ref1','ref2','ref3','ref4','ref5','ref6','ref7']
+states=['idle','recording','ref1','ref2','ref3','ref4','ref5','ref6','ref7','ref8']
 state='idle'
 # Setup a Rosbag
 path=os.path.join(os.environ['HOME'],date.today().strftime('%m_%d_%y'))
@@ -94,17 +94,10 @@ while True:
     elif state=='recording':
         #Setup the recording
         #Set pin reference to 0
-        reference=0
+        reference=1
         SetPin(reference)
-        state='ref0'
+        state='ref1'
         lasttime=rospy.Time.now()
-    elif state=='ref0':
-        #Chill until is time to switch to next ref
-        if elapsed.to_sec()>SESSION_DURATION_S:
-            reference=1
-            SetPin(reference)
-            state='ref{:01d}'.format(reference)
-            lasttime=rospy.Time.now()
     elif state=='ref1':
         #Chill until is time to switch to next ref
         if elapsed.to_sec()>SESSION_DURATION_S:
@@ -141,13 +134,20 @@ while True:
             state='ref{:01d}'.format(reference)
             lasttime=rospy.Time.now()
     elif state=='ref6':
+        #Chill until is time to switch to next ref
+        if elapsed.to_sec()>SESSION_DURATION_S:
+            reference=7
+            SetPin(reference)
+            state='ref{:01d}'.format(reference)
+            lasttime=rospy.Time.now()
+    elif state=='ref7':
         #Chill until it's time to switch to next ref
         if elapsed.to_sec()>SESSION_DURATION_S:
-           reference=7
+           reference=8
            SetPin(reference)
            state='ref{:01d}'.format(reference)
            lasttime=rospy.Time.now()
-    elif state=='ref7':
+    elif state=='ref8':
         #Chill until is time to switch to next ref
         if elapsed.to_sec()>SESSION_DURATION_S:
             state='idle'
