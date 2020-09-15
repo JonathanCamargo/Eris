@@ -31,7 +31,6 @@ namespace SerialSelector{
   
  void SelectNegativeElectrode(uint8_t negElectrodeNum){
     if (negElectrodeNum > 0 && negElectrodeNum <= 9) {       
-      
       // Switch the port according to the commands
       EMG_SERIAL.write(0xAA);
       EMG_SERIAL.write(negElectrodeNum);
@@ -39,7 +38,7 @@ namespace SerialSelector{
     }
     else {
       #if DEBUG
-      Serial.println("Not a valid electrode number.");      
+      eriscommon::println("Not a valid electrode number.");      
       #endif
     }
   }
@@ -52,7 +51,7 @@ namespace SerialSelector{
       ; // wait for //Serial port to connect.
    }
 
-   Serial.println("Electrode selector ready");
+   eriscommon::println("Electrode selector ready");
   	// create task at priority one
 	readSerial=chThdCreateStatic(waReadSerial_T, sizeof(waReadSerial_T),NORMALPRIO, ReadSerial_T, NULL);    
 	}
