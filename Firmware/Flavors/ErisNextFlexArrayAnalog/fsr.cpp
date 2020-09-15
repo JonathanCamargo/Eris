@@ -10,8 +10,7 @@ ErisBuffer<FSRSample_t> buffer;
 
  
 static THD_WORKING_AREA(waSampleFSR_T, 128);
-static THD_FUNCTION(SampleFSR_T, arg) {  
-  static long idx=0;
+static THD_FUNCTION(SampleFSR_T, arg) {    
   while(1){
     
     float timestamp = ((float)(micros() - t0))/1.0e3;  

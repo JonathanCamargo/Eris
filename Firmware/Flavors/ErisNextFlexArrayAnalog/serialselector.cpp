@@ -21,7 +21,6 @@ namespace SerialSelector{
 
    bool ReadSerial(){   
     bool returnFlag=0;
-     static const char term='\r';
      if (EMG_SERIAL.available()){
          //Do something?
          returnFlag=0;

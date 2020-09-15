@@ -17,6 +17,7 @@ void INFO();
 void LED_on();
 void LED_off();
 void SayHello();
+void SynchronizeTime();
 void TransmitSineWave();
 void TransmitFSR();
 void TransmitEMG();

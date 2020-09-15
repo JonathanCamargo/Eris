@@ -28,10 +28,10 @@ emgmsg=Signal8CH()
 sinemsg=Float32()
 fsrmsg=Signal1CH()
 
-textpub = rospy.Publisher(namespace+'/print', String, queue_size=50)
-sinepub = rospy.Publisher(namespace+'/sine', Float32, queue_size=50)
-emgpub = rospy.Publisher(namespace+'/emg', Signal8CH, queue_size=100)
-fsrpub = rospy.Publisher(namespace+'/fsr', Signal1CH, queue_size=50)
+textpub = rospy.Publisher('print', String, queue_size=50)
+sinepub = rospy.Publisher('sine', Float32, queue_size=50)
+emgpub = rospy.Publisher('emg', Signal8CH, queue_size=100)
+fsrpub = rospy.Publisher('fsr', Signal1CH, queue_size=50)
 
 t0=0 #global variable to store time reference to linux time
 def publishEMG(sample):
@@ -87,7 +87,6 @@ def command_callback(msg):
 #Create an eris object
 #What to read from Eris?
 streams=['SINE','EMG','FSR']
-#streams=['FSR']
 streamsformat=[floatSample_t,Signal8CHSample_t,Signal1CHSample_t]
 e=Eris(streams,streamsformat,port)
 
@@ -107,7 +106,7 @@ cmdsub = rospy.Subscriber('eris/command',String,command_callback)
 
 ROSRATE=50 #Hz
 rate = rospy.Rate(ROSRATE)
-e.sendCommand('S_TIME') #Reset time to 0
+e.sendCommand('TIME0') #Reset time to 0
 t0=rospy.Time.now()
 rate.sleep()
 

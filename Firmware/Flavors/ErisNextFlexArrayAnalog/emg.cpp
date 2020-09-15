@@ -29,9 +29,9 @@ static void ISR_NewSample(){
   currSample.timestamp=timestamp;
   for (uint8_t i=0;i<EMG_NUMCHANNELS;i++){
     int a=analogRead(PINS_EMG[i]);  
-   currSample.ch[i]=(float)(a)*3.3/1024;
-  buffer.append(currSample); 
+   currSample.ch[i]=(float)(a)*3.3/1024;  
   }         
+  buffer.append(currSample); 
   chSysUnlockFromISR();
 }
 

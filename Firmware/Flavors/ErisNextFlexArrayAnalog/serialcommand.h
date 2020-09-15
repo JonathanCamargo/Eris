@@ -18,6 +18,7 @@ void INFO();
 void LED_on();
 void LED_off();
 void SayHello();
+void SynchronizeTime();
 void SelectNegativeElectrode();
 void TransmitSineWave();
 void TransmitEMG();

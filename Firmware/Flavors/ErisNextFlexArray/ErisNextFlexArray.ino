@@ -15,10 +15,9 @@
 
 #include <SPI.h>
 
- thread_t *thread1 = NULL;
-
-
- const char firmwareInfo[]=FIRMWARE_INFO;
+long t0=0; // Global start time for all modules 
+thread_t *thread1 = NULL;
+const char firmwareInfo[]=FIRMWARE_INFO;
 
 /* ******************************** Global threads ************************************************** */
 static THD_WORKING_AREA(waThread1, 32);

@@ -1,42 +1,35 @@
 #!/usr/bin/env python
 # READ EMG FEATURE DATA FROM ERIS AND SEND TO ROS TOPICS
-# read EMG and ETI only
+# read EMG from ETI Arrays and offer the option to modify the reference selection
 
 import rospy
 from eris.eris import Eris
-from eris.customtypes import Signal1CHSample_t, Signal8CHSample_t, floatSample_t, uint8_tSample_t
-from custom_msgs.msg import Signal1CH, Signal8CH, String, Float32, Bool, Float32MultiArray, ETI
+from eris.customtypes import Signal1CHSample_t,Signal8CHSample_t, floatSample_t, uint8_tSample_t
+from custom_msgs.msg import Signal1CH,Signal8CH, String, Float32, Bool, Float32MultiArray
 from std_msgs.msg import Header, MultiArrayDimension
+from std_msgs.msg import Float32 as stdmsgsFloat32
 
 from construct import Struct,Float32l,Int8ub
 import numpy as np
 import signal
 import sys
 
-tiSample_t = Struct(
-    "timestamp" / Float32l,
-    "temperature" / Float32l[1],
-    "impedance" / Float32l[1]
-    )
-
+import threading
 
 if rospy.has_param('eris/port'):
     port=rospy.get_param('eris/port')
 else:
     port='/dev/ttyACM0'
 
+
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
 emgmsg=Signal8CH()
 sinemsg=Float32()
 fsrmsg=Signal1CH()
 
-featuresmsg=Float32MultiArray()
-
-textpub = rospy.Publisher('/print', String, queue_size=50)
-sinepub = rospy.Publisher('/sine', Float32, queue_size=50)
-emgpub = rospy.Publisher('/emg', Signal8CH, queue_size=100)
-fsrpub = rospy.Publisher('/fsr', Signal1CH, queue_size=50)
-featurespub = rospy.Publisher('/features', Float32MultiArray, queue_size=1)
+textpub = rospy.Publisher('print', String, queue_size=50)
+emgpub = rospy.Publisher('emg', Signal8CH, queue_size=100)
+sinepub = rospy.Publisher('sine', Float32, queue_size=100)
 
 t0=0 #global variable to store time reference to linux time
 def publishEMG(sample):
@@ -45,30 +38,14 @@ def publishEMG(sample):
     #print(timestamp)
     emgmsg.header=Header(stamp=t0+rospy.Duration(timestamp))
     emgmsg.ch0=sample['ch'][0]
-    #emgmsg.ch1=sample['ch'][1]
-    #emgmsg.ch2=sample['ch'][2]
-    #emgmsg.ch3=sample['ch'][3]
-    #emgmsg.ch4=sample['ch'][4]
-    #emgmsg.ch5=sample['ch'][5]
-    #emgmsg.ch6=sample['ch'][6]
-    #emgmsg.ch7=sample['ch'][7]
+    emgmsg.ch1=sample['ch'][1]
+    emgmsg.ch2=sample['ch'][2]
+    emgmsg.ch3=sample['ch'][3]
+    emgmsg.ch4=sample['ch'][4]
+    emgmsg.ch5=sample['ch'][5]
+    emgmsg.ch6=sample['ch'][6]
+    emgmsg.ch7=sample['ch'][7]
     emgpub.publish(emgmsg)
-    #print(emgmsg)
-
-def publishFSR(sample):
-    '''Publish data for FSR'''
-    timestamp=sample['timestamp']/1000.0
-    #print(timestamp)
-    fsrmsg.header=Header(stamp=t0+rospy.Duration(timestamp))
-    fsrmsg.ch0=sample['ch'][0]
-    #emgmsg.ch1=sample['ch'][1]
-    #emgmsg.ch2=sample['ch'][2]
-    #emgmsg.ch3=sample['ch'][3]
-    #emgmsg.ch4=sample['ch'][4]
-    #emgmsg.ch5=sample['ch'][5]
-    #emgmsg.ch6=sample['ch'][6]
-    #emgmsg.ch7=sample['ch'][7]
-    fsrpub.publish(fsrmsg)
     #print(emgmsg)
 
 def publishSine(sample):
@@ -83,27 +60,16 @@ def publishText(data):
     textmsg.header=Header(stamp=rospy.Time.now())
     textpub.publish(textmsg)
 
-def publishFeatures(sample):
-    '''Publish features data'''
-    timestamp=sample['timestamp']/1000.0
-    featuresmsg.data=sample['features']
-    featuresmsg.header=Header(stamp=t0+rospy.Duration(timestamp))
-    featuresmsg.layout.dim=[MultiArrayDimension()]
-    featuresmsg.layout.dim[0].size=sample['len']
-    featuresmsg.layout.dim[0].stride=1
-    featuresmsg.layout.dim[0].label='index'
-    featurespub.publish(featuresmsg)
-
 def command_callback(msg):
     ''' A callback to transmit a command to eris'''
     e.sendCommand(msg.data)
 
+
 ################################################################################
 #Create an eris object
 #What to read from Eris?
-streams=['SINE','EMG','FSR']
-#streams=['FSR']
-streamsformat=[floatSample_t,Signal8CHSample_t,Signal1CHSample_t]
+streams=['SINE','EMG']
+streamsformat=[floatSample_t,Signal8CHSample_t]
 e=Eris(streams,streamsformat,port)
 
 ######################## HELPER FUNCTIONS ######################################
@@ -117,12 +83,12 @@ signal.signal(signal.SIGINT,signal_handler)
 ################################################################################
 
 ''' Main loop'''
-rospy.init_node('nextflexAnalog', anonymous=True)
+rospy.init_node('eris_emg', anonymous=True)
 cmdsub = rospy.Subscriber('eris/command',String,command_callback)
 
 ROSRATE=50 #Hz
 rate = rospy.Rate(ROSRATE)
-e.sendCommand('S_TIME') #Reset time to 0
+e.sendCommand('TIME0') #Reset time to 0
 t0=rospy.Time.now()
 rate.sleep()
 
@@ -147,9 +113,8 @@ while True:
         for sample in p['SINE']:
             publishSine(sample)
         for sample in p['EMG']:
-            publishEMG(sample)
-        for sample in p['FSR']:
-            publishFSR(sample)
+            publishEMG(sample)    
+
     #rospy.loginfo_once("This message will print only once")
     rate.sleep()
 e.sendCommand('S_OFF')

@@ -58,7 +58,7 @@ namespace SerialCom{
     sCmd.addCommand("SYNC",TransmitSync); // Transmit the current EMG buffer  
       
 
-    sCmd.addCommand("S_TIME",SynchronizeTime); // Synchronize time       
+    sCmd.addCommand("TIME0",SynchronizeTime); // Synchronize time       
     sCmd.addCommand("S_F",StreamingSetFeatures); // Configure the streaming functions
     sCmd.addCommand("S_ON",StreamingStart); // Stream the buffers' data
     sCmd.addCommand("S_OFF",StreamingStop); // Stop streaming

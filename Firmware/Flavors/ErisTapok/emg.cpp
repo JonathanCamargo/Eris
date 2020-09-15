@@ -23,7 +23,7 @@ static void ISR_NewSample(){
   //Sample every analog channel
   for(uint8_t chan = 0; chan < EMG_NUMCHANNELS; chan++) {
       int value=emg.lastSample[chan]-32800;
-      float v=value*(3.3/1024); //TODO define a good scaling ratio      
+      float v=value*(3.3/1024); //TODO define a good scaling ratio            
       thisSample.ch[chan]=v;      
   }  
   buffer.append(thisSample); 
