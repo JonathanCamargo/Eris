@@ -103,7 +103,7 @@ signal.signal(signal.SIGINT,signal_handler)
 
 ''' Main loop'''
 rospy.init_node('nextflexAnalog', anonymous=True)
-cmdsub = rospy.Subscriber(namespace+'eris/command',String,command_callback)
+cmdsub = rospy.Subscriber('eris/command',String,command_callback)
 
 ROSRATE=50 #Hz
 rate = rospy.Rate(ROSRATE)

@@ -16,12 +16,12 @@ import sys
 
 import threading
 
-if rospy.has_param('eris_emg/port'):
-    port=rospy.get_param('eris_emg/port')
+if rospy.has_param('eris_emg2/port'):
+    port=rospy.get_param('eris_emg2/port')
 else:
-    port='/dev/ttyACM0'
+    port='/dev/ttyACM1'
 
-namespace='eris_emg'
+namespace='eris_emg2'
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
 emgmsg=Signal8CH()

@@ -61,10 +61,12 @@ def signal_handler(sig,frame):
 signal.signal(signal.SIGINT,signal_handler)
 
 def SetPin(reference):
+    global commandpub
     #Set the pin reference by sending a command to eris
     stringmsg.header=Header()
     stringmsg.header.stamp=rospy.Time.now()
     stringmsg.data='NEG {:01d}'.format(reference)
+    commandpub.publish(stringmsg)
 
 ################################################################################
 ''' Main loop'''
