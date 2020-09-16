@@ -1,0 +1,4 @@
+<launch>
+<node name="protocol" pkg="eris_emg" type="genericprotocol.py" output="screen"/>
+<node name="eris" pkg="eris_emg" type="eris_nextFlexAnalog.py" output="screen"/>
+</launch>

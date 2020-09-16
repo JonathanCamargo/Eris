@@ -37,3 +37,37 @@ if [[ $name = "arrayplus" ]]; then
     bash "$path"/scripts/stop.sh
   fi
 fi
+
+#ETI PROTOCOL
+if [[ $name = "eti" ]]; then
+  if [[ $action = "launch" ]]; then
+    roslaunch eris_emg eti_protocol.launch
+  elif [[ $action = "start" ]]; then
+    echo "Starting protocol"
+    path=`rospack find eris_emg`
+    bash "$path"/scripts/start.sh $3
+  elif [[ $action = "stop" ]]; then
+    echo "Stoping protocol"
+    path=`rospack find eris_emg`
+    bash "$path"/scripts/stop.sh
+  fi
+fi
+
+#ETI PROTOCOL INCLUDING OTHER EMG SOURCE
+if [[ $name = "etiplus" ]]; then
+  if [[ $action = "launch" ]]; then
+    roslaunch eris_emg etiplus_protocol.launch
+  elif [[ $action = "start" ]]; then
+    echo "Starting protocol"
+    path=`rospack find eris_emg`
+    bash "$path"/scripts/start.sh $3
+  elif [[ $action = "stop" ]]; then
+    echo "Stoping protocol"
+    path=`rospack find eris_emg`
+    bash "$path"/scripts/stop.sh
+  fi
+fi
+
+
+
+

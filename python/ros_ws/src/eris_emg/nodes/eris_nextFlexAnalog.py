@@ -33,12 +33,12 @@ fsrmsg=Signal1CH()
 
 featuresmsg=Float32MultiArray()
 
-textpub = rospy.Publisher('/print', String, queue_size=50)
-sinepub = rospy.Publisher('/sine', Float32, queue_size=50)
-etipub = rospy.Publisher('/ti', ETI, queue_size=50)
-emgpub = rospy.Publisher('/emg', Signal1CH, queue_size=100)
-fsrpub = rospy.Publisher('/fsr', Signal1CH, queue_size=50)
-featurespub = rospy.Publisher('/features', Float32MultiArray, queue_size=1)
+textpub = rospy.Publisher('print', String, queue_size=50)
+sinepub = rospy.Publisher('sine', Float32, queue_size=50)
+etipub = rospy.Publisher('ti', ETI, queue_size=50)
+emgpub = rospy.Publisher('emg', Signal1CH, queue_size=100)
+fsrpub = rospy.Publisher('fsr', Signal1CH, queue_size=50)
+featurespub = rospy.Publisher('features', Float32MultiArray, queue_size=1)
 
 t0=0 #global variable to store time reference to linux time
 def publishEMG(sample):

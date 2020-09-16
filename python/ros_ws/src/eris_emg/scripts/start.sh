@@ -7,7 +7,7 @@ else
 fi
 
 
-rostopic pub --once /arrayprotocol custom_msgs/String "header:
+rostopic pub --once /protocol custom_msgs/String "header:
   seq: 0
   stamp: 'now'
   frame_id: ''
