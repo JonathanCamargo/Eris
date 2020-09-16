@@ -22,10 +22,10 @@ from datetime import date
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
 stringmsg=String()
-commandpub = rospy.Publisher('/eris/command', String, queue_size=50)
+commandpub = rospy.Publisher('/array/eris/command', String, queue_size=50)
 ################################################################################
 print('Inicio')
-states=['idle','recording','ref1','ref2','ref3','ref4','ref5','ref6','ref7','ref8']
+states=['idle','recording','ref1','ref2','ref3','ref4','ref5','ref6','ref7','ref8','ref9']
 state='idle'
 # Setup a Rosbag
 path=os.path.join(os.environ['HOME'],date.today().strftime('%m_%d_%y'))
@@ -150,6 +150,13 @@ while True:
            state='ref{:01d}'.format(reference)
            lasttime=rospy.Time.now()
     elif state=='ref8':
+        #Chill until its time to switch
+        if elapsed.to_sec()>SESSION_DURATION_S:
+           reference=9
+           SetPin(reference)
+           state='ref{:01d}'.format(reference)
+           lasttime=rospy.Time.now()
+    elif state=='ref9':
         #Chill until is time to switch to next ref
         if elapsed.to_sec()>SESSION_DURATION_S:
             state='idle'
