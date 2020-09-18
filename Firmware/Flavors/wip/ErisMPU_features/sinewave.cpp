@@ -1,5 +1,6 @@
 #include "Eris.h"
 #include "sinewave.h"
+#include "sdcard.h"
 
 namespace SineWave{
 	
@@ -34,7 +35,10 @@ static THD_FUNCTION(GenerateWave_T, arg) {
     thisSample.value=value;    
     buffer.append(thisSample);
   
-    
+    // Write data to sdcard (implemented in sdcard.cpp)
+    #if SDCARD
+        SDCard::sinebuffer.append(thisSample);
+    #endif 
        
     chThdSleepMilliseconds(10);    
   }

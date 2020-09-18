@@ -6,8 +6,15 @@
 
 #include "fsr.h"
 #include "imu.h"
+#include "sync.h"
 #include "sinewave.h"
+
+#include "features.h"
 #include "serialcommand.h"
+
+#if SDCARD
+#include "sdcard.h"
+#endif
 
 #include <SPI.h>
 
@@ -42,13 +49,22 @@ void start(){
 
   t0=micros();
 
+  #if SDCARD
+  SDCard::start();
+  #endif
+  
   // start special tasks from external sources
   SineWave::start();
   IMU::start();
   FSR::start();
-  
+  Sync::start();
+
+  Features::start();
   // Serial command interface   
   SerialCom::start();
+
+  //Register and do an initial default settings for mask
+  Features::Default();
 
 }
 

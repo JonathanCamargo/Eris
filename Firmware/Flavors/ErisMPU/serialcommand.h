@@ -6,8 +6,6 @@
 
 #include <SerialCommand.h>  // Due to the way the Arduino IDE compiles
 
-#include "serialcommand_features.h"
-
 
 namespace SerialCom{
 
@@ -27,7 +25,6 @@ void ShowFailures();
 void TransmitFSR();
 void TransmitIMU();
 void TransmitSineWave();
-void TransmitSync();
 
 void StreamSineWave();
 
@@ -43,9 +40,6 @@ void stream();
 
 
 void GetError();
-
-void StartRecording();
-void StopRecording();
 
 void unrecognized();
 void unrecognized(const char *command);

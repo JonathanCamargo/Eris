@@ -14,8 +14,6 @@ extern ErisBuffer<IMUSample_t> bufferFoot;
 extern int failures;
 void start(void);
 
-void RegisterExtractors(FeaturesHelper * featuresHelper);
-
 }
 
 #endif

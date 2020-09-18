@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 
-#define FIRMWARE_VERSION "v3.0" 
+#define FIRMWARE_VERSION "v2.0" 
 #define TEENSY3 //TEENSY4
 
 #define MAXSTRCMP 5 // Maximum length for string comparison
@@ -58,7 +58,11 @@
 #define IMU_FREQUENCY_HZ 250.0
 #define IMU_PERIOD_US ((1.0/IMU_FREQUENCY_HZ)*1000000)
 
-
+/////////////////////////////////////////////////////
+//
+// SYNC CONFIGURATION (Sync is a digital input that records time on change
+//
+#define PIN_SYNC 28
 
 // DEBUGGING FLAGS
 #define DEBUG true
@@ -69,5 +73,19 @@
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 #define FIRMWARE_INFO TOSTRING(FIRMWARE_VERSION) "Eris by ossip"
+
+
+// Enable SD Card
+#define SDCARD true
+
+//////////////////// FEATURES 
+// Enable Features 
+#define FEATURES true
+
+// Timing
+#define FEATURES_REGRESSION_WINDOW_MS 250
+#define FEATURES_REGRESSION_PERIOD_MS 50
+#define FEATURES_CLASSIFICATION_WINDOW_MS 100
+
 
 #endif

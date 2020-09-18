@@ -5,11 +5,14 @@
 #include "imu.h"
 #include "fsr.h"
 #include "sinewave.h"
+#include "sync.h"
 
+#include "sdcard.h"
 #include "streaming.h"
 
 //Static allocation to avoid moving a lot of memory in RTOS
 static FSRSample_t fsrsamples[MEMBUFFERSIZE];   
+static boolSample_t syncsamples[MEMBUFFERSIZE];
 static IMUSample_t imusamples[MEMBUFFERSIZE];
 
 char strbuffer[STRBUFFERSIZE];
@@ -23,6 +26,7 @@ namespace SerialCom{
   static bool stream_en=false;
 
   long startTime = 0;
+
   
   /********************** Threads *********************************/
   //To process //Serial commands
@@ -57,17 +61,35 @@ namespace SerialCom{
     sCmd.addCommand("SINE",TransmitSineWave); // Transmit the current sinewave buffer    
     sCmd.addCommand("IMU",TransmitIMU); // Transmit the current IMU buffer  
     sCmd.addCommand("FSR",TransmitFSR); // Transmit the current FSR buffer
+    sCmd.addCommand("SYNC",TransmitSync); // Transmit the current SYNC buffer  
     sCmd.addCommand("FAIL",ShowFailures); // Configure the streaming functions
 
-    sCmd.addCommand("TIME0",SynchronizeTime); //Synchronize time
+    sCmd.addCommand("S_TIME",SynchronizeTime); //Synchronize time
            
     sCmd.addCommand("S_F",StreamingSetFeatures); // Configure the streaming functions
     sCmd.addCommand("S_ON",StreamingStart); // Stream the buffers' data
     sCmd.addCommand("S_OFF",StreamingStop); // Stop streaming
-             
+    
+    sCmd.addCommand("F_ON", EnableFeatures);   //  Enable feature extraction and transmission
+    sCmd.addCommand("F_OFF", DisableFeatures); //  Disable feature extraction and transmission
+    sCmd.addCommand("F_R",Register );          //  Register module extractors into a features helper
+    sCmd.addCommand("F_MASK",ChangeMask );     //  Disable feature extraction and transmission
+    sCmd.addCommand("F_INFO",FeaturesInfo);    //  Display information for all the features helpers
+    /*
+    * NOTE:
+    * This is how the driver communicates with the teensy. Before enabling feature extraction (F_ON), masks must be set using F_MASK. Once features are enabled, the teensy will continuously stream computed features
+    * for regression. The rate of this is determined by the regression increment. To change the window, increment, or ambulation mode used to calculate regression features, use REG [NEW WINDOW] [NEW INCREMENT] [NEW MODE]. 
+    * To make a query for classification features, use CLASS [GAIT LOCATION] [NEXT WINDOW]. Features will be extracted using [GAIT LOCATION] and the current window, and the window size will only be updated once features 
+    * have been extracted. 
+    */
+    
+ 
     sCmd.addCommand("KILL",KillThreads); //Kill threads *Experimental*
     sCmd.addCommand("START",StartThreads);//Start threads *Experimental*
-  
+
+    sCmd.addCommand("SD_REC",StartRecording); //Save to sd card
+    sCmd.addCommand("SD_NREC",StopRecording); //Save to sd card
+    
     sCmd.setDefaultHandler(unrecognized);  // Handler for command that isn't matched  (says "What?")
     Serial.println("Serial Commands are ready");
 
@@ -79,13 +101,44 @@ namespace SerialCom{
 
 
 void INFO() {
-  char temp[32]; 
-  sprintf(temp, "Firmware: %s", FIRMWARE_INFO);   
-  eriscommon::println(temp);
+  packet.start(Packet::PacketType::TEXT); 
+  char temp[50]; 
+  int num = sprintf(temp, "Firmware: %s", FIRMWARE_INFO); 
+  //Serial.print(temp); 
+  packet.append((uint8_t *)temp, num); 
+  packet.send(); 
+  long test=chUnusedThreadStack(waStreamSerial_T,sizeof(waStreamSerial_T));
+  Serial.println("------");
+  Serial.print(test);
+  Serial.println("------");
 }
 
 void ShowFailures(){  
-  eriscommon::println(IMU::failures);
+  Serial.println(IMU::failures);
+}
+
+void StartRecording(){
+  #if not SDCARD
+    eriscommon::println("SDCARD disabled in configuration.h"); 
+  #else
+  char * arg = sCmd.next();  
+  if (arg != NULL) {
+    SDCard::setTrialName(arg);
+  } else {
+    SDCard::setTrialName(SDCard::DEFAULT_TRIALNAME);
+  }
+  sprintf(strbuffer, "Start record on SDCARD (trial:%s)", SDCard::getTrialName()); 
+  eriscommon::println(strbuffer); 
+
+  SDCard::StartRecording(); 
+  
+  #endif
+}
+
+
+void StopRecording(){
+  SDCard::StopRecording();
+  eriscommon::println("Stop record on SDCard");
 }
 
 
@@ -125,7 +178,7 @@ void StreamingSetFeatures(){
       arg = sCmd.next();
   }      
   chSysUnlockFromISR();
-  eriscommon::println("Features Ready");   
+  Serial.println("Features Ready");   
 }
   
 
@@ -189,24 +242,24 @@ void TransmitIMU(){
     int imuidx=atoi(arg);
     switch (imuidx){
       case 0: 
-        imubuffer=&IMU::bufferTrunk;
+        imubuffer=&SDCard::imutrunkbuffer;
         break;
       case 1:
-        imubuffer=&IMU::bufferThigh;
+        imubuffer=&SDCard::imuthighbuffer;
         break;
       case 2:
-        imubuffer=&IMU::bufferShank;
+        imubuffer=&SDCard::imushankbuffer;
         break;
       case 3:
-        imubuffer=&IMU::bufferFoot;
+        imubuffer=&SDCard::imufootbuffer;
         break;
       default:
-        imubuffer=&IMU::bufferTrunk;
+        imubuffer=&SDCard::imutrunkbuffer;
         break;
     }    
   }
   else {
-      imubuffer=&IMU::bufferTrunk;
+      imubuffer=&SDCard::imutrunkbuffer;
   }
       
   chSysLockFromISR();
@@ -272,6 +325,38 @@ void TransmitFSR(){
    }      
 }
 
+
+void TransmitSync(){
+  chSysLockFromISR();
+  boolSample_t *samples=&syncsamples[0];
+  int num=Sync::buffer.FetchData(samples,(char*)"SYNC",MEMBUFFERSIZE);
+  long missed=Sync::buffer.missed();   
+  chSysUnlockFromISR();   
+  Serial.print("Sync:");   
+  // Show number of missed points
+  Serial.print("(missed:");
+  Serial.print(missed);
+  Serial.print(") ");   
+  // Show the data
+   if (num>0){
+     uint8_t i=0;
+     Serial.print("(@");
+     Serial.print(samples[0].timestamp,2);
+     Serial.print("ms)");         
+     for (i=0;i<num-1;i++){
+        Serial.print(samples[i].value,2);
+        Serial.print(",");
+     }     
+     Serial.print(samples[i].value,2);
+     Serial.print("(@");
+     Serial.print(samples[i].timestamp,2);
+     Serial.println("ms)");   
+   } 
+   else {
+     Serial.println();
+   }      
+
+}
 void SayHello() {
   char *arg;
   arg = sCmd.next();    // Get the next argument from the //SerialCommand object buffer

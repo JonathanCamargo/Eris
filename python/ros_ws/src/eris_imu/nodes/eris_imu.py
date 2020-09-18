@@ -1,49 +1,39 @@
 #!/usr/bin/env python
-'''Read single imu data from Eris'''
-
-from eris.eris import Eris
-from eris.customtypes import IMUSample_t , floatSample_t
+# READ IMU DATA FROM ERIS AND SEND TO ROS TOPICS
 
 import rospy
-import threading
-
-from custom_msgs.msg import IMU,String,Float32
+from eris.eris import Eris
+from eris.customtypes import IMUSample_t, floatSample_t
+from custom_msgs.msg import IMU,Float32,Signal1CH,String
 from std_msgs.msg import Header
-from threading import Thread,Lock
 
-#Use construct to create a good c format
-from construct import Array,Struct,Float32l,Int8ub,this
 import numpy as np
 import signal
 import sys
-import copy
 
-imuformat=Struct(
-    "len" / Int8ub,
-    "imudata" / Array(this.len,IMUSample_t)
-)
-
-sineformat=Struct(
-    "len" / Int8ub,
-    "sinedata" / Array(this.len,floatSample_t)
-)
+import threading
 
 if rospy.has_param('eris/port'):
     port=rospy.get_param('eris/port')
 else:
     port='/dev/ttyACM0'
 
+
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
 imumsg=IMU()
 sinemsg=Float32()
-textpub = rospy.Publisher('eris/print', String, queue_size=50)
-sinepub = rospy.Publisher('eris/sine', Float32, queue_size=50)
-imupub = rospy.Publisher('eris/imu', IMU, queue_size=50)
+fsrmsg=Signal1CH()
+
+textpub = rospy.Publisher('print', String, queue_size=50)
+imupub = rospy.Publisher('imu', IMU, queue_size=100)
+sinepub = rospy.Publisher('sine', Float32, queue_size=100)
+
 t0=0 #global variable to store time reference to linux time
+
 def publishIMU(sample):
     '''Publish data for IMU'''
-    timestamp=sample['timestamp']
-    imumsg.header=Header(stamp=t0+rospy.Duration(timestamp)/1000.0)
+    timestamp=sample['timestamp']/1000.0
+    imumsg.header=Header(stamp=t0+rospy.Duration(timestamp))
     imumsg.ax=sample['ax']
     imumsg.ay=sample['ay']
     imumsg.az=sample['az']
@@ -53,9 +43,9 @@ def publishIMU(sample):
     imupub.publish(imumsg)
 
 def publishSine(sample):
-    '''Publish data for IMU'''
-    timestamp=sample['timestamp']
-    sinemsg.header=Header(stamp=t0+rospy.Duration(timestamp)/1000.0)
+    '''Publish data for Sine'''
+    timestamp=sample['timestamp']/1000.0
+    sinemsg.header=Header(stamp=t0+rospy.Duration(timestamp))
     sinemsg.data=sample['value']
     sinepub.publish(sinemsg)
 
@@ -68,68 +58,42 @@ def command_callback(msg):
     ''' A callback to transmit a command to eris'''
     e.sendCommand(msg.data)
 
+
 ################################################################################
 #Create an eris object
-e=Eris(['IMU_2','SINE'],[imuformat,sineformat],port)
+#What to read from Eris?
+streams=['IMU_0','SINE']
+streamsformat=[IMUSample_t,floatSample_t]
+e=Eris(streams,streamsformat,port)
 
 ######################## HELPER FUNCTIONS ######################################
 def signal_handler(sig,frame):
     ''' Terminate the connection to eris and close the node'''
     print('Ctrl+c')
-    e.sendCommand('S_OFF')
+    e.stop()
     sys.exit(0)
 signal.signal(signal.SIGINT,signal_handler)
-
-def publishData(data):
-    ''' Get all the data in binary packetform, parse it and publish
-    to the topics'''
-    #Make a local copy of the data
-    dataMutex.acquire(1)
-    local=copy.copy(data)
-    dataMutex.release()
-    for packetIdx,packet in enumerate(local):
-        try:
-            packetData=e.parse(packet)
-        except Exception as ex:
-            print('mierda')
-            print(ex)
-            #TODO publish a missing data message under eris/errors
-            continue
-        imudata=packetData['IMU_2']['imudata']
-        n=packetData['IMU_2']['len']
-        for sample in imudata: #all channels should have same lenght
-            publishIMU(sample)
-        sinedata=packetData['SINE']['sinedata']
-        n=packetData['SINE']['len']
-        for sample in sinedata: #all channels should have same lenght
-            publishSine(sample)
 
 ################################################################################
 
 ''' Main loop'''
-dataMutex=Lock();
-rospy.init_node('imunode', anonymous=True)
+rospy.init_node('eris_imu', anonymous=True)
 cmdsub = rospy.Subscriber('eris/command',String,command_callback)
 
 ROSRATE=50 #Hz
 rate = rospy.Rate(ROSRATE)
-e.sendCommand('S_OFF')
-e.sendCommand('S_TIME') #Reset time to 0
+e.sendCommand('TIME0') #Reset time to 0
 t0=rospy.Time.now()
 rate.sleep()
-e.sendCommand('S_ON') #Initilize automatic streaming of data
+
 print('Inicio')
-# Transmit a time stamp to eris to sync with pi time ??
+
 e.start()
 
-while True:
-    #Get data from teensy
+while True:    
     try:
-        dataMutex.acquire(1)
-        d=e.read()
-        dataMutex.release()
+    	out = e.read()
     except Exception as ex:
-        dataMutex.release()
         print('Problem')
         print(ex)
         e.sendCommand('S_OFF')
@@ -138,15 +102,13 @@ while True:
         rate.sleep()
         continue
 
-    if type(d) is dict:
-        if len(d['T'])>0:
-            t=Thread(target=publishText, args=(d['T'],))
-            t.start()
-        if len(d['D'])>0:
-            #This can be slow since it is data logging
-            #t2=Thread(target=publishData,args=(d['D'],))
-            #t2.start()
-            publishData(d['D'])
+    for p in out['D']:
+        for sample in p['SINE']:
+            publishSine(sample)
+        for sample in p['IMU_0']:
+            publishIMU(sample)
+    
+
     #rospy.loginfo_once("This message will print only once")
     rate.sleep()
 e.sendCommand('S_OFF')

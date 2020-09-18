@@ -26,7 +26,6 @@ features_publisher=rospy.Publisher('/features',Float32MultiArray,queue_size=1)
 
 ############################ ROS CALLBACKS #####################################
 
-
 ######################## HELPER FUNCTIONS ######################################
 def signal_handler(sig,frame):
     ''' Terminate the connection to eris and close the node'''
@@ -57,7 +56,7 @@ while True:
     features_emg=out[::8]
     out=fsr_sensor_extractor.extract()
     features_fsr=out[0]
-    
+
     multiarraymsg.data=np.concatenate([features_emg,np.expand_dims(features_fsr,0)])
 
     features_publisher.publish(multiarraymsg)
