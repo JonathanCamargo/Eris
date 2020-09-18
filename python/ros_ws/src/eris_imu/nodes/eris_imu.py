@@ -25,12 +25,13 @@ sinemsg=Float32()
 fsrmsg=Signal1CH()
 
 textpub = rospy.Publisher('print', String, queue_size=50)
-imupub = rospy.Publisher('imu', IMU, queue_size=100)
+imu0pub = rospy.Publisher('imu0', IMU, queue_size=100)
+imu1pub = rospy.Publisher('imu1', IMU, queue_size=100)
 sinepub = rospy.Publisher('sine', Float32, queue_size=100)
 
 t0=0 #global variable to store time reference to linux time
 
-def publishIMU(sample):
+def publishIMU(sample,pub):
     '''Publish data for IMU'''
     timestamp=sample['timestamp']/1000.0
     imumsg.header=Header(stamp=t0+rospy.Duration(timestamp))
@@ -40,7 +41,7 @@ def publishIMU(sample):
     imumsg.wx=sample['wx']
     imumsg.wy=sample['wy']
     imumsg.wz=sample['wz']
-    imupub.publish(imumsg)
+    pub.publish(imumsg)
 
 def publishSine(sample):
     '''Publish data for Sine'''
@@ -62,8 +63,8 @@ def command_callback(msg):
 ################################################################################
 #Create an eris object
 #What to read from Eris?
-streams=['IMU_0','SINE']
-streamsformat=[IMUSample_t,floatSample_t]
+streams=['IMU_0','IMU_1','SINE']
+streamsformat=[IMUSample_t,IMUSample_t,floatSample_t]
 e=Eris(streams,streamsformat,port)
 
 ######################## HELPER FUNCTIONS ######################################
@@ -106,7 +107,9 @@ while True:
         for sample in p['SINE']:
             publishSine(sample)
         for sample in p['IMU_0']:
-            publishIMU(sample)
+            publishIMU(sample,imu0pub)
+        for sample in p['IMU_1']:
+            publishIMU(sample,imu1pub)
     
 
     #rospy.loginfo_once("This message will print only once")
