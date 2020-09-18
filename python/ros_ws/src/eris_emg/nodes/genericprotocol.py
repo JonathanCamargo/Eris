@@ -39,7 +39,7 @@ rosparam=Rosparam('/')
 
 ############################ ROS CALLBACKS #####################################
 def command_callback(msg):
-    global state, rosbag, SESSION_DURATION_S
+    global state, rosbag, SESSION_DURATION_S,nextbag
     if msg.data=='START' and state=='idle':
         session_duration_seconds=rosparam.get('/session_duration_seconds')
         SESSION_DURATION_S= (30 if session_duration_seconds==[] else session_duration_seconds)
@@ -75,20 +75,18 @@ rate.sleep()
 
 elapsed=0
 lasttime=rospy.Time.now()
-reference=0
 
 while True:
 
     time=rospy.Time.now()
     elapsed=time.to_sec()-lasttime.to_sec()
-    #print(elapsed)
     print('State={}'.format(state))
     if state=='idle':
         elapsed=0
         lasttime=rospy.Time.now()
     elif state=='recording':
         #Chill until is time to switch to next ref
-        #print(elapsed)
+        print('\t{}'.format(nextbag))
         if elapsed>SESSION_DURATION_S:
             state='idle'
             lasttime=rospy.Time.now()
