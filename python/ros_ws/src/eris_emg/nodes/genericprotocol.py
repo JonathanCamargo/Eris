@@ -73,21 +73,23 @@ rate = rospy.Rate(ROSRATE)
 rate.sleep()
 
 
-elapsed=rospy.Duration.from_sec(0)
+elapsed=0
 lasttime=rospy.Time.now()
 reference=0
 
 while True:
 
     time=rospy.Time.now()
-    elapsed=time-lasttime
-
+    elapsed=time.to_sec()-lasttime.to_sec()
+    #print(elapsed)
     print('State={}'.format(state))
     if state=='idle':
-        pass
+        elapsed=0
+        lasttime=rospy.Time.now()
     elif state=='recording':
         #Chill until is time to switch to next ref
-        if elapsed.to_sec()>SESSION_DURATION_S:
+        #print(elapsed)
+        if elapsed>SESSION_DURATION_S:
             state='idle'
             lasttime=rospy.Time.now()
             rosbag.stop()
