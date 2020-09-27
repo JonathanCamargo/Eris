@@ -1,0 +1,21 @@
+imu0:
+    feats:
+        - ax_rms
+        - ay_rms
+        - az_rms
+    opts:
+        TD: True
+        window: 50
+    topic: /imu0
+    msgType: custom_msgs/IMU
+
+imu1:
+    feats:
+        - ax_rms
+        - ay_rms
+        - az_rms
+    opts:
+        TD: True
+        window: 50
+    topic: /imu1
+    msgType: custom_msgs/IMU

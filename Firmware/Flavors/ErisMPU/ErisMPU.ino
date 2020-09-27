@@ -62,7 +62,7 @@ void setup(){
   /*************** Configure HW pins *******************/
   pinMode(PIN_LED,OUTPUT); 
   pinMode(PIN_LED_R,OUTPUT); 
-  digitalWrite(PIN_LED,LOW); 
+  digitalWrite(PIN_LED,HIGH); 
   digitalWrite(PIN_LED_R,LOW); 
   // Setup battery pins
   // SPI chip select

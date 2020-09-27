@@ -86,7 +86,7 @@ while True:
         lasttime=rospy.Time.now()
     elif state=='recording':
         #Chill until is time to switch to next ref
-        print('\t{}'.format(nextbag))
+        print('\t{} ({}s remaining)'.format(nextbag,SESSION_DURATION_S-elapsed))
         if elapsed>SESSION_DURATION_S:
             state='idle'
             lasttime=rospy.Time.now()

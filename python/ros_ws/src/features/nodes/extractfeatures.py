@@ -7,7 +7,8 @@ import sys
 import rospkg
 
 from rospy import Publisher
-from std_msgs.msg import Float32MultiArray,MultiArrayDimension,Float32
+from std_msgs.msg import MultiArrayDimension,Float32
+from custom_msgs.msg import Float32MultiArray
 
 from featureextraction.extractorhelper import *
 
@@ -16,7 +17,6 @@ from featureextraction.extractorhelper import *
 featurespub=Publisher('/features',Float32MultiArray,queue_size=1)
 feat0pub=Publisher('/feature0',Float32,queue_size=1)
 feat1pub=Publisher('/feature1',Float32,queue_size=1)
-
 
 # Messages
 featuresmsg=Float32MultiArray()
@@ -38,16 +38,15 @@ def publishFeatures(sample):
 
 ################################## Loop ############################
 
-print(rospy.get_param('/features'))
-print("holaaaaa")
-extractor=ExtractorHelper(rospy.get_param('/features'))
-
 rospy.init_node('Featurenode', anonymous=True)
+print("helloooo")
+print(rospy.get_param('~featuresfile'))
+extractor=ExtractorHelper(rospy.get_param('~featuresfile'))
+
 
 ROSRATE=33 #Hz
 rate = rospy.Rate(ROSRATE)
 
-extractor.subscribe()
 
 msg=Float32()
 while True:

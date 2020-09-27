@@ -1,0 +1,9 @@
+imu0:
+    feats:
+        - ax_rms
+        - ay_rms
+    opts:
+        TD: True
+        window: 50
+    topic: /imu0
+    msgType: custom_msgs/IMU
