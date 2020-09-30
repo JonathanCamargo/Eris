@@ -69,5 +69,9 @@ if [[ $name = "etiplus" ]]; then
 fi
 
 
-
-
+#IMU PROTOCOL INCLUDING
+if [[ $name = "imu" ]]; then
+  if [[ $action = "launch" ]]; then
+    roslaunch eris_imu imu_protocol.launch
+  fi
+fi

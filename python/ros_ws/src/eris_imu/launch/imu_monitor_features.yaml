@@ -1,0 +1,22 @@
+#Features to just monitor the imu data
+imu0:
+    feats:
+        - ax_rms
+        - ay_rms
+        - az_rms
+    opts:
+        TD: True
+        window: 100
+    topic: /imu0
+    msgType: custom_msgs/IMU
+
+imu1:
+    feats:
+        - ax_rms
+        - ay_rms
+        - az_rms
+    opts:
+        TD: True
+        window: 100
+    topic: /imu1
+    msgType: custom_msgs/IMU

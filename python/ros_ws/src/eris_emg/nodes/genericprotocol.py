@@ -22,7 +22,9 @@ from datetime import date
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
 stringmsg=String()
+std_stringmsg=stdString()
 commandpub = rospy.Publisher('eris/command', String, queue_size=50)
+logpub = rospy.Publisher('log', stdString, queue_size=50)
 ################################################################################
 print('Inicio')
 states=['idle','recording']
@@ -60,6 +62,12 @@ def signal_handler(sig,frame):
     sys.exit(0)
 signal.signal(signal.SIGINT,signal_handler)
 
+def printAndLog(strdata):
+    ''' Print and publish string data to the log '''
+    print(strdata)
+    std_stringmsg.data=strdata
+    logpub.publish(std_stringmsg)
+
 ################################################################################
 ''' Main loop'''
 rospy.init_node('genericprotocol', anonymous=True)
@@ -80,13 +88,15 @@ while True:
 
     time=rospy.Time.now()
     elapsed=time.to_sec()-lasttime.to_sec()
-    print('State={}'.format(state))
+    msg='State={}'.format(state)
+    printAndLog(msg)
     if state=='idle':
         elapsed=0
         lasttime=rospy.Time.now()
     elif state=='recording':
         #Chill until is time to switch to next ref
-        print('\t{} ({}s remaining)'.format(nextbag,SESSION_DURATION_S-elapsed))
+        msg='\t{} ({:1.2f}s remaining)'.format(nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
         if elapsed>SESSION_DURATION_S:
             state='idle'
             lasttime=rospy.Time.now()

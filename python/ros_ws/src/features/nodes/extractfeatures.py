@@ -8,6 +8,7 @@ import rospkg
 
 from rospy import Publisher
 from std_msgs.msg import MultiArrayDimension,Float32
+from std_msgs.msg import Float32MultiArray as Float32MultiArrayStd
 from custom_msgs.msg import Float32MultiArray
 
 from featureextraction.extractorhelper import *
@@ -15,11 +16,11 @@ from featureextraction.extractorhelper import *
 
 # Publishers and subscribers
 featurespub=Publisher('/features',Float32MultiArray,queue_size=1)
-feat0pub=Publisher('/feature0',Float32,queue_size=1)
-feat1pub=Publisher('/feature1',Float32,queue_size=1)
+featuresstdpub=Publisher('/featuresstd',Float32MultiArrayStd,queue_size=1)
 
 # Messages
 featuresmsg=Float32MultiArray()
+featuresmsgstd=Float32MultiArrayStd()
 
 ############################ Signal term ######################################
 def signal_handler(sig,frame):
@@ -29,12 +30,21 @@ signal.signal(signal.SIGINT,signal_handler)
 
 ###################### Publishing and callback functions ###################
 def publishFeatures(sample):
+    featuresmsg.header.stamp=rospy.Time.now()
     featuresmsg.data=sample
     featuresmsg.layout.dim=[MultiArrayDimension()]
     featuresmsg.layout.dim[0].size=len(sample)
     featuresmsg.layout.dim[0].stride=1
     featuresmsg.layout.dim[0].label='index'
     featurespub.publish(featuresmsg)
+
+def publishFeaturesStd(sample):
+    featuresmsgstd.data=sample
+    featuresmsgstd.layout.dim=[MultiArrayDimension()]
+    featuresmsgstd.layout.dim[0].size=len(sample)
+    featuresmsgstd.layout.dim[0].stride=1
+    featuresmsgstd.layout.dim[0].label='index'
+    featuresstdpub.publish(featuresmsgstd)
 
 ################################## Loop ############################
 
@@ -54,10 +64,6 @@ while True:
     if len(feats) != 0:
         #print(feats)
         publishFeatures(feats)
-        msg.data=feats[0]
-        feat0pub.publish(msg)
-        msg.data=feats[1]
-        feat1pub.publish(msg)
-
+        publishFeaturesStd(feats)
 
     rate.sleep()

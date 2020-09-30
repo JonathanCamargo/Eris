@@ -54,7 +54,7 @@ void setup(){
   Serial.println("HELLO, This is Eris");
   /*************** Configure HW pins *******************/
   pinMode(PIN_LED,OUTPUT); 
-  digitalWrite(PIN_LED,HIGH); 
+  digitalWrite(PIN_LED,LOW); 
   pinMode(PIN_ERROR,OUTPUT);
   // Setup battery pins
   /******************************************************/
@@ -63,6 +63,7 @@ void setup(){
   /******************************************************/
   //Start threads
   chBegin(start);   
+  digitalWrite(PIN_LED,HIGH);       
   while(true){}
 }
 

@@ -56,7 +56,8 @@ namespace SerialCom{
     sCmd.addCommand("EMG",TransmitEMG); // Transmit the current EMG buffer      
     sCmd.addCommand("ETI",TransmitETI); // Transmit the current ETI buffer
     sCmd.addCommand("FSR",TransmitFSR); // Transmit the current ETI buffer
-           
+
+    sCmd.addCommand("TIME0",SynchronizeTime); // Synchronize time                 
     sCmd.addCommand("S_F",StreamingSetFeatures); // Configure the streaming functions
     sCmd.addCommand("S_ON",StreamingStart); // Stream the buffers' data
     sCmd.addCommand("S_OFF",StreamingStop); // Stop streaming
@@ -95,6 +96,13 @@ void StreamingStart(){
 void StreamingStop(){
   stream_en=false;
   Serial.println("Streaming off");
+}
+
+void SynchronizeTime(){  
+  // Reset the start time
+  chSysLockFromISR();
+  t0=micros();
+  chSysUnlockFromISR();
 }
 
 void StreamingSetFeatures(){   

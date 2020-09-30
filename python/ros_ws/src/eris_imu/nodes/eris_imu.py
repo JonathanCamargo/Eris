@@ -91,7 +91,7 @@ print('Inicio')
 
 e.start()
 
-while True:    
+while True:
     try:
     	out = e.read()
     except Exception as ex:
@@ -110,7 +110,7 @@ while True:
             publishIMU(sample,imu0pub)
         for sample in p['IMU_1']:
             publishIMU(sample,imu1pub)
-    
+
 
     #rospy.loginfo_once("This message will print only once")
     rate.sleep()

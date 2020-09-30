@@ -143,7 +143,6 @@ void start(void){
   // Initialize interrupt to take the samples      
   // Timer interrupt to take the IMU samples        
   //Set up ADC
-  timer0.begin(ISR_NewSample, IMU_PERIOD_US);          
-
+  timer0.begin(ISR_NewSample, IMU_PERIOD_US);      
   }
 }
