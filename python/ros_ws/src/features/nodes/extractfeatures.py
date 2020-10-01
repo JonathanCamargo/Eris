@@ -49,10 +49,14 @@ def publishFeaturesStd(sample):
 ################################## Loop ############################
 
 rospy.init_node('Featurenode', anonymous=True)
-print("helloooo")
-print(rospy.get_param('~featuresfile'))
-extractor=ExtractorHelper(rospy.get_param('~featuresfile'))
 
+print("Starting FeatureNode")
+
+if not (rospy.has_param('~featuresfile')):
+    rospy.logerr("Features file argument missing")
+    signal_handler(None,None)
+
+extractor=ExtractorHelper(rospy.get_param('~featuresfile'))
 
 ROSRATE=33 #Hz
 rate = rospy.Rate(ROSRATE)

@@ -1,0 +1,25 @@
+#Features to just monitor the imu data
+array:
+    feats:
+        - ch0_rms
+        - ch1_rms
+        - ch2_rms
+        - ch3_rms
+        - ch4_rms
+        - ch5_rms
+        - ch6_rms
+        - ch7_rms
+    opts:
+        TD: True
+        window: 200
+    topic: /array/emg
+    msgType: custom_msgs/Signal8CH
+
+fsr:
+    feats:
+        - ch0_rms
+    opts:
+        TD: True
+        window: 50
+    topic: /array/fsr
+    msgType: custom_msgs/Signal1CH

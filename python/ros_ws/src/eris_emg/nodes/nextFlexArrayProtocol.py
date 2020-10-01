@@ -22,7 +22,9 @@ from datetime import date
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
 stringmsg=String()
+std_stringmsg=stdString()
 commandpub = rospy.Publisher('eris/command', String, queue_size=50)
+logpub = rospy.Publisher('log', stdString, queue_size=50)
 ################################################################################
 print('Inicio')
 states=['idle','recording','ref1','ref2','ref3','ref4','ref5','ref6','ref7','ref8','ref9']
@@ -68,6 +70,12 @@ def SetPin(reference):
     stringmsg.data='NEG {:01d}'.format(reference)
     commandpub.publish(stringmsg)
 
+def printAndLog(strdata):
+    ''' Print and publish string data to the log '''
+    print(strdata)
+    std_stringmsg.data=strdata
+    logpub.publish(std_stringmsg)
+
 ################################################################################
 ''' Main loop'''
 rospy.init_node('nextflexArrayProtocol', anonymous=True)
@@ -76,7 +84,7 @@ cmdsub_std = rospy.Subscriber('/protocolstd',stdString,command_callback)
 
 ROSRATE= 1 #Hz
 session_duration_seconds=rosparam.get('/session_duration_seconds')
-SESSION_DURATION_S= (30 if session_duration_seconds==[] else session_duration_seconds)
+SESSION_DURATION_S= (40 if session_duration_seconds==[] else session_duration_seconds)
 rate = rospy.Rate(ROSRATE)
 rate.sleep()
 
@@ -89,76 +97,87 @@ while True:
 
     time=rospy.Time.now()
     elapsed=time.to_sec()-lasttime.to_sec()
-    print('State={}'.format(state))
+    msg='State={}'.format(state)
+    printAndLog(msg)
     if state=='idle':
         elapsed=0
         lasttime=rospy.Time.now()
     elif state=='recording':
         #Setup the recording
         #Set pin reference to 0
-        print('\trecording to{}'.format(nextbag))
         reference=1
         SetPin(reference)
         state='ref1'
         lasttime=rospy.Time.now()
     elif state=='ref1':
         #Chill until is time to switch to next ref
-        if elapsed.to_sec()>SESSION_DURATION_S:
+        msg='\t{} - rec {} ({:1.2f}s remaining)'.format(state,nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
+        if elapsed>SESSION_DURATION_S:
             reference=2
             SetPin(reference)
             state='ref{:01d}'.format(reference)
             lasttime=rospy.Time.now()
     elif state=='ref2':
         #Chill until is time to switch to next ref
-        if elapsed.to_sec()>SESSION_DURATION_S:
+        msg='\t{} - rec {} ({:1.2f}s remaining)'.format(state,nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
+        if elapsed>SESSION_DURATION_S:
             reference=3
             SetPin(reference)
-            state='ref{:01d}'.format(reference)
             lasttime=rospy.Time.now()
     elif state=='ref3':
         #Chill until is time to switch to next ref
-        if elapsed.to_sec()>SESSION_DURATION_S:
+        msg='\t{} - rec {} ({:1.2f}s remaining)'.format(state,nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
+        if elapsed>SESSION_DURATION_S:
             reference=4
             SetPin(reference)
-            state='ref{:01d}'.format(reference)
             lasttime=rospy.Time.now()
     elif state=='ref4':
         #Chill until is time to switch to next ref
-        if elapsed.to_sec()>SESSION_DURATION_S:
+        msg='\t{} - rec {} ({:1.2f}s remaining)'.format(state,nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
+        if elapsed>SESSION_DURATION_S:
             reference=5
             SetPin(reference)
-            state='ref{:01d}'.format(reference)
             lasttime=rospy.Time.now()
     elif state=='ref5':
         #Chill until is time to switch to next ref
-        if elapsed.to_sec()>SESSION_DURATION_S:
+        msg='\t{} - rec {} ({:1.2f}s remaining)'.format(state,nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
+        if elapsed>SESSION_DURATION_S:
             reference=6
             SetPin(reference)
-            state='ref{:01d}'.format(reference)
             lasttime=rospy.Time.now()
     elif state=='ref6':
         #Chill until is time to switch to next ref
-        if elapsed.to_sec()>SESSION_DURATION_S:
+        msg='\t{} - rec {} ({:1.2f}s remaining)'.format(state,nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
+        if elapsed>SESSION_DURATION_S:
             reference=7
             SetPin(reference)
-            state='ref{:01d}'.format(reference)
             lasttime=rospy.Time.now()
     elif state=='ref7':
         #Chill until it's time to switch to next ref
-        if elapsed.to_sec()>SESSION_DURATION_S:
+        msg='\t{} - rec {} ({:1.2f}s remaining)'.format(state,nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
+        if elapsed>SESSION_DURATION_S:
            reference=8
            SetPin(reference)
-           state='ref{:01d}'.format(reference)
            lasttime=rospy.Time.now()
     elif state=='ref8':
         #Chill until its time to switch
-        if elapsed.to_sec()>SESSION_DURATION_S:
+        msg='\t{} - rec {} ({:1.2f}s remaining)'.format(state,nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
+        if elapsed>SESSION_DURATION_S:
            reference=9
            SetPin(reference)
-           state='ref{:01d}'.format(reference)
            lasttime=rospy.Time.now()
     elif state=='ref9':
         #Chill until is time to switch to next ref
+        msg='\t{} - rec {} ({:1.2f}s remaining)'.format(state,nextbag,SESSION_DURATION_S-elapsed)
+        printAndLog(msg)
         if elapsed.to_sec()>SESSION_DURATION_S:
             print('\tfinish recording to{}'.format(nextbag))
             state='idle'

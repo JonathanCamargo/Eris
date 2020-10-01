@@ -1,4 +1,4 @@
-#Features to just monitor the imu data
+#Features to just monitor the imu data#Features to just monitor the imu data
 imu0:
     feats:
         - ax_rms

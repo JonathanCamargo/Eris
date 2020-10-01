@@ -1,4 +1,21 @@
 <launch>
-<node name="protocol" pkg="eris_emg" type="nextFlexArrayProtocol.py" output="screen"/>
-<node name="eris" pkg="eris_emg" type="eris_nextFlexArray.py" output="screen"/>
+
+<!-- Array EMG -->
+<env name="ROS_NAMESPACE" value="array"/>
+<rosparam param="array/eris/port">/dev/ttyACM0</rosparam>
+<node name="eris_nextflex" pkg="eris_emg" type="eris_nextFlexArray.py" output="screen"/>
+
+<!-- Protocol Code-->
+<env name="ROS_NAMESPACE" value=""/>
+<rosparam param="session_duration_seconds">40</rosparam>
+<remap from="eris/command" to="array/eris/command"/>
+<node name="protocol"  pkg="eris_emg" type="nextFlexArrayProtocol.py" output="screen"/>
+
+<!-- Feature Extraction -->
+<env name="ROS_NAMESPACE" value=""/>
+<node name="features" pkg="features" type="extractfeatures.py" output="screen">
+  <param name="featuresfile" value="$(find eris_emg)/launch/arrayplus_monitor_features.yaml"></param>
+</node>
+
+
 </launch>

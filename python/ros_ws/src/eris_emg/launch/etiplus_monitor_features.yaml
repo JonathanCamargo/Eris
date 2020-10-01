@@ -1,0 +1,18 @@
+#Features to just monitor the imu data
+eti:
+    feats:
+        - ch0_rms
+    opts:
+        TD: True
+        window: 200
+    topic: /eti/emg
+    msgType: custom_msgs/Signal1CH
+
+fsr:
+    feats:
+        - ch0_rms
+    opts:
+        TD: True
+        window: 50
+    topic: /eti/fsr
+    msgType: custom_msgs/Signal1CH

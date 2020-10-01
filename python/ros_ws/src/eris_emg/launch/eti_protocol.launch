@@ -1,4 +1,21 @@
 <launch>
-<node name="protocol" pkg="eris_emg" type="genericprotocol.py" output="screen"/>
-<node name="eris" pkg="eris_emg" type="eris_nextFlexAnalog.py" output="screen"/>
+
+<!-- ETI EMG -->
+<env name="ROS_NAMESPACE" value="eti"/>
+<rosparam param="eti/eris/port">/dev/ttyACM0</rosparam>
+<node name="eris_nextflex" pkg="eris_emg" type="eris_nextFlexAnalog.py" output="screen"/>
+
+<!-- Protocol Code-->
+<env name="ROS_NAMESPACE" value=""/>
+<rosparam param="session_duration_seconds">60</rosparam>
+<remap from="eris/command" to="array/erais/command"/>
+<node name="protocol"  pkg="eris_emg" type="genericprotocol.py" output="screen"/>
+
+<!-- Feature Extraction -->
+<env name="ROS_NAMESPACE" value=""/>
+<node name="features" pkg="features" type="extractfeatures.py" output="screen">
+  <param name="featuresfile" value="$(find eris_emg)/launch/etiplus_monitor_features.yaml"></param>
+</node>
+
+
 </launch>

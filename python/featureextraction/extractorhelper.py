@@ -83,9 +83,7 @@ class ExtractorHelper:
                 se.configureExtractor(e)
                 # Use the header of the sensor extractor to determine the indices to use
                 print(e.header)
-                n=len(e.header.tolist())
-                print(n)
-                print(e.header.tolist().index('ax_rms'))
+                n=len(e.header.tolist())                
                 indices=[e.header.tolist().index(v) for v in item['feats']]
                 #Save the configuration for future use
                 self.configurations[configIdx]['extractors'].append(e)

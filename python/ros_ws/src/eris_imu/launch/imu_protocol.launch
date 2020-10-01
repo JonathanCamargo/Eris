@@ -1,12 +1,12 @@
 <launch>
 <!-- Eris IMU -->
 <env name="ROS_NAMESPACE" value=""/>
-<param name="/eris/port" value="/dev/ttyACM0"></param>
+<param name="/eris/port" value="/dev/ttyACM0" output="screen"></param>
 <node name="eris_imu" pkg="eris_imu" type="eris_imu.py" />
 
 <!-- Feature Extraction -->
 <env name="ROS_NAMESPACE" value=""/>
-<node name="features" pkg="features" type="extractfeatures.py">
+<node name="features" pkg="features" type="extractfeatures.py" output="screen">
     <param name="featuresfile" value="$(find eris_imu)/launch/imu_monitor_features.yaml"></param>
 </node>
 
