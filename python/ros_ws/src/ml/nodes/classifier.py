@@ -4,6 +4,8 @@
 # Subscribes to a feature vector (custom_msgs/Float32MultiArray) and a label (custom_msgs/String)
 # Uses upcoming feature data to fit a classifier to predict the label
 
+# Interface with topic command (Start/Stop learning)
+
 import rospy
 import numpy as np
 import signal
@@ -26,11 +28,11 @@ from sklearn.model_selection import KFold
 from joblib import dump, load
 from copy import deepcopy
 
-
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
 stringmsg=String()
+std_stringmsg=StdString()
 labelpub = rospy.Publisher('prediction',String,queue_size=1)
-
+logpub = rospy.Publisher('log', StdString, queue_size=50)
 ################################################################################
 labels=[]
 label=None
@@ -54,11 +56,11 @@ f=FileManager(path,PathStructure=['Type','File'])
 def learning_callback(msg):
     '''Enable or disable learning'''
     global learning
-    if msg.data=='Start':
-        print('Learning enabled')
+    if msg.data=='START':
+        printAndLog('Learning enabled')
         learning=True
-    elif msg.data=='Stop':
-        print('Learning disabled')
+    elif msg.data=='STOP':
+        printAndLog('Learning disabled')
         learning=False
 
 def label_callback(msg):
@@ -78,6 +80,11 @@ def label_callback(msg):
         numSamples[label]=0
         active_model=None #Reset the model since the number of labels changed
     lock.release()
+    
+def labelstd_callback(msg):
+    stringmsg.header.stamp=rospy.Time.now()
+    stringmsg.data=msg.data
+    label_callback(stringmsg)
 
 def features_callback(msg):
     ''' Get a new feature sample and incorporate the sample in memory'''
@@ -128,6 +135,12 @@ def signal_handler(sig,frame):
     sys.exit(0)
 signal.signal(signal.SIGINT,signal_handler)
 
+def printAndLog(strdata):
+    ''' Print and publish string data to the log '''
+    print(strdata)
+    std_stringmsg.data=strdata
+    logpub.publish(std_stringmsg)
+
 def memory2xy(memory):
     '''Convert the data from memory to a x,y tables for fitting a model'''
     labels=memory.keys()
@@ -158,13 +171,14 @@ def train(memory):
 ''' Main loop'''
 rospy.init_node('classifier', anonymous=True)
 labelsub = rospy.Subscriber('label',String,label_callback)
-learningsub = rospy.Subscriber('command',String,learning_callback)
-learningstdsub = rospy.Subscriber('command_std',StdString,learning_callback)
+labelstdsub = rospy.Subscriber('labelstd',StdString,labelstd_callback)
+learningsub = rospy.Subscriber('train',String,learning_callback)
+learningstdsub = rospy.Subscriber('train_std',StdString,learning_callback)
 featuressub = rospy.Subscriber('features',Float32MultiArray,features_callback)
+
 ROSRATE= 1 #Hz
 rate = rospy.Rate(ROSRATE)
 rate.sleep()
-
 
 elapsed=0
 lasttime=rospy.Time.now()
@@ -179,22 +193,16 @@ if len(models)>0:
 count=0
 while True:
     time=rospy.Time.now()
-    print('Heartbeat')
-    print('labels:{}'.format(labels))
-    print('label={}'.format(label))
-    print('Total samples:')
+    printAndLog('label={}'.format(label))
     for l in labels:
-        print('\t{}:{}'.format(l,numSamples[l]))
         if count % 2 == 0:
             x,y=memory2xy(memory)
             if active_model==None:
-                print('Training model for the first time')
                 mdl=train(memory)
                 lock.acquire()
                 active_model=deepcopy(mdl)
                 lock.release()
             elif learning:
-                print('Retrain')
                 lock.acquire()
                 active_model=retrain(memory)
                 lock.release()

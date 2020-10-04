@@ -48,14 +48,12 @@ class GenericSubscriber(object):
 
         if topic!="":
             self.topic=topic
-            print("subscribing to "+topic)
+
         if data_class!="":
             self.topic=topic
             self.data_class=data_class
-            print("using data class:"+str(data_class))
             self.channels=self.data_class.__slots__
             self.channel_types=self.data_class._slot_types
-            print("with channels:"+str(self.channels))
         
     def callback(self,msg):
         if __debug__:
@@ -95,13 +93,11 @@ class GenericSubscriber(object):
         return self.channels
 
     def unsubscribe(self):
-        print("unsubscribing to "+self.topic)
         if self.subs is not None:
             self.subs.unregister()
             self.registered=False
 
-    def subscribe(self):
-        print("subscribing to "+self.topic)
+    def subscribe(self):       
         if self.registered is False:
             self.t=threading.Thread(target=self.listener())
             self.t.start()

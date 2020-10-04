@@ -1,8 +1,8 @@
 <launch>
 <!-- Eris IMU -->
 <env name="ROS_NAMESPACE" value=""/>
-<param name="/eris/port" value="/dev/ttyACM0" output="screen"></param>
-<node name="eris_imu" pkg="eris_imu" type="eris_imu.py" />
+<param name="/eris/port" value="/dev/ttyACM0"></param>
+<node name="eris_imu" pkg="eris_imu" type="eris_imu.py" output="screen" />
 
 <!-- Feature Extraction -->
 <env name="ROS_NAMESPACE" value=""/>
@@ -12,6 +12,7 @@
 
 <!-- Protocol Code-->
 <env name="ROS_NAMESPACE" value=""/>
+<rosparam param="/sesion_duration_seconds">120</rosparam>
 <remap from="eris/command" to="array/eris/command"/>
 <node name="protocol"  pkg="eris_emg" type="genericprotocol.py" output="screen"/>
 

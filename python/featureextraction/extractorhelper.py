@@ -59,7 +59,6 @@ class ExtractorHelper:
 
         alltopics_set=set(alltopics)
         maxwindow=dict()
-        print(alltopics_set)
         for topic in alltopics_set:
             idx=[i for i,x in enumerate(alltopics) if x==topic]
             windows=[allwindows[i] for i in idx]
@@ -82,7 +81,6 @@ class ExtractorHelper:
 
                 se.configureExtractor(e)
                 # Use the header of the sensor extractor to determine the indices to use
-                print(e.header)
                 n=len(e.header.tolist())                
                 indices=[e.header.tolist().index(v) for v in item['feats']]
                 #Save the configuration for future use
@@ -115,7 +113,6 @@ class ExtractorHelper:
         '''
         with open(config, 'r') as f:
             data=yaml.safe_load(f)
-        print(data)
 
         #Check each Topic and make sure we have the necessary fields
         requiredKeys=['feats', 'opts', 'msgType','topic']

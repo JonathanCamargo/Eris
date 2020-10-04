@@ -3,6 +3,9 @@ imu0:
         - ax_rms
         - ay_rms
         - az_rms
+        - wx_rms
+        - wy_rms
+        - wz_rms
     opts:
         TD: True
         window: 50
@@ -14,6 +17,9 @@ imu1:
         - ax_rms
         - ay_rms
         - az_rms
+        - wx_rms
+        - wy_rms
+        - wz_rms
     opts:
         TD: True
         window: 50
