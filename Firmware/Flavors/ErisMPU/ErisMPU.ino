@@ -54,9 +54,10 @@ void start(){
 
 void setup(){  
   Serial.begin(115200);
-  // Wait for USB Serial.
-  while (!Serial) {}
-  delay(1000);
+  pinMode(PIN_LED,OUTPUT);
+  digitalWrite(PIN_LED,LOW);
+  // Wait for USB Serial.  
+  delay(2000);
   // Setup the initial configuration  
   Serial.println("HELLO, This is Eris");
   /*************** Configure HW pins *******************/
@@ -65,9 +66,9 @@ void setup(){
   digitalWrite(PIN_LED,LOW); 
   digitalWrite(PIN_LED_R,LOW); 
   // Setup battery pins
-  // SPI chip select
+    
   /******************************************************/
-  SPI.begin();
+
   /******************************************************/
   //Start threads
   chBegin(start);   
