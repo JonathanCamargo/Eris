@@ -8,7 +8,7 @@ imu0:
         - wz_rms
     opts:
         TD: True
-        window: 50
+        window: 100
     topic: /imu0
     msgType: custom_msgs/IMU
 
@@ -22,6 +22,35 @@ imu1:
         - wz_rms
     opts:
         TD: True
-        window: 50
+        window: 100
     topic: /imu1
     msgType: custom_msgs/IMU
+
+imu2:
+    feats:
+        - ax_rms
+        - ay_rms
+        - az_rms
+        - wx_rms
+        - wy_rms
+        - wz_rms
+    opts:
+        TD: True
+        window: 100
+    topic: /imu2
+    msgType: custom_msgs/IMU
+
+imu3:
+    feats:
+        - ax_rms
+        - ay_rms
+        - az_rms
+        - wx_rms
+        - wy_rms
+        - wz_rms
+    opts:
+        TD: True
+        window: 100
+    topic: /imu3
+    msgType: custom_msgs/IMU
+
