@@ -74,6 +74,15 @@ static void ISR_NewSample(){
 
 
 void start(void){
+  pinMode(PIN_IMU_TRUNK,OUTPUT);
+  pinMode(PIN_IMU_THIGH,OUTPUT);
+  pinMode(PIN_IMU_SHANK,OUTPUT);
+  pinMode(PIN_IMU_FOOT,OUTPUT);
+  digitalWrite(PIN_IMU_TRUNK,HIGH);
+  digitalWrite(PIN_IMU_THIGH,HIGH);
+  digitalWrite(PIN_IMU_SHANK,HIGH);
+  digitalWrite(PIN_IMU_FOOT,HIGH);
+  SPI.begin();
   failures=0;
   // Start ErisBuffers            
   bufferTrunk.init();   
@@ -101,6 +110,7 @@ void start(void){
   if (status<0){
     failures |= B0100;
     Serial.println("Thigh IMU initialization unsuccessful");
+    Serial.println(status);
     imuThighOK=false;
   }
   imuptr->setSrd(0); // 1000Hz
@@ -115,6 +125,7 @@ void start(void){
   if (status<0){
     failures |= B0010;
     Serial.println("Shank IMU initialization unsuccessful");
+    Serial.println(status);
     imuShankOK=false;
   }
   imuptr->setSrd(0); // 1000Hz
@@ -129,6 +140,7 @@ void start(void){
   if (status<0){
     failures |= B0001;
     Serial.println("Foot IMU initialization unsuccessful");
+    Serial.println(status);
     imuFootOK=false;
   }
   imuptr->setSrd(0); // 1000Hz
