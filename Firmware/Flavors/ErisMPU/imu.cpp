@@ -72,6 +72,84 @@ static void ISR_NewSample(){
   chSysUnlockFromISR();  
 }
 
+void InitIMU(void){
+  eriscommon::println("Initializing IMU");
+  timer0.end();
+  int status=0;
+  failures = -1;
+
+  imuTrunkOK=true;
+  imuThighOK=true;
+  imuShankOK=true;
+  imuFootOK=true;
+
+  imuptr=&imuTrunk;
+  // Start the IMU configuration 
+  eriscommon::println("Initializing IMU Trunk");
+  status = imuptr->begin();
+  if (status<0){
+    failures |= B1000;
+    Serial.println("Trunk IMU initialization unsuccessful");
+    imuTrunkOK=false;
+  }
+  imuptr->setSrd(0); // 1000Hz
+  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
+  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
+  imuptr->setAccelCalX(0,1);
+  imuptr->setAccelCalY(0,1);
+  imuptr->setAccelCalZ(0,1);
+
+  imuptr=&imuThigh;
+  eriscommon::println("Initializing IMU Thigh");
+  status = imuptr->begin();
+  if (status<0){
+    failures |= B0100;
+    Serial.println("Thigh IMU initialization unsuccessful");
+    Serial.println(status);
+    imuThighOK=false;
+  }
+  imuptr->setSrd(0); // 1000Hz
+  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
+  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
+  imuptr->setAccelCalX(0.15,1);
+  imuptr->setAccelCalY(0.15,1);
+  imuptr->setAccelCalZ(0.29,0.98);
+
+  imuptr=&imuShank;
+  eriscommon::println("Initializing IMU Shank");
+  status = imuptr->begin();
+  if (status<0){
+    failures |= B0010;
+  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
+    Serial.println("Shank IMU initialization unsuccessful");
+    Serial.println(status);
+    imuShankOK=false;
+  }
+  imuptr->setSrd(0); // 1000Hz
+  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
+  imuptr->setAccelCalX(0.04,1);
+  imuptr->setAccelCalY(0.04,1);
+  imuptr->setAccelCalZ(0.13,0.99);
+
+  imuptr=&imuFoot;
+  eriscommon::println("Initializing IMU Foot");
+  status = imuptr->begin();
+  if (status<0){
+    failures |= B0001;
+    Serial.println("Foot IMU initialization unsuccessful");
+    Serial.println(status);
+    imuFootOK=false;
+  }
+  imuptr->setSrd(0); // 1000Hz
+  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
+  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
+  imuptr->setAccelCalX(-.01,1);
+  imuptr->setAccelCalY(-.04,1);
+  imuptr->setAccelCalZ(-.05,.98);
+
+  Serial.println("Starting IMU collection");
+  timer0.begin(ISR_NewSample, IMU_PERIOD_US);    
+}
 
 void start(void){
   pinMode(PIN_IMU_TRUNK,OUTPUT);
@@ -90,71 +168,12 @@ void start(void){
   bufferShank.init();   
   bufferFoot.init();            
 
-  imuptr=&imuTrunk;
-	// Start the IMU configuration 
-  int status = imuptr->begin();
-	if (status<0){
-    failures |= B1000;
-		Serial.println("Trunk IMU initialization unsuccessful");
-    imuTrunkOK=false;
-	}
-  imuptr->setSrd(0); // 1000Hz
-  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
-  imuptr->setAccelCalX(0,1);
-  imuptr->setAccelCalY(0,1);
-  imuptr->setAccelCalZ(0,1);
-
-  imuptr=&imuThigh;
-  status = imuptr->begin();
-  if (status<0){
-    failures |= B0100;
-    Serial.println("Thigh IMU initialization unsuccessful");
-    Serial.println(status);
-    imuThighOK=false;
-  }
-  imuptr->setSrd(0); // 1000Hz
-  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
-  imuptr->setAccelCalX(0.15,1);
-  imuptr->setAccelCalY(0.15,1);
-  imuptr->setAccelCalZ(0.29,0.98);
-
-  imuptr=&imuShank;
-  status = imuptr->begin();
-  if (status<0){
-    failures |= B0010;
-    Serial.println("Shank IMU initialization unsuccessful");
-    Serial.println(status);
-    imuShankOK=false;
-  }
-  imuptr->setSrd(0); // 1000Hz
-  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
-  imuptr->setAccelCalX(0.04,1);
-  imuptr->setAccelCalY(0.04,1);
-  imuptr->setAccelCalZ(0.13,0.99);
-
-  imuptr=&imuFoot;
-  status = imuptr->begin();
-  if (status<0){
-    failures |= B0001;
-    Serial.println("Foot IMU initialization unsuccessful");
-    Serial.println(status);
-    imuFootOK=false;
-  }
-  imuptr->setSrd(0); // 1000Hz
-  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
-  imuptr->setAccelCalX(-.01,1);
-  imuptr->setAccelCalY(-.04,1);
-  imuptr->setAccelCalZ(-.05,.98);
+  InitIMU();
    
   //Start samples semaphore for feature extraction
   //chBSemObjectInit(&xsamplesSemaphore,true);        
   // Initialize interrupt to take the samples      
   // Timer interrupt to take the IMU samples        
-  //Set up ADC
-  timer0.begin(ISR_NewSample, IMU_PERIOD_US);      
+  //Set up ADC   
   }
 }
