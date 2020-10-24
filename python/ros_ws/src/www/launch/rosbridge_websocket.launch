@@ -1,6 +1,6 @@
 <launch>
   <arg name="port" default="9090" />
-  <arg name="address" default="backpack.com" />
+  <arg name="address" default="backpack.lan" />
   <arg name="ssl" default="false" />
   <arg name="certfile" default=""/>
   <arg name="keyfile" default="" />

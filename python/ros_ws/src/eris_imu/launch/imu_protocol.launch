@@ -16,4 +16,6 @@
 <remap from="eris/command" to="array/eris/command"/>
 <node name="protocol"  pkg="eris_emg" type="genericprotocol.py" output="screen"/>
 
+<include file="$(find www)/launch/rosbridge_websocket.launch"/>
+
 </launch>
