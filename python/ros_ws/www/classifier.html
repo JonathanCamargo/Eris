@@ -39,16 +39,26 @@
 
   // Subscribing to a Topic
   // ----------------------
-
   var listener = new ROSLIB.Topic({
     ros : ros,
     name : '/log',
     messageType : 'std_msgs/String'
   });
 
+  var predictionListener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/prediction',
+    messageType : 'custom_msgs/String'
+  });
+
   listener.subscribe(function(message) {
     document.getElementById('log').innerHTML=message.data;
   });
+
+  predictionListener.subscribe(function(message) {
+    document.getElementById('prediction').innerHTML=message.data;
+  });
+
 
   var features_sub = new ROSLIB.Topic({
     ros: ros,
@@ -56,57 +66,13 @@
     messageType: 'custom_msgs/Float32MultiArray'
   });
 
-  var imu0_sub = new ROSLIB.Topic({
-    ros: ros,
-    name : '/imu0',
-    messageType: 'custom_msgs/IMU'
-  });
-  var imu1_sub = new ROSLIB.Topic({
-    ros: ros,
-    name : '/imu1',
-    messageType: 'custom_msgs/IMU'
-  });
-  var imu2_sub = new ROSLIB.Topic({
-    ros: ros,
-    name : '/imu2',
-    messageType: 'custom_msgs/IMU'
-  });
-  var imu3_sub = new ROSLIB.Topic({
-    ros: ros,
-    name : '/imu3',
-    messageType: 'custom_msgs/IMU'
-  });
-//  features_sub.subscribe(function(message) {
-//    console.log('Received message on ' + features_sub.name + ': ' + message.data);
-//    PushDataToPlot(message.data);
-//  });
-	var dataqueue0=[];
-  var dataqueue1=[];
-  var dataqueue2=[];
-  var dataqueue3=[];
-  imu0_sub.subscribe(function(message) {
-//    console.log('Received message on ' + features_sub.name + ': ' + message.data);
-    var sample=[message.ax,message.ay,message.az,message.wx,message.wy,message.wz];
-    PushIMUDataToPlot(sample,dataqueue0);
-  });
-  imu1_sub.subscribe(function(message) {
+	var dataqueue=[];
+  features_sub.subscribe(function(message) {
   //    console.log('Received message on ' + features_sub.name + ': ' + message.data);
-    var sample=[message.ax,message.ay,message.az,message.wx,message.wy,message.wz];
-    PushIMUDataToPlot(sample,dataqueue1);
+    var sample=message.data;
+    PushDataToPlot(sample,dataqueue);
   });
-  imu2_sub.subscribe(function(message) {
-  //    console.log('Received message on ' + features_sub.name + ': ' + message.data);
-    var sample=[message.ax,message.ay,message.az,message.wx,message.wy,message.wz];
-    PushIMUDataToPlot(sample,dataqueue2);
-  });
-  imu3_sub.subscribe(function(message) {
-  //    console.log('Received message on ' + features_sub.name + ': ' + message.data);
-    var sample=[message.ax,message.ay,message.az,message.wx,message.wy,message.wz];
-    PushIMUDataToPlot(sample,dataqueue3);
-  });
-
-
-	function PushIMUDataToPlot(data,dataqueue){
+	function PushDataToPlot(data,dataqueue){
 	  dataqueue.push(data);
 		if (dataqueue.length > WINDOWSIZE_SAMPLES){
 		dataqueue.shift();
@@ -126,19 +92,34 @@
     console.log('MAX VAL: ' + value);
   });
 
-
   var textpub = new ROSLIB.Topic({
     ros : ros,
     name : '/protocolstd',
     messageType : 'std_msgs/String'
-  });http://backpack.lan
-
+  });
+  var trainpub = new ROSLIB.Topic({
+    ros : ros,
+    name : '/trainstd',
+    messageType : 'std_msgs/String'
+  });
+  var labelpub = new ROSLIB.Topic({
+    ros : ros,
+    name : '/labelstd',
+    messageType : 'std_msgs/String'
+  });
   function PublishProtocolCommand(text){
     var msg = new ROSLIB.Message({data: text});
     textpub.publish(msg);
   }
-
- function UpdateIMUPlot(divname,dataqueue){
+  function PublishTrainingCommand(text){
+    var msg = new ROSLIB.Message({data: text});
+    trainpub.publish(msg);
+  }
+  function PublishLabelCommand(text){
+    var msg = new ROSLIB.Message({data: text});
+    labelpub.publish(msg);
+  }
+ function UpdatePlot(divname,dataqueue){
    /* divname: plot name
       dataqueue that contains the data for this sensor
    */
@@ -147,10 +128,9 @@
 	 }
 	 var nchannels=dataqueue[0].length;
 	 var traces=[];
-   var channelNames=['ax','ay','az','wx','wy','wz'];
 	 for (i=0; i< nchannels; i++){
 	 	var col=dataqueue.map(function(value,index) { return value[i]; });
-	 	traces[i]={y: col, type:'scatter', name:channelNames[i]};
+	 	traces[i]={y: col, type:'scatter', name:'ch'+i};
 	 	}
     var layout={
       autosize:true,
@@ -161,29 +141,12 @@
       displayModeBar: false
     };
 	 Plotly.newPlot(divname,traces,layout,config);
-   /*
-   var w1=document.getElementById(divname).offsetWidth;
-   var svg_container=document.getElementById(divname).getElementsByClassName('plot-container')[0].getElementsByClassName('svg-container')[0];
-   if (svg_container.offsetWidth!=w1){
-     var d3 = Plotly.d3;
-     var gd3 = d3.select("div[id='"+divname+"']");
-     var gd = gd3.node();
-     svg_container.style.width=w1;
-     Plotly.Plots.resize(gd);
-     //Plotly.Plots.resize()
-   }
-   */
  }
 
 document.addEventListener('DOMContentLoaded', (event) => {
    console.log( "ready!" );
-   setInterval(function(){UpdateIMUPlot('plotIMU0',dataqueue0);},REFRESH_RATE_MS);
-   setInterval(function(){UpdateIMUPlot('plotIMU1',dataqueue1);},REFRESH_RATE_MS);
-   setInterval(function(){UpdateIMUPlot('plotIMU2',dataqueue2);},REFRESH_RATE_MS);
-   setInterval(function(){UpdateIMUPlot('plotIMU3',dataqueue3);},REFRESH_RATE_MS);
-
+   setInterval(function(){UpdatePlot('plotFeatures',dataqueue);},REFRESH_RATE_MS);
 });
-
 </script>
 </head>
 
@@ -194,31 +157,74 @@ document.addEventListener('DOMContentLoaded', (event) => {
   </div>
   <div class="row justify-content-center">
     <div class="col">
+      <h2>Record</h2>
+    </div>
+    <div class="col-5">
       <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishProtocolCommand('START')">Start</button>
     </div>
-    <div class="col">
+    <div class="col-5">
       <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishProtocolCommand('STOP')">Stop</button>
     </div>
   </div>
 
   <div class="jumbotron">
       <h2>log</h2>
-      <p id='log'>--no message received yet--</p>      
+      <p id='log'>--no message received yet--</p>
+  </div>
+
+  <div class="jumbotron">
+      <h2>Prediction</h2>
+      <p id='prediction'>--no message received yet--</p>
   </div>
 
   <div class="row justify-content-center">
-    <div class="col-sm-12" id='plotIMU0'></div>
-  </div>
-  <div class="row justify-content-center">
-    <div class="col-sm-12" id='plotIMU1'></div>
-  </div>
-  <div class="row justify-content-center">
-    <div class="col-sm-12" id='plotIMU2'></div>
-  </div>
-  <div class="row justify-content-center">
-    <div class="col-sm-12" id='plotIMU3'></div>
+    <div class="col-sm-12" id='plotFeatures'></div>
   </div>
 
+  <div class="row justify-content-center">
+    <div class="col">
+      <h2>Training</h2>
+    </div>
+    <div class="col-5">
+      <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishTrainingCommand('START')">Start</button>
+    </div>
+    <div class="col-5">
+      <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishTrainingCommand('STOP')">Stop</button>
+    </div>
+  </div>
+
+  <div class="row justify-content-center mt-5">
+    <h2>Label</h2>
+  </div>
+  <div class="row justify-content-center mt-4">
+    <div class="col-4">
+            <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishLabelCommand('IDLE')">IDLE</button>
+    </div>
+    <div class="col-4">
+      <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishLabelCommand('STAND')">STAND</button>
+    </div>
+    <div class="col-4">
+      <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishLabelCommand('SIT')">SIT</button>
+    </div>
+  </div>
+
+  <div class="row justify-content-center mt-4">
+    <div class="col-4">
+            <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishLabelCommand('SA')">SA</button>
+    </div>
+    <div class="col-4">
+      <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishLabelCommand('SD')">SD</button>
+    </div>
+  </div>
+
+  <div class="row justify-content-center mt-4">
+    <div class="col-4">
+            <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishLabelCommand('RA')">RA</button>
+    </div>
+    <div class="col-4">
+      <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishLabelCommand('RD')">R1D</button>
+    </div>
+  </div>
 
 </div>
 <script src="js/jquery-3.5.1.slim.min.js"></script>
