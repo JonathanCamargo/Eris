@@ -13,6 +13,7 @@ extern ErisBuffer<IMUSample_t> bufferShank;
 extern ErisBuffer<IMUSample_t> bufferFoot;
 extern int failures;
 void start(void);
+void InitIMU(void);
 
 }
 

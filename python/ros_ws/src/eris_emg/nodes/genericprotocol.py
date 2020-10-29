@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# READ EMG FEATURE DATA FROM ERIS AND SEND TO ROS TOPICS
-# read EMG from ETI Arrays and offer the option to modify the reference selection
-
+# A generic protocol of data collection that  records bag files incrementally
+# Subscribes to /protocol (custom_msg) and /protocolstd (std_msg) to START
+# and STOP recording.
 import rospy
 import numpy as np
 import signal

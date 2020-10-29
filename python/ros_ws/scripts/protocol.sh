@@ -69,9 +69,16 @@ if [[ $name = "etiplus" ]]; then
 fi
 
 
-#IMU PROTOCOL INCLUDING
+#IMU PROTOCOL
 if [[ $name = "imu" ]]; then
   if [[ $action = "launch" ]]; then
     roslaunch eris_imu imu_protocol.launch
+  fi
+fi
+
+#IMUML PROTOCOL
+if [[ $name = "imuclassifier" ]]; then
+  if [[ $action = "launch" ]]; then
+    roslaunch ml imuclassifier_protocol.launch
   fi
 fi

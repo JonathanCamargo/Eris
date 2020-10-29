@@ -27,6 +27,8 @@ fsrmsg=Signal1CH()
 textpub = rospy.Publisher('print', String, queue_size=50)
 imu0pub = rospy.Publisher('imu0', IMU, queue_size=100)
 imu1pub = rospy.Publisher('imu1', IMU, queue_size=100)
+imu2pub = rospy.Publisher('imu2', IMU, queue_size=100)
+imu3pub = rospy.Publisher('imu3', IMU, queue_size=100)
 sinepub = rospy.Publisher('sine', Float32, queue_size=100)
 
 t0=0 #global variable to store time reference to linux time
@@ -63,8 +65,8 @@ def command_callback(msg):
 ################################################################################
 #Create an eris object
 #What to read from Eris?
-streams=['IMU_0','IMU_1','SINE']
-streamsformat=[IMUSample_t,IMUSample_t,floatSample_t]
+streams=['IMU_0','IMU_1','IMU_2','IMU_3','SINE']
+streamsformat=[IMUSample_t,IMUSample_t,IMUSample_t,IMUSample_t,floatSample_t]
 e=Eris(streams,streamsformat,port)
 
 ######################## HELPER FUNCTIONS ######################################
@@ -110,7 +112,10 @@ while True:
             publishIMU(sample,imu0pub)
         for sample in p['IMU_1']:
             publishIMU(sample,imu1pub)
-
+        for sample in p['IMU_2']:
+            publishIMU(sample,imu2pub)
+        for sample in p['IMU_3']:
+            publishIMU(sample,imu3pub)
 
     #rospy.loginfo_once("This message will print only once")
     rate.sleep()

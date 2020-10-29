@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<!--
+<script type="text/javascript" src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+-->
+<script type="text/javascript" src="js/eventemitter2.min.js"></script>
+<script type="text/javascript" src="js/roslib.min.js"></script>
+<script src='js/plotly-latest.min.js'></script>
+
+<script type="text/javascript" type="text/javascript">
+
+  const WINDOWSIZE_SAMPLES=500;
+  const REFRESH_RATE_MS=200;
+  // Connecting to ROS
+  // -----------------
+  var ros = new ROSLIB.Ros({
+    url : 'ws://192.168.0.101:9090'
+  });
+
+  ros.on('connection', function() {
+    console.log('Connected to websocket server.');
+  });
+
+  ros.on('error', function(error) {
+    console.log('Error connecting to websocket server: ', error);
+    alert("Error connecting to server");
+  });
+
+  ros.on('close', function() {
+    console.log('Connection to websocket server closed.');
+    alert("Connection closed");
+  });
+
+  // Subscribing to a Topic
+  // ----------------------
+
+  var listener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/log',
+    messageType : 'std_msgs/String'
+  });
+
+  listener.subscribe(function(message) {
+    document.getElementById('log').innerHTML=message.data;
+  });
+
+  var features_sub = new ROSLIB.Topic({
+    ros: ros,
+    name : '/features',
+    messageType: 'custom_msgs/Float32MultiArray'
+  });
+
+  var imu0_sub = new ROSLIB.Topic({
+    ros: ros,
+    name : '/imu0',
+    messageType: 'custom_msgs/IMU'
+  });
+  var imu1_sub = new ROSLIB.Topic({
+    ros: ros,
+    name : '/imu1',
+    messageType: 'custom_msgs/IMU'
+  });
+//  features_sub.subscribe(function(message) {
+//    console.log('Received message on ' + features_sub.name + ': ' + message.data);
+//    PushDataToPlot(message.data);
+//  });
+	var dataqueue0=[];
+  var dataqueue1=[];
+
+  imu0_sub.subscribe(function(message) {
+//    console.log('Received message on ' + features_sub.name + ': ' + message.data);
+    var sample=[message.ax,message.ay,message.az,message.wx,message.wy,message.wz];
+    PushIMUDataToPlot(sample,dataqueue0);
+  });
+  imu1_sub.subscribe(function(message) {
+  //    console.log('Received message on ' + features_sub.name + ': ' + message.data);
+    var sample=[message.ax,message.ay,message.az,message.wx,message.wy,message.wz];
+    PushIMUDataToPlot(sample,dataqueue1);
+  });
+
+
+	function PushIMUDataToPlot(data,dataqueue){
+	  dataqueue.push(data);
+		if (dataqueue.length > WINDOWSIZE_SAMPLES){
+		dataqueue.shift();
+		}
+	}
+
+
+  // Getting and setting a param value
+  // ---------------------------------
+  var maxVelX = new ROSLIB.Param({
+    ros : ros,
+    name : 'max_vel_y'
+  });
+
+  maxVelX.set(0.8);
+  maxVelX.get(function(value) {
+    console.log('MAX VAL: ' + value);
+  });
+
+
+  var textpub = new ROSLIB.Topic({
+    ros : ros,
+    name : '/protocolstd',
+    messageType : 'std_msgs/String'
+  });
+
+  function PublishProtocolCommand(text){
+    var msg = new ROSLIB.Message({data: text});
+    textpub.publish(msg);
+  }
+
+
+
+</script>
+</head>
+
+<body>
+<div class="container-fluid">
+  <div class="row">
+    <h1>EMG experiment</h1>
+  </div>
+  <div class="row">
+    <div class="col">
+      <button type="button" onclick="PublishProtocolCommand('START')">Start</button>
+    </div>
+    <div class="col">
+      <button type="button" onclick="PublishProtocolCommand('STOP')">Stop</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <h2>log</h2>
+    </div>
+  </div>
+    <div class="row" >
+      <div class="col">
+        <p id='log'>--no message received yet--</p>
+      </div>
+  </div>
+
+  <div class="row">
+        <!--<h2>Raw IMU0</h2>-->
+        <div class="col-sm-4" id="plotIMU0"></div>
+        <div class="col-sm-4" id="plotIMU1"></div>
+        <script>
+          var trace={y: [1,2,3,4,5], type:'scatter', name:'trace'};
+          var layout={autosize:true, height:400, width:400};
+          //plotIMU0 = document.getElementById('plotIMU0');
+          //plotIMU1 = document.getElementById('plotIMU1');
+          var config={responsive:true};
+          Plotly.newPlot(plotIMU0,[trace],layout,config);
+          Plotly.newPlot(plotIMU1,[trace],layout,config);
+        </script>
+    </div>
+
+
+</div>
+<script src="js/jquery-3.5.1.slim.min.js"></script>
+<script src="js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

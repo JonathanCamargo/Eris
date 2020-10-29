@@ -55,6 +55,7 @@ namespace SerialCom{
     sCmd.addCommand("OFF",LED_off);        // Turns LED off
     
     sCmd.addCommand("SINE",TransmitSineWave); // Transmit the current sinewave buffer    
+    sCmd.addCommand("INITIMU",InitIMU); // Transmit the current IMU buffer  
     sCmd.addCommand("IMU",TransmitIMU); // Transmit the current IMU buffer  
     sCmd.addCommand("FSR",TransmitFSR); // Transmit the current FSR buffer
     sCmd.addCommand("FAIL",ShowFailures); // Configure the streaming functions
@@ -147,6 +148,9 @@ void LED_off() {
   digitalWrite(PIN_LED, LOW);
 }
 
+void InitIMU(){
+  IMU::InitIMU();
+}
 void TransmitSineWave(){
    chSysLockFromISR();
    floatSample_t samples[MEMBUFFERSIZE];   

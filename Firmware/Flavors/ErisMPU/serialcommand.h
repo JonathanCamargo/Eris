@@ -25,9 +25,10 @@ void ShowFailures();
 void TransmitFSR();
 void TransmitIMU();
 void TransmitSineWave();
-
+void InitIMU();
 void StreamSineWave();
-
+void WriteFoot();
+void ReadFoot();
 void SynchronizeTime();
 
 void KillThreads();
