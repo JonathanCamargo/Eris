@@ -191,7 +191,7 @@ rospy.init_node('classifier', anonymous=True)
 labelsub = rospy.Subscriber('label',String,label_callback)
 labelstdsub = rospy.Subscriber('labelstd',StdString,labelstd_callback)
 learningsub = rospy.Subscriber('train',String,learning_callback)
-learningstdsub = rospy.Subscriber('train_std',StdString,learning_callback)
+learningstdsub = rospy.Subscriber('trainstd',StdString,learning_callback)
 featuressub = rospy.Subscriber('features',Float32MultiArray,features_callback)
 
 ROSRATE= 1 #Hz

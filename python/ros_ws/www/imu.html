@@ -20,7 +20,7 @@
   // Connecting to ROS
   // -----------------
   var ros = new ROSLIB.Ros({
-    url : 'ws://192.168.0.101:9090'
+    url : 'ws://192.168.0.103:9090'
   });
 
   ros.on('connection', function() {
@@ -206,17 +206,29 @@ document.addEventListener('DOMContentLoaded', (event) => {
       <p id='log'>--no message received yet--</p>      
   </div>
 
-  <div class="row justify-content-center">
-    <div class="col-sm-12" id='plotIMU0'></div>
+  <div class="row justify-content-center">    
+    <div class="col-sm-12">
+    <h3>IMU0</h3>
+    <div id='plotIMU0'></div>
+    </div>
   </div>
   <div class="row justify-content-center">
-    <div class="col-sm-12" id='plotIMU1'></div>
+    <div class="col-sm-12">
+    <h3>IMU1</h3>
+    <div id='plotIMU1'></div>
+    </div>
   </div>
   <div class="row justify-content-center">
-    <div class="col-sm-12" id='plotIMU2'></div>
+    <div class="col-sm-12">
+    <h3>IMU2</h3>
+    <div id='plotIMU2'></div>
+    </div>
   </div>
   <div class="row justify-content-center">
-    <div class="col-sm-12" id='plotIMU3'></div>
+    <div class="col-sm-12">
+    <h3>IMU3</h3>
+    <div id='plotIMU3'></div>
+    </div>
   </div>
 
 

@@ -23,4 +23,8 @@
 <remap from="eris/command" to="/eris/command"/>
 <node name="protocol"  pkg="eris_imu" type="genericprotocol.py" output="screen"/>
 
+<!-- WWW -->
+<include file="$(find www)/launch/rosbridge_websocket.launch"/>
+
+
 </launch>

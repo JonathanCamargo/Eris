@@ -12,6 +12,7 @@ import signal
 import sys
 
 import threading
+from time import sleep
 
 if rospy.has_param('eris/port'):
     port=rospy.get_param('eris/port')
@@ -85,6 +86,9 @@ cmdsub = rospy.Subscriber('eris/command',String,command_callback)
 
 ROSRATE=50 #Hz
 rate = rospy.Rate(ROSRATE)
+e.sendCommand('INITIMU')
+sleep(15.0)
+print("Done init")
 e.sendCommand('TIME0') #Reset time to 0
 t0=rospy.Time.now()
 rate.sleep()
