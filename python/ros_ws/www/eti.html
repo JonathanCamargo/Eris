@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<!--
+<script type="text/javascript" src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+-->
+<script type="text/javascript" src="js/eventemitter2.min.js"></script>
+<script type="text/javascript" src="js/roslib.min.js"></script>
+<script src='js/plotly-latest.min.js'></script>
+
+<script type="text/javascript" type="text/javascript">
+
+  const WINDOWSIZE_SAMPLES=500;
+  const REFRESH_RATE_MS=100;
+  // Connecting to ROS
+  // -----------------
+  var ros = new ROSLIB.Ros({
+    url : 'ws://192.168.0.103:9090'
+  });
+
+  ros.on('connection', function() {
+    console.log('Connected to websocket server.');
+  });
+
+  ros.on('error', function(error) {
+    console.log('Error connecting to websocket server: ', error);
+    alert("Error connecting to server");
+  });
+
+  ros.on('close', function() {
+    console.log('Connection to websocket server closed.');
+    alert("Connection closed");
+  });
+
+  // Subscribing to a Topic
+  // ----------------------
+
+  var listener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/log',
+    messageType : 'std_msgs/String'
+  });
+
+  listener.subscribe(function(message) {
+    document.getElementById('log').innerHTML=message.data;
+  });
+
+  var features_sub = new ROSLIB.Topic({
+    ros: ros,
+    name : '/features',
+    messageType: 'custom_msgs/Float32MultiArray'
+  });
+
+  var emg_sub = new ROSLIB.Topic({
+    ros: ros,
+    name : '/eti/emg',
+    messageType: 'custom_msgs/Signal1CH'
+  });
+ 
+  var fsr_sub = new ROSLIB.Topic({
+    ros: ros,
+    name : '/eti/fsr',
+    messageType: 'custom_msgs/Signal1CH'
+  });
+//  features_sub.subscribe(function(message) {
+//    console.log('Received message on ' + features_sub.name + ': ' + message.data);
+//    PushDataToPlot(message.data);
+//  });
+  var dataqueue0=[];
+  var dataqueue1=[];
+  var dataqueue2=[];
+  var dataqueue3=[];
+  emg_sub.subscribe(function(message) {
+    var sample=[message.ch0];
+    PushDataToPlot(sample,dataqueue0,2000);
+  });
+  fsr_sub.subscribe(function(message) {
+    var sample=[message.ch0];
+    PushDataToPlot(sample,dataqueue1,200);
+  });
+
+
+    function PushDataToPlot(data,dataqueue,windowsize){
+      dataqueue.push(data);
+	    if (dataqueue.length > windowsize){
+	    dataqueue.shift();
+	    }
+    }
+
+
+  // Getting and setting a param value
+  // ---------------------------------
+  var maxVelX = new ROSLIB.Param({
+    ros : ros,
+    name : 'max_vel_y'
+  });
+
+  maxVelX.set(0.8);
+  maxVelX.get(function(value) {
+    console.log('MAX VAL: ' + value);
+  });
+
+
+  var textpub = new ROSLIB.Topic({
+    ros : ros,
+    name : '/protocolstd',
+    messageType : 'std_msgs/String'
+  });
+
+  function PublishProtocolCommand(text){
+    var msg = new ROSLIB.Message({data: text});
+    textpub.publish(msg);
+  }
+
+ function UpdatePlot(divname,dataqueue){
+   /* divname: plot name
+      dataqueue that contains the data for this sensor
+   */
+	 if (dataqueue.length<10){
+		 return;
+	 }
+	 var nchannels=dataqueue[0].length;
+	 var traces=[];
+   var channelNames=['ch0'];
+	 for (i=0; i< nchannels; i++){
+	 	var col=dataqueue.map(function(value,index) { return value[i]; });
+	 	traces[i]={y: col, type:'scatter', name:channelNames[i]};
+	 	}
+    var layout={
+      autosize:true,
+      width: 700,
+      height: 400
+    };
+    var config={
+      displayModeBar: true
+    };
+	 Plotly.newPlot(divname,traces,layout,config);
+   /*
+   var w1=document.getElementById(divname).offsetWidth;
+   var svg_container=document.getElementById(divname).getElementsByClassName('plot-container')[0].getElementsByClassName('svg-container')[0];
+   if (svg_container.offsetWidth!=w1){
+     var d3 = Plotly.d3;
+     var gd3 = d3.select("div[id='"+divname+"']");
+     var gd = gd3.node();
+     svg_container.style.width=w1;
+     Plotly.Plots.resize(gd);
+     //Plotly.Plots.resize()
+   }
+   */
+ }
+
+document.addEventListener('DOMContentLoaded', (event) => {
+   console.log( "ready!" );
+   setInterval(function(){UpdatePlot('plotEMG',dataqueue0);},REFRESH_RATE_MS);
+   setInterval(function(){UpdatePlot('plotFSR',dataqueue1);},REFRESH_RATE_MS);
+//   setInterval(function(){UpdateIMUPlot('plotIMU1',dataqueue1);},REFRESH_RATE_MS);
+ //  setInterval(function(){UpdateIMUPlot('plotIMU2',dataqueue2);},REFRESH_RATE_MS);
+  // setInterval(function(){UpdateIMUPlot('plotIMU3',dataqueue3);},REFRESH_RATE_MS);
+
+});
+
+</script>
+</head>
+
+<body>
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <h1>Protocol</h1>
+  </div>
+  <div class="row justify-content-center">
+    <div class="col">
+      <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishProtocolCommand('START')">Start</button>
+    </div>
+    <div class="col">
+      <button type="button" class="btn btn-primary btn-lg btn-block" onclick="PublishProtocolCommand('STOP')">Stop</button>
+    </div>
+  </div>
+
+  <div class="jumbotron">
+      <h2>log</h2>
+      <p id='log'>--no message received yet--</p>      
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-sm-12">
+    <h2>EMG</h2>
+    <div id='plotEMG'></div>
+    </div>
+    <div class="col-sm-12">
+    <h2>FSR</h2>
+    <div id='plotFSR'></div>
+    </div>
+  </div>
+
+
+</div>
+<script src="js/jquery-3.5.1.slim.min.js"></script>
+<script src="js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

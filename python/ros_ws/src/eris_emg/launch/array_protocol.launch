@@ -17,5 +17,7 @@
   <param name="featuresfile" value="$(find eris_emg)/launch/arrayplus_monitor_features.yaml"></param>
 </node>
 
+<include file="$(find www)/launch/rosbridge_websocket.launch"/>
+
 
 </launch>
