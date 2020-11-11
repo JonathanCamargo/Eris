@@ -35,7 +35,7 @@ static THD_WORKING_AREA(waGeneratePWM_T, 64);
 static THD_FUNCTION(GeneratePWM_T, arg) {        
   while(1){      
     // Update the pulse
-    Serial.println("pwm");
+    //Serial.println("pwm");
     switch (pwmstate){
       case PWM_ZERO:
           digitalWrite(PIN_LED,HIGH);        
@@ -79,7 +79,7 @@ static THD_FUNCTION(Transitions_T, arg) {
                     EVENT_MASK(0),
                     ACTION_PRESS | ACTION_RELEASE); 
   while(1){ 
-    //PrintState();
+    PrintState();
     eventmask_t evt = chEvtWaitOneTimeout(EVENT_MASK(0),TIME_IMMEDIATE);
     if (evt & EVENT_MASK(0)){                    
       eventflags_t flags=chEvtGetAndClearFlags(&action_event_listener);
@@ -111,18 +111,21 @@ static THD_FUNCTION(Transitions_T, arg) {
     else{
       // If no event registered the button could be still pressed or on hold
       switch (btnstate){
-        case (BTN_PRESSED):
+        case (BTN_PRESSED):        
         case (BTN_HOLD):
           elapsed=millis()-t0;
+          if (elapsed>TIME_MIN_HOLD_MS && !digitalRead(PIN_BTN) ){
+            btnstate=BTN_HOLD;
+            pwmvel==PWM_LOW ? pwmvel=PWM_HIGH : pwmvel=PWM_LOW;
+            pwmstate=pwmvel;
+            t0=millis();
+            Serial.println("Change speed");
+          }
+          else if (elapsed>TIME_MIN_HOLD_MS){
+            btnstate=BTN_OFF;
+          }
         break;                 
-      }
-      if (elapsed>TIME_MIN_HOLD_MS){
-        btnstate=BTN_HOLD;
-        pwmvel==PWM_LOW ? pwmvel=PWM_HIGH : pwmvel=PWM_LOW;
-        pwmstate=pwmvel;
-        t0=millis();
-        Serial.println("Change speed");
-      }
+      }     
     }
     
     

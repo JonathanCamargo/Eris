@@ -21,8 +21,8 @@
 #define PIN_BTN 2
 #define PIN_LED_R 28 //
 
-#define FREQ_LOW_HZ 5
-#define FREQ_HIGH_HZ 40
+#define FREQ_LOW_HZ 10
+#define FREQ_HIGH_HZ 45
 #define TIME_MIN_HOLD_MS 800
 
 /////////// MEMORY CONFIGURATION
