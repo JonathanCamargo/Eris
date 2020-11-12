@@ -87,7 +87,19 @@ cmdsub = rospy.Subscriber('eris/command',String,command_callback)
 ROSRATE=50 #Hz
 rate = rospy.Rate(ROSRATE)
 e.sendCommand('INITIMU')
-sleep(15.0)
+print("Waiting for IMU initialization (30 seconds)")
+
+counts=0
+while (counts<30):
+    sleep(1.0)
+    counts=counts+1
+    out = e.read()
+    #Get error and shutdown if initialization failed
+    print(out['T'])
+    for er in out['E']:
+        rospy.logerr(er)
+
+
 print("Done init")
 e.sendCommand('TIME0') #Reset time to 0
 t0=rospy.Time.now()
@@ -120,6 +132,9 @@ while True:
             publishIMU(sample,imu2pub)
         for sample in p['IMU_3']:
             publishIMU(sample,imu3pub)
+    for p in out['E']:
+    	print('SUPUTAMADREEEROR')
+    	print(p)
 
     #rospy.loginfo_once("This message will print only once")
     rate.sleep()

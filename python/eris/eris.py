@@ -93,8 +93,8 @@ class Eris:
             self._setDformat(features,format)
 
             self.buffer=b'' #Buffer to store incomplete packet data in the serial-RX
-            self.packetTypes=['D','T']
-            self.packetFunctions=[self.parseD,self.parseT]
+            self.packetTypes=['D','T','E']
+            self.packetFunctions=[self.parseD,self.parseT,self.parseE]
 
             self._lastPackets=dict()
             self._clearLastPackets()
@@ -121,7 +121,7 @@ class Eris:
             print(self._readString())
             sleep(0.1)
             print(self._readString())
-            print('Eris is ready')
+            print('Eris initialized')
 
         def _setDformat(self,features,format):
             ''' The full format of a D packet consists of a struct of
@@ -161,6 +161,12 @@ class Eris:
             ''' Parse data from a T packet'''
             content=decodedPacket.decode('ascii')
             return content
+
+        def parseE(self,decodedPacket):
+            ''' Parse data from a T packet'''
+            content=decodedPacket.decode('ascii')
+            return content
+
 
         def start(self):
             '''
@@ -273,6 +279,9 @@ class Eris:
                 elif a=='T':
                     print(decoded[1:])
                     data['T'].append(decoded[1:].decode('ascii'))
+                elif a=='E':
+                    print(decoded[1:])
+                    data['E'].append(decoded[1:].decode('ascii'))
                 else:
                     print('Unsupported Packet type:'),
                     print(decoded)

@@ -118,7 +118,7 @@ void StreamingSetFeatures(){
   while(arg!= NULL){    
       bool found=Streaming::AddFunction(arg);
       if (!found){
-        Error::RaiseError(COMMAND,(char *)"StreamingSetFeatures");
+        Error::RaiseError(Error::COMMAND,(char *)"StreamingSetFeatures");
         Streaming::ClearFunctions();
         chSysUnlockFromISR();        
         return;
@@ -297,7 +297,7 @@ void GetID() {
 
 // This gets set as the default handler, and gets called when no other command matches.
 void unrecognized(const char *command) {
-  Error::RaiseError(COMMAND);
+  Error::RaiseError(Error::COMMAND);
   Serial.println("What?");
 }
 

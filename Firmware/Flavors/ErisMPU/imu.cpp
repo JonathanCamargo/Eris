@@ -1,6 +1,7 @@
 #include "Eris.h"
 #include "MPU9250.h"
 #include "configuration.h"
+#include "error.h"
 
 namespace IMU{
   
@@ -89,7 +90,7 @@ void InitIMU(void){
   status = imuptr->begin();
   if (status<0){
     failures |= B1000;
-    Serial.println("Trunk IMU initialization unsuccessful");
+    Error::RaiseError(Error::SENSOR,"Trunk IMU initialization unsuccessful");
     imuTrunkOK=false;
   }
   imuptr->setSrd(0); // 1000Hz
@@ -104,8 +105,7 @@ void InitIMU(void){
   status = imuptr->begin();
   if (status<0){
     failures |= B0100;
-    Serial.println("Thigh IMU initialization unsuccessful");
-    Serial.println(status);
+    RaiseError(Error::SENSOR,"Thigh IMU initialization unsuccessful");    
     imuThighOK=false;
   }
   imuptr->setSrd(0); // 1000Hz
@@ -121,8 +121,8 @@ void InitIMU(void){
   if (status<0){
     failures |= B0010;
   imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-    Serial.println("Shank IMU initialization unsuccessful");
-    Serial.println(status);
+    RaiseError(Error::SENSOR,"Shank IMU initialization unsuccessful");
+    
     imuShankOK=false;
   }
   imuptr->setSrd(0); // 1000Hz
@@ -136,8 +136,7 @@ void InitIMU(void){
   status = imuptr->begin();
   if (status<0){
     failures |= B0001;
-    Serial.println("Foot IMU initialization unsuccessful");
-    Serial.println(status);
+    RaiseError(Error::SENSOR,"Foot IMU initialization unsuccessful");    
     imuFootOK=false;
   }
   imuptr->setSrd(0); // 1000Hz
@@ -147,7 +146,7 @@ void InitIMU(void){
   imuptr->setAccelCalY(-.04,1);
   imuptr->setAccelCalZ(-.05,.98);
 
-  Serial.println("Starting IMU collection");
+  eriscommon::println("Starting IMU collection");
   timer0.begin(ISR_NewSample, IMU_PERIOD_US);    
 }
 

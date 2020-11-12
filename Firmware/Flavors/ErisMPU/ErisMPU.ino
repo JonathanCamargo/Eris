@@ -33,6 +33,8 @@ static THD_FUNCTION(Thread1, arg) {
 
 
 void start(){
+  eriscommon::setPrintPacketMode(true); //send prints to eris
+  
   // Initialize mutex for heartbeat
   //chMtxObjectInit(&mtxhb);
   /*************** Start Threads ************************/    
@@ -49,6 +51,8 @@ void start(){
   
   // Serial command interface   
   SerialCom::start();
+
+  
 
 }
 

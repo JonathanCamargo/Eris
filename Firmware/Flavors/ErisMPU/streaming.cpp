@@ -68,7 +68,7 @@ bool AddFunction(char * arg){
     return false;
   }
   if (Nfunctions>MAXFNC){
-    Error::RaiseError(MEMORY,(char *)"STREAMFNC");
+    Error::RaiseError(Error::MEMORY,(char *)"STREAMFNC");
   }
   return true;
 }
