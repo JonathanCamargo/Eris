@@ -3,8 +3,8 @@
 
 import rospy
 from eris.eris import Eris
-from eris.customtypes import  Signal8CHSample_t,floatSample_t
-from custom_msgs.msg import Float32,Signal8CH,String
+from eris.customtypes import  Signal2CHSample_t,floatSample_t
+from custom_msgs.msg import Float32,Signal2CH,String
 from std_msgs.msg import Header
 
 import numpy as np
@@ -21,11 +21,11 @@ else:
 
 
 ##################### ROS MESSAGES AND PUBLISHERS ##############################
-analogmsg=Signal8CH()
+analogmsg=Signal2CH()
 sinemsg=Float32()
 
 textpub = rospy.Publisher('print', String, queue_size=50)
-analogpub = rospy.Publisher('analog', Signal8CH, queue_size=100)
+analogpub = rospy.Publisher('analog', Signal2CH, queue_size=100)
 sinepub = rospy.Publisher('sine', Float32, queue_size=100)
 
 t0=0 #global variable to store time reference to linux time
@@ -35,13 +35,13 @@ def publishAnalog(sample):
     timestamp=sample['timestamp']/1000.0
     analogmsg.header=Header(stamp=t0+rospy.Duration(timestamp))
     analogmsg.ch0=sample['ch'][0]
-    analogmsg.ch1=sample['ch'][1]
-    analogmsg.ch2=sample['ch'][2]
-    analogmsg.ch3=sample['ch'][3]
-    analogmsg.ch4=sample['ch'][4]
-    analogmsg.ch5=sample['ch'][5]
-    analogmsg.ch6=sample['ch'][6]
-    analogmsg.ch7=sample['ch'][7]
+    #analogmsg.ch1=sample['ch'][1]
+    #analogmsg.ch2=sample['ch'][2]
+    #analogmsg.ch3=sample['ch'][3]
+    #analogmsg.ch4=sample['ch'][4]
+    #analogmsg.ch5=sample['ch'][5]
+    #analogmsg.ch6=sample['ch'][6]
+    #analogmsg.ch7=sample['ch'][7]
     analogpub.publish(analogmsg)
 
 def publishSine(sample):
@@ -65,7 +65,7 @@ def command_callback(msg):
 #Create an eris object
 #What to read from Eris?
 streams=['Analog','SINE']
-streamsformat=[Signal8CHSample_t,floatSample_t]
+streamsformat=[Signal2CHSample_t,floatSample_t]
 e=Eris(streams,streamsformat,port)
 
 ######################## HELPER FUNCTIONS ######################################

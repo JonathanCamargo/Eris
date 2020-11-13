@@ -27,20 +27,14 @@
 
 ///////////////////////////////////////////////////
 /// EMG ANALOG CONFIGURATION
-#define ANALOG_NUMCHANNELS 8
+#define ANALOG_NUMCHANNELS 2
 #define ANALOG_PERIOD_US 1000
-#define PINS_ANALOG A0,A1,A2,A3,A4,A5,A6,A7
+#define PINS_ANALOG A0,A1 //A0,A1,A2,A3,A4,A5,A6,A7
 
 /// FSR ANALOG CONFIGURATION
 #define FSR_NUMCHANNELS 1
 #define FSR_PERIOD_US 10000 // FSR @100Hz
 #define PIN_FSR A20
-
-////////////////////////////////////////////////////
-/// Serial inputs
-/// Impedance and temperature using Serial port
-#define ETI_NUMCHANNELS 1
-#define ETI_SERIAL0 Serial2
 
 // DEBUGGING FLAGS
 //#define DEBUG_TIME false
