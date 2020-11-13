@@ -64,7 +64,8 @@ add_message_files(
     ETI.msg
     Uint8.msg
     Signal1CH.msg
-    Signal2CH.msg    
+    Signal2CH.msg
+    Signal3CH.msg    
     Signal8CH.msg
     
 

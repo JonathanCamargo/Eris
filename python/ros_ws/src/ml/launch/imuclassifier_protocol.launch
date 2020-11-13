@@ -4,7 +4,7 @@
 <!-- Eris IMU -->
 <env name="ROS_NAMESPACE" value=""/>
 <param name="/eris/port" value="/dev/ttyACM0"></param>
-<node name="eris_imu" pkg="eris_imu" type="eris_imu.py" />
+<node name="eris_imu" pkg="eris_imu" type="eris_imu.py" output="screen" />
 
 <!-- Feature Extraction -->
 <env name="ROS_NAMESPACE" value=""/>
