@@ -4,46 +4,38 @@
 
 #include "configuration.h"
 #include "Eris.h"
-#include "sinewave.h"
-#include "serialcommand.h"
 #include "btnpwm.h"
 
 
-long t0=0; // Global start time for all modules 
-thread_t *thread1 = NULL;
+//long t0=0; // Global start time for all modules 
 const char firmwareInfo[]=FIRMWARE_INFO;
 
 /* ******************************** Global threads ************************************************** */
-
 
 /* ************************************************************************************************* */
 
 
 void start(){
   /*************** Start Threads ************************/    
-  Error::start(); // Start error notification task (Do not disable)
-
+  //Error::start(); // Start error notification task (Do not disable)
   // start special tasks from external sources
-  SineWave::start();
-  // Command interfaces   
-  SerialCom::start();
+  // Command interfaces     
   ButtonPWM::start();
 
 }
 
 void setup(){  
+  pinMode(PIN_LED,OUTPUT);  
+  digitalWrite(PIN_LED,LOW);
   Serial.begin(115200);  
-  delay(500);
+  delay(500);  
   // Setup the initial configuration  
-  Serial.println("HELLO, This is Eris");
-  /*************** Configure HW pins *******************/
-  pinMode(PIN_LED,OUTPUT);      
+  Serial.println(F("HELLO, This is Eris"));
+  /*************** Configure HW pins *******************/    
   //Start threads
-  chBegin(start);   
-   
+  chBegin(start);      
   while(true){}
 }
-
 
 
 

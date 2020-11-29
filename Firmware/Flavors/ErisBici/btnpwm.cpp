@@ -9,7 +9,6 @@ thread_t *transitions = NULL;
 static const int PERIOD_LOW_MS=(int) 1000/FREQ_LOW_HZ;
 static const int PERIOD_HIGH_MS=(int) 1000/FREQ_HIGH_HZ;
 
-static msg_t msg;
 typedef enum btnstates_t{  
   BTN_OFF, // Button is released 
   BTN_PRESSED, // Button is pressed  
@@ -31,11 +30,10 @@ typedef enum pwmstates_t{
 static pwmstates_t pwmstate=PWM_ZERO; // Current state of the PWM
 static pwmstates_t pwmvel=PWM_LOW; // Current velocity of the PWM
 
-static THD_WORKING_AREA(waGeneratePWM_T, 64);
+static THD_WORKING_AREA(waGeneratePWM_T, 16);
 static THD_FUNCTION(GeneratePWM_T, arg) {        
   while(1){      
-    // Update the pulse
-    //Serial.println("pwm");
+    // Update the pulse    
     switch (pwmstate){
       case PWM_ZERO:
           digitalWrite(PIN_LED,HIGH);        
@@ -56,19 +54,19 @@ static THD_FUNCTION(GeneratePWM_T, arg) {
 void PrintState(){
   switch (btnstate){
     case (BTN_OFF):
-      Serial.println("BTN_OFF");
+      Serial.println(F("BTN_OFF"));
       break;
     case (BTN_PRESSED):
-      Serial.println("BTN_PRESSED");
+      Serial.println(F("BTN_PRESSED"));
       break;
     case (BTN_HOLD):
-      Serial.println("BTN_HOLD");
+      Serial.println(F("BTN_HOLD"));
       break;     
   }
 }
 
 event_source_t action_event_source;
-static THD_WORKING_AREA(waTransitions_T, 64);
+static THD_WORKING_AREA(waTransitions_T, 16);
 static THD_FUNCTION(Transitions_T, arg) {  
   long t0=millis();
   long elapsed=0;    
@@ -96,7 +94,7 @@ static THD_FUNCTION(Transitions_T, arg) {
           if (flags | ACTION_RELEASE){
             btnstate=BTN_OFF;            
             // Change velocity
-            Serial.println("Toggle ON/OFF");
+            Serial.println(F("Toggle ON/OFF"));
             pwmstate==PWM_ZERO ? pwmstate=pwmvel : pwmstate=PWM_ZERO;
           }
           break;
@@ -119,7 +117,7 @@ static THD_FUNCTION(Transitions_T, arg) {
             pwmvel==PWM_LOW ? pwmvel=PWM_HIGH : pwmvel=PWM_LOW;
             pwmstate=pwmvel;
             t0=millis();
-            Serial.println("Change speed");
+            Serial.println(F("Change speed"));
           }
           else if (elapsed>TIME_MIN_HOLD_MS){
             btnstate=BTN_OFF;
@@ -146,15 +144,15 @@ static void ISR_PIN_BTN(){
     switch (btnstate){
       case BTN_OFF:        
         // Button pressed :)        
-        eriscommon::println("press"); 
+        eriscommon::println(F("press")); 
         chEvtBroadcastFlagsI(&action_event_source,ACTION_PRESS);       
         break;
       case BTN_PRESSED:          
-        eriscommon::println("release");      
+        eriscommon::println(F("release"));      
         chEvtBroadcastFlagsI(&action_event_source,ACTION_RELEASE);       
         break;       
       case BTN_HOLD:        
-        eriscommon::println("release");
+        eriscommon::println(F("release"));
         chEvtBroadcastFlagsI(&action_event_source,ACTION_RELEASE);               
         break;        
     }             
@@ -167,10 +165,11 @@ static void ISR_PIN_BTN(){
     chEvtObjectInit(&action_event_source);   
     pinMode(PIN_BTN,INPUT_PULLUP);
     digitalWrite(PIN_LED,LOW);
-    eriscommon::print("Low ms:");
+    /*eriscommon::print(F("Low ms:"));
     eriscommon::println(PERIOD_LOW_MS);
-    eriscommon::print("High ms:");
+    eriscommon::print(F("High ms:"));
     eriscommon::println(PERIOD_HIGH_MS);
+    */    
     attachInterrupt(digitalPinToInterrupt(PIN_BTN), ISR_PIN_BTN,CHANGE);    
     // create tasks at priority lowest priority
     generatePWM=chThdCreateStatic(waGeneratePWM_T, sizeof(waGeneratePWM_T),NORMALPRIO+1, GeneratePWM_T, NULL);
