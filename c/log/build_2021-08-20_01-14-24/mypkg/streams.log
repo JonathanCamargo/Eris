@@ -1,0 +1,11 @@
+[0.022s] Invoking command in '/home/ossip/mygit/Eris/c/build/mypkg': /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/mypkg -- -j4 -l4
+[0.087s] [35m[1mScanning dependencies of target mynode[0m
+[0.101s] [ 50%] [32mBuilding CXX object CMakeFiles/mynode.dir/src/mynode.cpp.o[0m
+[0.134s] [01m[K/home/ossip/mygit/Eris/c/mypkg/src/mynode.cpp:3:10:[m[K [01;31m[Kfatal error: [m[KPacketSerial.h: No such file or directory
+[0.134s]     3 | #include [01;31m[K<PacketSerial.h>[m[K
+[0.135s]       |          [01;31m[K^~~~~~~~~~~~~~~~[m[K
+[0.135s] compilation terminated.
+[0.136s] make[2]: *** [CMakeFiles/mynode.dir/build.make:63: CMakeFiles/mynode.dir/src/mynode.cpp.o] Error 1
+[0.136s] make[1]: *** [CMakeFiles/Makefile2:78: CMakeFiles/mynode.dir/all] Error 2
+[0.136s] make: *** [Makefile:141: all] Error 2
+[0.141s] Invoked command in '/home/ossip/mygit/Eris/c/build/mypkg' returned '2': /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/mypkg -- -j4 -l4

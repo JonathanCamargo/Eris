@@ -1,0 +1,42 @@
+[0.022s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4
+[0.062s] -- Found ament_cmake: 1.1.4 (/home/ossip/ros2_galactic/ros2-linux/share/ament_cmake/cmake)
+[0.094s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[0.182s] -- Found ament_lint_auto: 0.10.6 (/home/ossip/ros2_galactic/ros2-linux/share/ament_lint_auto/cmake)
+[0.271s] -- Added test 'copyright' to check source files copyright and LICENSE
+[0.274s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[0.274s] -- Configured cppcheck include dirs: /home/ossip/mygit/Eris/c/serial/include
+[0.275s] -- Configured cppcheck exclude dirs and/or files: 
+[0.277s] -- Added test 'cpplint' to check C / C++ code against the Google style
+[0.278s] -- Configured cpplint exclude dirs and/or files: 
+[0.278s] -- Added test 'flake8' to check Python code syntax and style conventions
+[0.279s] -- Added test 'lint_cmake' to check CMake code style
+[0.280s] -- Added test 'pep257' to check Python code against some of the style conventions in PEP 257
+[0.283s] -- Added test 'uncrustify' to check C / C++ code style
+[0.283s] -- Configured uncrustify additional arguments: 
+[0.284s] -- Added test 'xmllint' to check XML markup files
+[0.286s] -- Configuring done
+[0.292s] -- Generating done
+[0.293s] -- Build files have been written to: /home/ossip/mygit/Eris/c/build/serial
+[0.339s] [ 66%] Built target serial
+[0.373s] [ 83%] [32mBuilding CXX object CMakeFiles/serial_example.dir/examples/serial_example.cc.o[0m
+[0.833s] [100%] [32m[1mLinking CXX executable serial_example[0m
+[0.949s] [100%] Built target serial_example
+[0.988s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4
+[1.051s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --install /home/ossip/mygit/Eris/c/build/serial
+[1.065s] -- Install configuration: ""
+[1.065s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/ament_index/resource_index/package_run_dependencies/serial
+[1.066s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/ament_index/resource_index/parent_prefix_path/serial
+[1.066s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/ament_prefix_path.sh
+[1.067s] -- Installing: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/ament_prefix_path.dsv
+[1.067s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/path.sh
+[1.068s] -- Installing: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/path.dsv
+[1.068s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.bash
+[1.068s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.sh
+[1.069s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.zsh
+[1.069s] -- Installing: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.dsv
+[1.069s] -- Installing: /home/ossip/mygit/Eris/c/install/serial/share/serial/package.dsv
+[1.069s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/ament_index/resource_index/packages/serial
+[1.069s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/cmake/serialConfig.cmake
+[1.070s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/cmake/serialConfig-version.cmake
+[1.070s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/package.xml
+[1.072s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --install /home/ossip/mygit/Eris/c/build/serial

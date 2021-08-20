@@ -1,0 +1,17 @@
+-- Found ament_cmake: 1.1.4 (/home/ossip/ros2_galactic/ros2-linux/share/ament_cmake/cmake)
+-- Using PYTHON_EXECUTABLE: /usr/bin/python3
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/ossip/mygit/Eris/c/build/serial
+[35m[1mScanning dependencies of target serial[0m
+[ 16%] [32mBuilding CXX object CMakeFiles/serial.dir/src/impl/unix.cc.o[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/serial.dir/src/impl/list_ports/list_ports_linux.cc.o[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/serial.dir/src/serial.cc.o[0m
+[ 66%] [32m[1mLinking CXX static library libserial.a[0m
+[ 66%] Built target serial
+[35m[1mScanning dependencies of target serial_example[0m
+[ 83%] [32mBuilding CXX object CMakeFiles/serial_example.dir/examples/serial_example.cc.o[0m
+[100%] [32m[1mLinking CXX executable serial_example[0m
+[100%] Built target serial_example
+-- Install configuration: ""
+-- Installing: /home/ossip/mygit/Eris/c/install/serial/lib/libserial.a

@@ -1,0 +1,11 @@
+-- Found ament_cmake: 1.1.4 (/home/ossip/ros2_galactic/ros2-linux/share/ament_cmake/cmake)
+-- Using PYTHON_EXECUTABLE: /usr/bin/python3
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/ossip/mygit/Eris/c/build/serial
+[ 66%] Built target serial
+[100%] Built target serial_example
+-- Install configuration: ""
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/lib/libserial.a
+-- Installing: /home/ossip/mygit/Eris/c/install/serial/lib/serial/serial.h
+-- Installing: /home/ossip/mygit/Eris/c/install/serial/lib/serial/v8stdint.h

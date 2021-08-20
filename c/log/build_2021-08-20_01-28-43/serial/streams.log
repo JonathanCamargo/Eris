@@ -1,0 +1,11 @@
+[0.021s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial
+[0.049s] -- Found ament_cmake: 1.1.4 (/home/ossip/ros2_galactic/ros2-linux/share/ament_cmake/cmake)
+[0.085s] -- Found PythonInterp: /usr/bin/python3 (found suitable version "3.8.10", minimum required is "3") 
+[0.085s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[0.233s] CMake Error at CMakeLists.txt:16 (catkin_package):
+[0.233s]   Unknown CMake command "catkin_package".
+[0.233s] 
+[0.233s] 
+[0.234s] -- Configuring incomplete, errors occurred!
+[0.234s] See also "/home/ossip/mygit/Eris/c/build/serial/CMakeFiles/CMakeOutput.log".
+[0.237s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '1': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial

@@ -1,0 +1,2 @@
+Invoking command in '/home/ossip/mygit/Eris/c/build/serial': /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial
+Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '1': /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial

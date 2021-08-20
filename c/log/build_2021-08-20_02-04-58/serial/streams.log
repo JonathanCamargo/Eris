@@ -1,0 +1,15 @@
+[0.023s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4
+[0.085s] [35m[1mScanning dependencies of target serial[0m
+[0.131s] [ 25%] [32mBuilding CXX object CMakeFiles/serial.dir/src/impl/list_ports/list_ports_linux.cc.o[0m
+[0.476s] [01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:[m[K In function ‘[01m[Kstd::vector<std::__cxx11::basic_string<char> > glob(const std::vector<std::__cxx11::basic_string<char> >&)[m[K’:
+[0.477s] [01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:64:9:[m[K [01;31m[Kerror: [m[K‘[01m[Kglob_retval[m[K’ was not declared in this scope
+[0.477s]    64 |         [01;31m[Kglob_retval[m[K = glob(iter->c_str(), GLOB_APPEND, NULL, &glob_results);
+[0.477s]       |         [01;31m[K^~~~~~~~~~~[m[K
+[0.481s] [01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:[m[K In function ‘[01m[Kstd::string format(const char*, ...)[m[K’:
+[0.481s] [01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:247:31:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: ‘[01m[Kint[m[K’ and ‘[01m[Ksize_t[m[K’ {aka ‘[01m[Klong unsigned int[m[K’} [[01;35m[K-Wsign-compare[m[K]
+[0.481s]   247 |         else if( [01;35m[Kreturn_value >= buffer_size_bytes[m[K )
+[0.481s]       |                  [01;35m[K~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~[m[K
+[0.600s] make[2]: *** [CMakeFiles/serial.dir/build.make:89: CMakeFiles/serial.dir/src/impl/list_ports/list_ports_linux.cc.o] Error 1
+[0.600s] make[1]: *** [CMakeFiles/Makefile2:78: CMakeFiles/serial.dir/all] Error 2
+[0.600s] make: *** [Makefile:141: all] Error 2
+[0.603s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4

@@ -25,7 +25,6 @@ static THD_FUNCTION(GenerateWave_T, arg) {
     float timestamp = ((float)(micros() - t0))/1.0e3;  
     
     float value=3.3*sin(2*M_PI*FREQ*((float)idx)/1.0e4);          
-    //float value=timestamp;
     
     floatSample_t thisSample;
     thisSample.timestamp=timestamp;

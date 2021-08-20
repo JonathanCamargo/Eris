@@ -1,0 +1,24 @@
+[35m[1mScanning dependencies of target serial[0m
+[ 25%] [32mBuilding CXX object CMakeFiles/serial.dir/src/impl/list_ports/list_ports_linux.cc.o[0m
+[01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:[m[K In function ‘[01m[Kstd::string format(const char*, ...)[m[K’:
+[01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:248:31:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: ‘[01m[Kint[m[K’ and ‘[01m[Ksize_t[m[K’ {aka ‘[01m[Klong unsigned int[m[K’} [[01;35m[K-Wsign-compare[m[K]
+  248 |         else if( [01;35m[Kreturn_value >= buffer_size_bytes[m[K )
+      |                  [01;35m[K~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~[m[K
+[ 50%] [32m[1mLinking CXX static library libserial.a[0m
+[100%] Built target serial
+-- Install configuration: ""
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/ament_index/resource_index/package_run_dependencies/serial
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/ament_index/resource_index/parent_prefix_path/serial
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/ament_prefix_path.sh
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/ament_prefix_path.dsv
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/path.sh
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/path.dsv
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.bash
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.sh
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.zsh
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.dsv
+-- Installing: /home/ossip/mygit/Eris/c/install/serial/share/serial/package.dsv
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/ament_index/resource_index/packages/serial
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/cmake/serialConfig.cmake
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/cmake/serialConfig-version.cmake
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/package.xml

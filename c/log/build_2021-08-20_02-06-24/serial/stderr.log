@@ -1,0 +1,4 @@
+[01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:[m[K In function ‘[01m[Kstd::string format(const char*, ...)[m[K’:
+[01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:244:26:[m[K [01;35m[Kwarning: [m[Kcomparison of unsigned expression < 0 is always false [[01;35m[K-Wtype-limits[m[K]
+  244 |         if( [01;35m[Kreturn_value < 0[m[K )
+      |             [01;35m[K~~~~~~~~~~~~~^~~[m[K

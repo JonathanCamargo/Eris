@@ -1,0 +1,31 @@
+[0.024s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4
+[0.066s] -- Found ament_cmake: 1.1.4 (/home/ossip/ros2_galactic/ros2-linux/share/ament_cmake/cmake)
+[0.097s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[0.190s] -- Found ament_lint_auto: 0.10.6 (/home/ossip/ros2_galactic/ros2-linux/share/ament_lint_auto/cmake)
+[0.284s] CMake Warning (dev) at /home/ossip/ros2_galactic/ros2-linux/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:41 (if):
+[0.285s]   Policy CMP0057 is not set: Support new IN_LIST if() operator.  Run "cmake
+[0.285s]   --help-policy CMP0057" for policy details.  Use the cmake_policy command to
+[0.285s]   set the policy and suppress this warning.
+[0.285s] 
+[0.285s]   IN_LIST will be interpreted as an operator when the policy is set to NEW.
+[0.285s]   Since the policy is not set the OLD behavior will be used.
+[0.285s] Call Stack (most recent call first):
+[0.285s]   /home/ossip/ros2_galactic/ros2-linux/share/ament_cmake_core/cmake/core/ament_package.cmake:66 (ament_execute_extensions)
+[0.285s]   CMakeLists.txt:97 (ament_package)
+[0.286s] This warning is for project developers.  Use -Wno-dev to suppress it.
+[0.286s] 
+[0.286s] CMake Error at /home/ossip/ros2_galactic/ros2-linux/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:41 (if):
+[0.286s]   if given arguments:
+[0.286s] 
+[0.286s]     "ament_cmake_core" "IN_LIST" "_ARG_EXCLUDE"
+[0.286s] 
+[0.286s]   Unknown arguments specified
+[0.286s] Call Stack (most recent call first):
+[0.286s]   /home/ossip/ros2_galactic/ros2-linux/share/ament_cmake_core/cmake/core/ament_package.cmake:66 (ament_execute_extensions)
+[0.286s]   CMakeLists.txt:97 (ament_package)
+[0.286s] 
+[0.287s] 
+[0.287s] -- Configuring incomplete, errors occurred!
+[0.287s] See also "/home/ossip/mygit/Eris/c/build/serial/CMakeFiles/CMakeOutput.log".
+[0.288s] make: *** [Makefile:172: cmake_check_build_system] Error 1
+[0.290s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4

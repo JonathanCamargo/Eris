@@ -1,0 +1,8 @@
+[0.020s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial
+[0.038s] CMake Error at CMakeLists.txt:20:
+[0.038s]   Parse error.  Expected a command name, got right paren with text ")".
+[0.038s] 
+[0.039s] 
+[0.039s] -- Configuring incomplete, errors occurred!
+[0.039s] See also "/home/ossip/mygit/Eris/c/build/serial/CMakeFiles/CMakeOutput.log".
+[0.041s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '1': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial

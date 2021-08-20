@@ -1,0 +1,28 @@
+[0.021s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4
+[0.081s] [35m[1mScanning dependencies of target serial[0m
+[0.097s] [ 25%] [32mBuilding CXX object CMakeFiles/serial.dir/src/impl/list_ports/list_ports_linux.cc.o[0m
+[0.446s] [01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:[m[K In function ‘[01m[Kstd::string format(const char*, ...)[m[K’:
+[0.446s] [01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:248:31:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: ‘[01m[Kint[m[K’ and ‘[01m[Ksize_t[m[K’ {aka ‘[01m[Klong unsigned int[m[K’} [[01;35m[K-Wsign-compare[m[K]
+[0.446s]   248 |         else if( [01;35m[Kreturn_value >= buffer_size_bytes[m[K )
+[0.446s]       |                  [01;35m[K~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~[m[K
+[0.715s] [ 50%] [32m[1mLinking CXX static library libserial.a[0m
+[0.768s] [100%] Built target serial
+[0.782s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4
+[0.843s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --install /home/ossip/mygit/Eris/c/build/serial
+[0.857s] -- Install configuration: ""
+[0.857s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/ament_index/resource_index/package_run_dependencies/serial
+[0.858s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/ament_index/resource_index/parent_prefix_path/serial
+[0.858s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/ament_prefix_path.sh
+[0.858s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/ament_prefix_path.dsv
+[0.858s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/path.sh
+[0.858s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/environment/path.dsv
+[0.858s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.bash
+[0.859s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.sh
+[0.859s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.zsh
+[0.859s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/local_setup.dsv
+[0.859s] -- Installing: /home/ossip/mygit/Eris/c/install/serial/share/serial/package.dsv
+[0.859s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/ament_index/resource_index/packages/serial
+[0.859s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/cmake/serialConfig.cmake
+[0.859s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/cmake/serialConfig-version.cmake
+[0.859s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/share/serial/package.xml
+[0.862s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --install /home/ossip/mygit/Eris/c/build/serial

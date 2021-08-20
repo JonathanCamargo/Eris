@@ -1,0 +1,35 @@
+[0.021s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial
+[0.119s] -- The C compiler identification is GNU 9.3.0
+[0.217s] -- The CXX compiler identification is GNU 9.3.0
+[0.227s] -- Check for working C compiler: /usr/bin/cc
+[0.325s] -- Check for working C compiler: /usr/bin/cc -- works
+[0.326s] -- Detecting C compiler ABI info
+[0.420s] -- Detecting C compiler ABI info - done
+[0.440s] -- Detecting C compile features
+[0.441s] -- Detecting C compile features - done
+[0.446s] -- Check for working CXX compiler: /usr/bin/c++
+[0.556s] -- Check for working CXX compiler: /usr/bin/c++ -- works
+[0.558s] -- Detecting CXX compiler ABI info
+[0.675s] -- Detecting CXX compiler ABI info - done
+[0.697s] -- Detecting CXX compile features
+[0.698s] -- Detecting CXX compile features - done
+[0.733s] CMake Error at CMakeLists.txt:5 (find_package):
+[0.733s]   By not providing "Findcatkin.cmake" in CMAKE_MODULE_PATH this project has
+[0.733s]   asked CMake to find a package configuration file provided by "catkin", but
+[0.733s]   CMake did not find one.
+[0.733s] 
+[0.734s]   Could not find a package configuration file provided by "catkin" with any
+[0.734s]   of the following names:
+[0.734s] 
+[0.734s]     catkinConfig.cmake
+[0.734s]     catkin-config.cmake
+[0.734s] 
+[0.734s]   Add the installation prefix of "catkin" to CMAKE_PREFIX_PATH or set
+[0.735s]   "catkin_DIR" to a directory containing one of the above files.  If "catkin"
+[0.735s]   provides a separate development package or SDK, be sure it has been
+[0.735s]   installed.
+[0.735s] 
+[0.735s] 
+[0.735s] -- Configuring incomplete, errors occurred!
+[0.736s] See also "/home/ossip/mygit/Eris/c/build/serial/CMakeFiles/CMakeOutput.log".
+[0.738s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '1': /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial

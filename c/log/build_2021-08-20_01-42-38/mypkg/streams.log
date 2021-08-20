@@ -1,0 +1,25 @@
+[0.022s] Invoking command in '/home/ossip/mygit/Eris/c/build/mypkg': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/mypkg -- -j4 -l4
+[0.080s] [35m[1mScanning dependencies of target mynode[0m
+[0.118s] [ 50%] [32mBuilding CXX object CMakeFiles/mynode.dir/src/mynode.cpp.o[0m
+[0.159s] [100%] [32m[1mLinking CXX executable mynode[0m
+[0.237s] [100%] Built target mynode
+[0.254s] Invoked command in '/home/ossip/mygit/Eris/c/build/mypkg' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/mypkg -- -j4 -l4
+[0.312s] Invoking command in '/home/ossip/mygit/Eris/c/build/mypkg': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --install /home/ossip/mygit/Eris/c/build/mypkg
+[0.328s] -- Install configuration: ""
+[0.328s] -- Installing: /home/ossip/mygit/Eris/c/install/mypkg/lib/mypkg/mynode
+[0.328s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/ament_index/resource_index/package_run_dependencies/mypkg
+[0.329s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/ament_index/resource_index/parent_prefix_path/mypkg
+[0.329s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/environment/ament_prefix_path.sh
+[0.329s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/environment/ament_prefix_path.dsv
+[0.329s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/environment/path.sh
+[0.329s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/environment/path.dsv
+[0.329s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/local_setup.bash
+[0.330s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/local_setup.sh
+[0.330s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/local_setup.zsh
+[0.330s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/local_setup.dsv
+[0.330s] -- Installing: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/package.dsv
+[0.331s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/ament_index/resource_index/packages/mypkg
+[0.331s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/cmake/mypkgConfig.cmake
+[0.331s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/cmake/mypkgConfig-version.cmake
+[0.331s] -- Up-to-date: /home/ossip/mygit/Eris/c/install/mypkg/share/mypkg/package.xml
+[0.334s] Invoked command in '/home/ossip/mygit/Eris/c/build/mypkg' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --install /home/ossip/mygit/Eris/c/build/mypkg

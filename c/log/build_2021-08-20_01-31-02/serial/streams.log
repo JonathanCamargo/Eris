@@ -1,0 +1,28 @@
+[0.021s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial
+[0.048s] -- Found ament_cmake: 1.1.4 (/home/ossip/ros2_galactic/ros2-linux/share/ament_cmake/cmake)
+[0.080s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[0.176s] -- Configuring done
+[0.182s] -- Generating done
+[0.183s] -- Build files have been written to: /home/ossip/mygit/Eris/c/build/serial
+[0.186s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake /home/ossip/mygit/Eris/c/serial -DCMAKE_INSTALL_PREFIX=/home/ossip/mygit/Eris/c/install/serial
+[0.191s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4
+[0.249s] [35m[1mScanning dependencies of target serial[0m
+[0.266s] [ 16%] [32mBuilding CXX object CMakeFiles/serial.dir/src/impl/unix.cc.o[0m
+[0.271s] [ 50%] [32mBuilding CXX object CMakeFiles/serial.dir/src/impl/list_ports/list_ports_linux.cc.o[0m
+[0.271s] [ 50%] [32mBuilding CXX object CMakeFiles/serial.dir/src/serial.cc.o[0m
+[1.302s] [ 66%] [32m[1mLinking CXX static library libserial.a[0m
+[1.359s] [ 66%] Built target serial
+[1.374s] [35m[1mScanning dependencies of target serial_example[0m
+[1.389s] [ 83%] [32mBuilding CXX object CMakeFiles/serial_example.dir/examples/serial_example.cc.o[0m
+[1.842s] [100%] [32m[1mLinking CXX executable serial_example[0m
+[1.969s] [100%] Built target serial_example
+[1.991s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/serial -- -j4 -l4
+[2.050s] Invoking command in '/home/ossip/mygit/Eris/c/build/serial': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --install /home/ossip/mygit/Eris/c/build/serial
+[2.063s] -- Install configuration: ""
+[2.063s] -- Installing: /home/ossip/mygit/Eris/c/install/serial/lib/libserial.a
+[2.064s] CMake Error at cmake_install.cmake:53 (file):
+[2.064s]   file cannot create directory: /serial.  Maybe need administrative
+[2.064s]   privileges.
+[2.064s] 
+[2.064s] 
+[2.066s] Invoked command in '/home/ossip/mygit/Eris/c/build/serial' returned '1': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --install /home/ossip/mygit/Eris/c/build/serial

@@ -1,0 +1,2 @@
+Invoking command in '/home/ossip/mygit/Eris/c/build/mypkg': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/mypkg -- -j4 -l4
+Invoked command in '/home/ossip/mygit/Eris/c/build/mypkg' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/galactic /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/mypkg -- -j4 -l4

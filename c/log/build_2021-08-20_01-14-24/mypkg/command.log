@@ -1,0 +1,2 @@
+Invoking command in '/home/ossip/mygit/Eris/c/build/mypkg': /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/mypkg -- -j4 -l4
+Invoked command in '/home/ossip/mygit/Eris/c/build/mypkg' returned '2': /usr/bin/cmake --build /home/ossip/mygit/Eris/c/build/mypkg -- -j4 -l4

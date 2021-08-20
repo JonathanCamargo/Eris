@@ -1,0 +1,24 @@
+CMake Warning (dev) at /home/ossip/ros2_galactic/ros2-linux/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:41 (if):
+  Policy CMP0057 is not set: Support new IN_LIST if() operator.  Run "cmake
+  --help-policy CMP0057" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+  IN_LIST will be interpreted as an operator when the policy is set to NEW.
+  Since the policy is not set the OLD behavior will be used.
+Call Stack (most recent call first):
+  /home/ossip/ros2_galactic/ros2-linux/share/ament_cmake_core/cmake/core/ament_package.cmake:66 (ament_execute_extensions)
+  CMakeLists.txt:88 (ament_package)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Error at /home/ossip/ros2_galactic/ros2-linux/share/ament_cmake_core/cmake/core/ament_execute_extensions.cmake:41 (if):
+  if given arguments:
+
+    "ament_cmake_core" "IN_LIST" "_ARG_EXCLUDE"
+
+  Unknown arguments specified
+Call Stack (most recent call first):
+  /home/ossip/ros2_galactic/ros2-linux/share/ament_cmake_core/cmake/core/ament_package.cmake:66 (ament_execute_extensions)
+  CMakeLists.txt:88 (ament_package)
+
+
+make: *** [Makefile:370: cmake_check_build_system] Error 1

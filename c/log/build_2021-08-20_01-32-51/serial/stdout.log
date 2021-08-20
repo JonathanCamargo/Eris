@@ -1,0 +1,6 @@
+[ 66%] Built target serial
+[100%] Built target serial_example
+-- Install configuration: ""
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/lib/libserial.a
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/lib/serial/serial.h
+-- Up-to-date: /home/ossip/mygit/Eris/c/install/serial/lib/serial/v8stdint.h
