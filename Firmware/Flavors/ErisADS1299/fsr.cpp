@@ -10,7 +10,7 @@
 
 namespace FSR{
   
-thread_t * newSample = NULL;
+eris_thread_ref_t newSample = NULL;
 
 
 static const uint8_t pin_channels[FSR_NUMCHANNELS]={PIN_FSR};
@@ -19,13 +19,13 @@ static const uint8_t pin_channels[FSR_NUMCHANNELS]={PIN_FSR};
 ErisBuffer<FSRSample_t> buffer ;
 
 // Semaphore to feature extractor
-static binary_semaphore_t xsamplesSemaphore;
+static eris_binary_sem_t xsamplesSemaphore;
 
 // Indices and flags
 
  
-static THD_WORKING_AREA(waNewSample_T, 128);
-static THD_FUNCTION(NewSample_T, arg) {    
+ERIS_THREAD_WA(waNewSample_T, 128);
+ERIS_THREAD_FUNC(NewSample_T) {    
   while(1){
     float timestamp = ((float)(micros() - SDCard::startTime))/1.0e3;     
     FSRSample_t thisSample;
@@ -40,13 +40,13 @@ static THD_FUNCTION(NewSample_T, arg) {
 	#if SDCARD
 	   SDCard::fsrbuffer.append(thisSample);
 	#endif 	
-    chThdSleepMilliseconds(10);    
+    eris_sleep_ms(10);
   }
 }
 
 void start(void){   
     buffer.init();                    
-    chBSemObjectInit(&xsamplesSemaphore,true);        
+    eris_bsem_init(&xsamplesSemaphore,true);
 	//Configure ADC for FSR
     pinMode(26,OUTPUT);
     digitalWrite(26,HIGH);
@@ -54,6 +54,6 @@ void start(void){
     analogReadRes(10); // set bits of resolution   
     
 	// create tasks at priority lowest priority
-    newSample=chThdCreateStatic(waNewSample_T, sizeof(waNewSample_T),NORMALPRIO+1, NewSample_T, NULL);
+    newSample=eris_thread_create(waNewSample_T, 128, NORMALPRIO+1, NewSample_T, NULL);
   }
 }

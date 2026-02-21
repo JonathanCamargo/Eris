@@ -10,8 +10,8 @@
 namespace SDCard{
     
 const int chipSelect = BUILTIN_SDCARD;    
-thread_t *writeFiles = NULL;
-static binary_semaphore_t xwriteDataSemaphore;
+eris_thread_ref_t writeFiles = NULL;
+static eris_binary_sem_t xwriteDataSemaphore;
 static bool recording=false;  
 static bool isSDOK=false;
 long startTime=0;
@@ -34,12 +34,12 @@ ErisBuffer<floatSample_t> sinebuffer;
 ErisBuffer<uint8_tSample_t> syncbuffer;
 
 //Thread for periodically writing on the sdcard
-static THD_WORKING_AREA(waWriteFiles_T, 8192);
-static THD_FUNCTION(WriteFiles_T, arg) {  
+ERIS_THREAD_WA(waWriteFiles_T, 8192);
+ERIS_THREAD_FUNC(WriteFiles_T) {  
   while(true){            
-    msg_t msg = chBSemWaitTimeout(&xwriteDataSemaphore, MS2ST(TIME_IMMEDIATE));
-    if (msg == MSG_TIMEOUT) {  
-      chThdSleepMilliseconds(10);            
+    eris_msg_t msg = eris_bsem_wait_timeout(&xwriteDataSemaphore, ERIS_TIME_IMMEDIATE);
+    if (msg == ERIS_MSG_TIMEOUT) {
+      eris_sleep_ms(10);
       continue;
     }          
     // Recording for each file
@@ -50,8 +50,8 @@ static THD_FUNCTION(WriteFiles_T, arg) {
     //digitalWrite(PIN_LED,!digitalRead(PIN_LED));
     
     //digitalWrite(PIN_LED_R,!digitalRead(PIN_LED_R));
-    chBSemSignal(&xwriteDataSemaphore);         
-    chThdSleepMilliseconds(50);   
+    eris_bsem_signal(&xwriteDataSemaphore);
+    eris_sleep_ms(50);
   }
 }
 
@@ -124,17 +124,17 @@ bool initSD(void){
     }    
 }
 void StopRecording(void){
-  chSysLockFromISR();
-  recording=false;  
-  chBSemReset(&xwriteDataSemaphore,true);
-  chSysUnlockFromISR();    
+  ERIS_CRITICAL_ENTER();
+  recording=false;
+  eris_bsem_reset(&xwriteDataSemaphore,true);
+  ERIS_CRITICAL_EXIT();    
   sineFile.close();
   fsrFile.close(); 
   syncFile.close();       
 }
 
 bool StartRecording(void){
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   // Check SD and create files
   if (!isSDOK){
     Error::RaiseError(MEMORY,(char *)F("SDCARD:isSDOK")); 
@@ -149,20 +149,20 @@ bool StartRecording(void){
   }    
   ResetTime();
   recording=true;     
-  chBSemSignal(&xwriteDataSemaphore); 
-  chSysUnlockFromISR();
+  eris_bsem_signal(&xwriteDataSemaphore);
+  ERIS_CRITICAL_EXIT();
   //unlock mutex to make the LED blink  
   return recording; 
 }
 
-void ResetTime(){  
-  chSysLockFromISR();
-  startTime = micros(); 
-  
+void ResetTime(){
+  ERIS_CRITICAL_ENTER();
+  startTime = micros();
+
   fsrbuffer.clear();
   sinebuffer.clear();
   syncbuffer.clear();
-  chSysUnlockFromISR();
+  ERIS_CRITICAL_EXIT();
 }
 
 void setTrialName(char * newtrialname){
@@ -175,7 +175,7 @@ char* getTrialName() {
 
 void start(void){   
     recording=false;
-    chBSemObjectInit(&xwriteDataSemaphore,true);
+    eris_bsem_init(&xwriteDataSemaphore,true);
        
     // Initialize SDCard  
     initSD();
@@ -185,6 +185,6 @@ void start(void){
     syncbuffer.init();
     
     // create tasks at priority lowest priority
-    writeFiles=chThdCreateStatic(waWriteFiles_T, sizeof(waWriteFiles_T),NORMALPRIO, WriteFiles_T, NULL);
+    writeFiles=eris_thread_create(waWriteFiles_T, 8192, NORMALPRIO, WriteFiles_T, NULL);
  }
 }

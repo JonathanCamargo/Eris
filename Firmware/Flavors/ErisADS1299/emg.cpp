@@ -11,8 +11,8 @@
 
 namespace EMG{
   
-thread_t *extractFeaturesEMG = NULL;
-thread_t *readSensor1 = NULL;
+eris_thread_ref_t extractFeaturesEMG = NULL;
+eris_thread_ref_t readSensor1 = NULL;
 
 //Buffer for readings 
 ErisBuffer<EMGSample_t> buffer;
@@ -28,12 +28,12 @@ FilterOnePole *filterhp[EMG_NUMCHANNELS];
 static uint16_t buffersize = sensor1.bufferSize();
 
 // Semaphore for collecting the data in sensor1 buffer
-static binary_semaphore_t xsensor1FullSemaphore;
+static eris_binary_sem_t xsensor1FullSemaphore;
 
 float * data[EMG_NUMCHANNELS];
 
 static void ISR_NewSample(){
-	chSysLockFromISR();    
+	ERIS_CRITICAL_ENTER();    
   float timestamp = ((float)(micros() - SDCard::startTime))/1000.0;  
 	if (sensor1.collectData()) {
 	
@@ -56,7 +56,7 @@ static void ISR_NewSample(){
     SDCard::emgbuffer.append(thisSample);
     #endif
   
-    chSysUnlockFromISR();    
+    ERIS_CRITICAL_EXIT();    
 }
 
 /*
@@ -92,7 +92,7 @@ void start(void){
     // Start ErisBuffers        
     buffer.init();     
     
-    chBSemObjectInit(&xsensor1FullSemaphore,true);    
+    eris_bsem_init(&xsensor1FullSemaphore,true);
     
     //Set up ADC chip	    	  
     pinMode(PIN_EMG_ADC0_DRDY,INPUT_PULLUP);
