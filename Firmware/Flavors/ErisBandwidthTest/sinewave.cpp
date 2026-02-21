@@ -3,7 +3,7 @@
 
 namespace SineWave{
 	
-thread_t *generateWave = NULL;
+eris_thread_ref_t generateWave = NULL;
 
 //Buffer for readings 
 ErisBuffer<floatSample_t> buffer;
@@ -12,8 +12,8 @@ ErisBuffer<multiSample_t> buffer2;
 
 static const float FREQ=1;
   
-static THD_WORKING_AREA(waGenerateWave_T, 128);
-static THD_FUNCTION(GenerateWave_T, arg) {  
+ERIS_THREAD_WA(waGenerateWave_T, 128);
+ERIS_THREAD_FUNC(GenerateWave_T) {  
   static long idx=0;
   static floatSample_t thisSample;
   static multiSample_t mSample;
@@ -42,7 +42,7 @@ static THD_FUNCTION(GenerateWave_T, arg) {
     }
     buffer2.append(mSample);
    
-    chThdSleepMilliseconds(10);    
+    eris_sleep_ms(10);
   }
 }
 
@@ -51,7 +51,7 @@ static THD_FUNCTION(GenerateWave_T, arg) {
     buffer.init();
     buffer2.init();
     // create tasks at priority lowest priority
-    generateWave=chThdCreateStatic(waGenerateWave_T, sizeof(waGenerateWave_T),NORMALPRIO+1, GenerateWave_T, NULL);
+    generateWave=eris_thread_create(waGenerateWave_T, 128, NORMALPRIO+1, GenerateWave_T, NULL);
 	}
 	
 	
