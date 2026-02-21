@@ -10,14 +10,14 @@
 
 #include <Arduino.h>
 
-#include <ChRt.h>
+#include <eris_rtos.h>
 
 void ResetTime();
 
 extern const char firmwareInfo[];
 extern char strbuffer[STRBUFFERSIZE]; // Buffer for str data for use across all files
 
-extern mutex_t mtxhb;
+extern eris_mutex_t mtxhb;
 extern long t0;
 
 #endif

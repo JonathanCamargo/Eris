@@ -17,7 +17,7 @@
 
 namespace Features{
 
-  thread_t * extractRegression = NULL;
+  eris_thread_ref_t extractRegression = NULL;
 
   // Regression Settings
   uint8_t regIdx = 0; // index for which regression helper
@@ -32,8 +32,8 @@ namespace Features{
   static Packet packet;
   bool en_features = false;            //Flag that enables features
 
-  static THD_WORKING_AREA(waExtractRegression_T, 1024);
-  static THD_FUNCTION(ExtractRegression_T, arg) {   
+  ERIS_THREAD_WA(waExtractRegression_T, 1024);
+  ERIS_THREAD_FUNC(ExtractRegression_T) {   
     //static systime_t nextTime= chVTGetSystemTimeX(); // T0  
     while(1){
       //nextTime+=MS2ST(FEATURES_REGRESSION_PERIOD_MS); This was giving problems :( Still don't understand
@@ -44,7 +44,7 @@ namespace Features{
         uint8_t numFeatures=RegressionFeatures[regIdx].numFeatures();      
         float * features=RegressionFeatures[regIdx].getFeatures();
         // Send the features
-        chSysLockFromISR();
+        ERIS_CRITICAL_ENTER();
         packet.start(Packet::PacketType::REGRESSION);
         packet.append((uint8_t *)&timestamp,sizeof(float));
         packet.append((uint8_t *)&numFeatures,sizeof(uint8_t));
@@ -58,10 +58,10 @@ namespace Features{
         
         packet.send();
         
-        chSysUnlockFromISR();
+        ERIS_CRITICAL_EXIT();
         digitalWrite(PIN_LED, LOW);
       }
-      chThdSleepMilliseconds(regInc);    
+      eris_sleep_ms(regInc);    
     }
   }
 
@@ -72,7 +72,7 @@ namespace Features{
       uint8_t numFeatures=ClassificationFeatures[classIdx].numFeatures();      
       float * features=ClassificationFeatures[classIdx].getFeatures();
       // Send the features
-      chSysLockFromISR();
+      ERIS_CRITICAL_ENTER();
       packet.start(Packet::PacketType::CLASSIFIER);
       packet.append((uint8_t *)&timestamp,sizeof(float));
       packet.append((uint8_t *)&numFeatures,sizeof(uint8_t));
@@ -84,7 +84,7 @@ namespace Features{
 
       packet.send();
       
-      chSysUnlockFromISR();
+      ERIS_CRITICAL_EXIT();
     }
   }
 
@@ -186,7 +186,7 @@ void Default(){
     }
     
     // create task at normal priority
-    extractRegression=chThdCreateStatic(waExtractRegression_T, sizeof(waExtractRegression_T),NORMALPRIO+1, ExtractRegression_T, NULL);
+    extractRegression=eris_thread_create(waExtractRegression_T, 1024,NORMALPRIO+1, ExtractRegression_T, NULL);
   }
   
 }

@@ -19,7 +19,7 @@ namespace Biom{
   ErisBuffer<BiomSample_t> buffer;
   
   // Semaphore to feature extractor
-  static binary_semaphore_t xsamplesSemaphore;
+  static eris_binary_sem_t xsamplesSemaphore;
   
   // Indices and flags
   long idx = 0;
@@ -29,9 +29,9 @@ namespace Biom{
   ////////////////////////////////////////////////////////
 
   static void ISR_NewSample(){
-  	chSysLockFromISR();
+  	ERIS_CRITICAL_ENTER();
     
-    chBSemSignalI(&xsamplesSemaphore);
+    eris_bsem_signal_i(&xsamplesSemaphore);
     
     BiomSample_t thisSample;
       
@@ -59,7 +59,7 @@ namespace Biom{
     //  idx = -100;
     //}
     
-    chSysUnlockFromISR();
+    ERIS_CRITICAL_EXIT();
   }
 
   void RegisterExtractors(FeaturesHelper * featuresHelper){
@@ -76,7 +76,7 @@ namespace Biom{
   void start(void){
 
     buffer.init();
-    chBSemObjectInit(&xsamplesSemaphore,true);
+    eris_bsem_init(&xsamplesSemaphore,true);
     // Timer interrupt to take the ADC samples        
     //Set up ADC
     analogReadAveraging(4); // set number of averages
