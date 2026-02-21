@@ -10,7 +10,7 @@
 
 #include <Arduino.h>
 
-#include <ChRt.h>
+#include <eris_rtos.h>
 
 extern const char firmwareInfo[];
 extern char strbuffer[STRBUFFERSIZE];   // Buffer for str data for use across all files
@@ -18,7 +18,7 @@ extern char strbuffer[STRBUFFERSIZE];   // Buffer for str data for use across al
 extern long t0; // Global start time for all modules
 
 //Mutex to take control of the LED
-extern mutex_t mtxhb;
+extern eris_mutex_t mtxhb;
 
 
 #endif
