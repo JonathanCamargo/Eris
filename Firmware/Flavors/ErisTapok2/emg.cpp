@@ -9,8 +9,8 @@
 
 namespace EMG{
   
-thread_t *extractFeaturesEMG = NULL;
-thread_t *readAnalog = NULL;
+eris_thread_ref_textractFeaturesEMG = NULL;
+eris_thread_ref_treadAnalog = NULL;
 
 Tapok emg(EMG_GAIN); //Tapok object to read the data
 
@@ -21,11 +21,11 @@ ErisBuffer<EMGSample_t> emgbuffer2;
 ErisBuffer<EMGSample_t> emgbuffer3;
 
 // Semaphore to feature extractor
-static binary_semaphore_t xsamplesSemaphore;
+static eris_binary_sem_t xsamplesSemaphore;
 
 // Indices and flags
 static void ISR_NewSample(){  
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   digitalWrite(PIN_LED,HIGH);
   float timestamp = ((float)(micros() - SDCard::startTime))/1000.0;  
   //Sample every channel
@@ -46,7 +46,7 @@ static void ISR_NewSample(){
     emgbuffer3.append(thisSample);
   #endif 
   digitalWrite(PIN_LED,LOW);
-  chSysUnlockFromISR();  
+  ERIS_CRITICAL_EXIT();  
 }
 
 void start(void){ 
@@ -58,7 +58,7 @@ void start(void){
     emgbuffer2.init();
     emgbuffer3.init();
     //Start samples semaphore for feature extraction
-    chBSemObjectInit(&xsamplesSemaphore,true);    
+    eris_bsem_init(&xsamplesSemaphore,true);    
     
     // Initialize interrupt to take the samples      
     emg.connect();     

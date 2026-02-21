@@ -10,7 +10,7 @@
 
 namespace FSR{
   
-thread_t *readAnalog = NULL;
+eris_thread_ref_treadAnalog = NULL;
 
 IntervalTimer timer0; // Timer for ADC
 
@@ -20,12 +20,12 @@ static const uint8_t pin_channels[FSR_NUMCHANNELS]={PIN_FSR};
 ErisBuffer<FSRSample_t> buffer ;
 
 // Semaphore to feature extractor
-static binary_semaphore_t xsamplesSemaphore;
+static eris_binary_sem_t xsamplesSemaphore;
 
 // Indices and flags
 
 static void ISR_NewSample(){  
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   float timestamp = ((float)(micros() - SerialCom::startTime))/1.0e3;  
   FSRSample_t thisSample;
   thisSample.timestamp=timestamp;  
@@ -39,12 +39,12 @@ static void ISR_NewSample(){
   #if SDCARD
       SDCard::addFSR(thisSample);
   #endif 
-  chSysUnlockFromISR();  
+  ERIS_CRITICAL_EXIT();  
 }
 
 void start(void){   
     buffer.init();                    
-    chBSemObjectInit(&xsamplesSemaphore,true);        
+    eris_bsem_init(&xsamplesSemaphore,true);        
     // Timer interrupt to take the ADC samples        
     //Set up ADC
     analogReadAveraging(4); // set number of averages

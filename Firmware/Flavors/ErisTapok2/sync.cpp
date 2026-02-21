@@ -21,7 +21,7 @@ ErisBuffer<boolSample_t> buffer ;
 // Indices and flags
 
 static void ISR_SYNC_CHANGE(){  
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   float timestamp = ((float)(micros() - SerialCom::startTime))/1.0e3;   
   boolSample_t thisSample;
   thisSample.timestamp=timestamp;    
@@ -30,7 +30,7 @@ static void ISR_SYNC_CHANGE(){
   #if SDCARD
       SDCard::addSync(thisSample);
   #endif
-  chSysUnlockFromISR();  
+  ERIS_CRITICAL_EXIT();  
 }
 
 void start(void){   

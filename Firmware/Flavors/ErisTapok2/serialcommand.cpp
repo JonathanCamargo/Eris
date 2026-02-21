@@ -22,8 +22,8 @@ namespace SerialCom{
 
   SerialCommand sCmd;
 
-  thread_t *readSerial = NULL;
-  thread_t *streamSerial = NULL;
+  eris_thread_ref_treadSerial = NULL;
+  eris_thread_ref_tstreamSerial = NULL;
   static bool stream_en=false;
 
   long startTime = 0;
@@ -31,22 +31,22 @@ namespace SerialCom{
   
   /********************** Threads *********************************/
   //To process //Serial commands
-  static THD_WORKING_AREA(waReadSerial_T, 1024);
-	static THD_FUNCTION(ReadSerial_T, arg) {
+  ERIS_THREAD_WA(waReadSerial_T, 1024);
+	ERIS_THREAD_FUNC(ReadSerial_T) {
     while(1){
 		  sCmd.readSerial();
-		  chThdSleepMilliseconds(100);
+		  eris_sleep_ms(100);
     }
 	}
 
   //To process //Serial commands
-  static THD_WORKING_AREA(waStreamSerial_T, 1024);
-  static THD_FUNCTION(StreamSerial_T, arg) {    
+  ERIS_THREAD_WA(waStreamSerial_T, 1024);
+  ERIS_THREAD_FUNC(StreamSerial_T) {    
     while(1){
       if (stream_en){
         stream();  
       }                        
-      chThdSleepMilliseconds(10);
+      eris_sleep_ms(10);
     }
   }
  
@@ -79,8 +79,8 @@ namespace SerialCom{
     Serial.println("Serial Commands are ready");
 
     // create task at priority one
-    readSerial=chThdCreateStatic(waReadSerial_T, sizeof(waReadSerial_T),NORMALPRIO, ReadSerial_T, NULL);
-    streamSerial=chThdCreateStatic(waStreamSerial_T, sizeof(waStreamSerial_T),NORMALPRIO+3, StreamSerial_T, NULL);
+    readSerial=eris_thread_create(waReadSerial_T, sizeof(waReadSerial_T),NORMALPRIO, ReadSerial_T, NULL);
+    streamSerial=eris_thread_create(waStreamSerial_T, sizeof(waStreamSerial_T),NORMALPRIO+3, StreamSerial_T, NULL);
 
 	}
 
@@ -136,7 +136,7 @@ void StreamingStop(){
 
 void StreamingSetFeatures(){   
   char *arg;
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   Streaming::ClearFunctions();
   // Select the streaming function based on names
   arg = sCmd.next();
@@ -145,12 +145,12 @@ void StreamingSetFeatures(){
       if (!found){
         Error::RaiseError(COMMAND,(char *)"StreamingSetFeatures");
         Streaming::ClearFunctions();
-        chSysUnlockFromISR();        
+        ERIS_CRITICAL_EXIT();        
         return;
       }
       arg = sCmd.next();
   }      
-  chSysUnlockFromISR();
+  ERIS_CRITICAL_EXIT();
   Serial.println("Features Ready");   
 }
 
@@ -173,11 +173,11 @@ void LED_off() {
 }
 
 void TransmitSineWave(){
-   chSysLockFromISR();
+   ERIS_CRITICAL_ENTER();
    floatSample_t samples[MEMBUFFERSIZE];   
    int num=SineWave::buffer.FetchData(samples,(char*)"SINEWAVE",MEMBUFFERSIZE);
    long missed=SineWave::buffer.missed();   
-   chSysUnlockFromISR();   
+   ERIS_CRITICAL_EXIT();   
    Serial.print("SineWave:");   
    // Show number of missed points
    Serial.print("(missed:");
@@ -204,11 +204,11 @@ void TransmitSineWave(){
 }
 
 void TransmitEMG(){
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   EMGSample_t *samples=&emgsamples[0];
   int num=EMG::buffer.FetchData(samples,(char*)"EMG",MEMBUFFERSIZE);  
   long missed=EMG::buffer.missed();   
-  chSysUnlockFromISR();   
+  ERIS_CRITICAL_EXIT();   
   Serial.print("EMG[ch0]:");   
   // Show number of missed points
   Serial.print("(missed:");
@@ -236,11 +236,11 @@ void TransmitEMG(){
 
 
 void TransmitEMG2(){
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   EMGSample_t *samples=&emgsamples[0];
   int num=SDCard::emgbuffer.FetchData(samples,(char*)"EMG",MEMBUFFERSIZE);  
   long missed=SDCard::emgbuffer.missed();   
-  chSysUnlockFromISR();   
+  ERIS_CRITICAL_EXIT();   
   Serial.print("EMG[ch0]:");   
   // Show number of missed points
   Serial.print("(missed:");
@@ -267,11 +267,11 @@ void TransmitEMG2(){
 }
 
 void TransmitFSR(){    
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   FSRSample_t *samples=&fsrsamples[0];
   int num=FSR::buffer.FetchData(samples,(char*)"FSR",MEMBUFFERSIZE);
   long missed=FSR::buffer.missed();   
-  chSysUnlockFromISR();   
+  ERIS_CRITICAL_EXIT();   
   Serial.print("FSR[ch0]:");   
   // Show number of missed points
   Serial.print("(missed:");
@@ -299,11 +299,11 @@ void TransmitFSR(){
 
 
 void TransmitSync(){
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   boolSample_t *samples=&syncsamples[0];
   int num=Sync::buffer.FetchData(samples,(char*)"SYNC",MEMBUFFERSIZE);
   long missed=Sync::buffer.missed();   
-  chSysUnlockFromISR();   
+  ERIS_CRITICAL_EXIT();   
   Serial.print("Sync:");   
   // Show number of missed points
   Serial.print("(missed:");
