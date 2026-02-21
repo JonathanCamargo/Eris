@@ -12,19 +12,19 @@
 
 
 long t0=0; // Global start time for all modules 
-thread_t *thread1 = NULL;
+eris_thread_ref_t thread1 = NULL;
 const char firmwareInfo[]=FIRMWARE_INFO;
 
 /* ******************************** Global threads ************************************************** */
 
 // Mutex to enable or disable heartbeat
-static THD_WORKING_AREA(waThread1, 32);
-static THD_FUNCTION(Thread1, arg) {
+ERIS_THREAD_WA(waThread1, 32);
+ERIS_THREAD_FUNC(Thread1) {
   while (1) {
     // Sleep for 1000 milliseconds.
     // Toggle pin to show heartbeat    
     //digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-    chThdSleepMilliseconds(250);
+    eris_sleep_ms(250);
   }
 }
 /* ************************************************************************************************* */
@@ -34,7 +34,7 @@ void start(){
   // Initialize mutex for heartbeat
   //chMtxObjectInit(&mtxhb);
   /*************** Start Threads ************************/    
-  chThdCreateStatic(waThread1, sizeof(waThread1),
+  eris_thread_create(waThread1, 32,
                                    NORMALPRIO, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
 
@@ -62,7 +62,7 @@ void setup(){
   analogWrite(3, 10);
   
   //Start threads
-  chBegin(start);   
+  eris_scheduler_start(start);
    
   while(true){}
 }
@@ -71,5 +71,5 @@ void setup(){
 
 
 void loop(){    
-    chThdSleepMilliseconds(10000);
+    eris_sleep_ms(10000);
 }

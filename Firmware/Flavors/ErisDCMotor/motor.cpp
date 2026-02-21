@@ -4,7 +4,7 @@
 
 namespace Motor{
 	
-thread_t *updatepid = NULL;
+eris_thread_ref_t updatepid = NULL;
 
 //Buffer for readings 
 double input=0;
@@ -13,8 +13,8 @@ double setpoint=2.0;
 
 PID pid(&input,&output,&setpoint,10.0,0.1,0.1,1,1);
 
-static THD_WORKING_AREA(waUpdatePID_T, 128);
-static THD_FUNCTION(UpdatePID_T, arg) {  
+ERIS_THREAD_WA(waUpdatePID_T, 128);
+ERIS_THREAD_FUNC(UpdatePID_T) {  
   static long idx=0;
   while(1){        
     if (pid.Compute()){
@@ -22,7 +22,7 @@ static THD_FUNCTION(UpdatePID_T, arg) {
       Serial.print(",");
       Serial.println(output);
     }         
-    chThdSleepMilliseconds(20);    
+    eris_sleep_ms(20);    
   }
 }
 
@@ -30,7 +30,7 @@ static THD_FUNCTION(UpdatePID_T, arg) {
 	void start(void){        
     //buffer.init();
     // create tasks at priority lowest priority
-    updatepid=chThdCreateStatic(waUpdatePID_T, sizeof(waUpdatePID_T),NORMALPRIO+1, UpdatePID_T, NULL);
+    updatepid=eris_thread_create(waUpdatePID_T, 128,NORMALPRIO+1, UpdatePID_T, NULL);
     pinMode(PIN_MOT_0_A,OUTPUT);
     pinMode(PIN_MOT_0_B,OUTPUT);
     pid.SetMode(AUTOMATIC);

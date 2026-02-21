@@ -4,7 +4,7 @@
 
 namespace Potentiometer{
 	
-thread_t *readPotentiometer = NULL;
+eris_thread_ref_t readPotentiometer = NULL;
 
 uint8_t pins[POT_NUMCHANNELS]={PIN_POT_0};//{PIN_POT_0,PIN_POT_1};
 
@@ -13,8 +13,8 @@ ErisBuffer<PotentiometerSample_t> buffer;
 
 PotentiometerSample_t lastSample;
 
-static THD_WORKING_AREA(waReadPotentiometer_T, 128);
-static THD_FUNCTION(ReadPotentiometer_T, arg) {  
+ERIS_THREAD_WA(waReadPotentiometer_T, 128);
+ERIS_THREAD_FUNC(ReadPotentiometer_T) {  
   static long idx=0;
   while(1){
     float timestamp = ((float)(micros() - t0))/1.0e3;      
@@ -35,7 +35,7 @@ static THD_FUNCTION(ReadPotentiometer_T, arg) {
     buffer.append(thisSample); 
     //Update motor state
     Motor::UpdateMeasurement(thisSample.ch[0]);
-    chThdSleepMilliseconds(POT_PERIOD_MS);    
+    eris_sleep_ms(POT_PERIOD_MS);    
   }
 }
 
@@ -43,7 +43,7 @@ static THD_FUNCTION(ReadPotentiometer_T, arg) {
 	void start(void){        
     buffer.init();
     // create tasks at priority lowest priority
-    readPotentiometer=chThdCreateStatic(waReadPotentiometer_T, sizeof(waReadPotentiometer_T),NORMALPRIO+1, ReadPotentiometer_T, NULL);
+    readPotentiometer=eris_thread_create(waReadPotentiometer_T, 128,NORMALPRIO+1, ReadPotentiometer_T, NULL);
 	}
 	
 	
