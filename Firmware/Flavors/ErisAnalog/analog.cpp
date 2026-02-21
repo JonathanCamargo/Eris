@@ -12,13 +12,13 @@ uint32_t pins[ANALOG_NUMCHANNELS]={PINS_ANALOG};
 IntervalTimer timer0; // Timer for ADC
   
 //thread_t *extractFeaturesEMG = NULL;
-thread_t *readAnalog = NULL;
+eris_thread_ref_t readAnalog = NULL;
 
 //Buffer for readings 
 ErisBuffer<AnalogSample_t> buffer;
 
 static void ISR_NewSample(){
-	chSysLockFromISR();
+	ERIS_CRITICAL_ENTER();
 
   AnalogSample_t currSample; // Current sample
   float timestamp = ((float)(micros() - t0))/1.0e3;     
@@ -29,7 +29,7 @@ static void ISR_NewSample(){
     currSample.ch[i]=(float)(a)*3.3/1024;
   }
   buffer.append(currSample);            
-  chSysUnlockFromISR();
+  ERIS_CRITICAL_EXIT();
 }
 
   
