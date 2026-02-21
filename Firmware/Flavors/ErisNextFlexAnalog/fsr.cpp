@@ -3,14 +3,14 @@
 
 namespace FSR{
   
-thread_t *sampleFSR = NULL;
+eris_thread_ref_tsampleFSR = NULL;
 
 //Buffer for readings 
 ErisBuffer<FSRSample_t> buffer;
 
  
-static THD_WORKING_AREA(waSampleFSR_T, 128);
-static THD_FUNCTION(SampleFSR_T, arg) {  
+ERIS_THREAD_WA(waSampleFSR_T, 128);
+ERIS_THREAD_FUNC(SampleFSR_T) {  
   static long idx=0;
   while(1){
     
@@ -25,7 +25,7 @@ static THD_FUNCTION(SampleFSR_T, arg) {
     thisSample.ch[0]=value;    
     buffer.append(thisSample);      
        
-    chThdSleepMilliseconds(FSR_PERIOD_US/1000);    
+    eris_sleep_ms(FSR_PERIOD_US/1000);    
   }
 }
 
@@ -33,7 +33,7 @@ static THD_FUNCTION(SampleFSR_T, arg) {
   void start(void){        
     buffer.init();
     // create tasks at priority lowest priority
-    sampleFSR=chThdCreateStatic(waSampleFSR_T, sizeof(waSampleFSR_T),NORMALPRIO+1, SampleFSR_T, NULL);
+    sampleFSR=eris_thread_create(waSampleFSR_T, sizeof(waSampleFSR_T),NORMALPRIO+1, SampleFSR_T, NULL);
   }
   
   
