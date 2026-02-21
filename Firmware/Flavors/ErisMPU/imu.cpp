@@ -5,7 +5,7 @@
 
 namespace IMU{
   
-thread_t *readAnalog = NULL;
+eris_thread_ref_t readAnalog = NULL;
 
 IntervalTimer timer0; // Timer for triggering IMU collection
 
@@ -39,7 +39,7 @@ void IMUGetDataHelper(MPU9250 * imu, IMUSample_t & sample ){
 
 // Indices and flags
 static void ISR_NewSample(){  
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   float timestamp = ((float)(micros() - t0))/1000.0;  
   //Sample every channel
   IMUSample_t thisSample;
@@ -70,7 +70,7 @@ static void ISR_NewSample(){
   bufferFoot.append(thisSample);
   }
   
-  chSysUnlockFromISR();  
+  ERIS_CRITICAL_EXIT();  
 }
 
 void InitIMU(void){

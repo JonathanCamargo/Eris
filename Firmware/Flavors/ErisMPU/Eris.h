@@ -11,7 +11,7 @@
 
 #include <Arduino.h>
 
-#include <ChRt.h>
+#include <eris_rtos.h>
 
 extern const char firmwareInfo[];
 extern char strbuffer[STRBUFFERSIZE]; // Buffer for str data for use across all files
