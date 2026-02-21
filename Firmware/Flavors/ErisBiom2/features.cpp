@@ -7,9 +7,9 @@
 
 namespace Features{
 
-  thread_t *extractFeatures = NULL;
+  eris_thread_ref_t extractFeatures = NULL;
   // Mutex to feature extractor
-  mutex_t extractMtx;
+  eris_mutex_t extractMtx;
   
   typedef FeatureExtractor * FeatureExtractorPtr;
   FeatureExtractorPtr * extractor = new FeatureExtractorPtr[BIOM_NUMCHANNELS];
@@ -41,23 +41,23 @@ namespace Features{
   bool en_features = false;//Flag that enables features
   volatile bool extractingFeatures = false; // Flag to show if features are being extracted at this moment
 
-  static THD_WORKING_AREA(waExtractFeatures_T, 256);
-  static THD_FUNCTION(ExtractFeatures_T, arg) {
+  ERIS_THREAD_WA(waExtractFeatures_T, 256);
+  ERIS_THREAD_FUNC(ExtractFeatures_T) {
     //Thread dedicated to feature extraction to be activated when all channels are ready
-    systime_t nextTime = chVTGetSystemTimeX(); // T0
+    systime_t nextTime = eris_get_time(); // T0
     while(1) {
-      nextTime += MS2ST(regInc);
+      nextTime += ERIS_MS_TO_TICKS(regInc);
 
       if(en_features) {
         //wait until mutex can be locked
-        chMtxLock(&extractMtx);
+        eris_mutex_lock(&extractMtx);
 
         tempTime = micros();
         extractHelper(regWin, 0); //extract features for regression (type 0)
-        
-        chMtxUnlock(&extractMtx);
+
+        eris_mutex_unlock(&extractMtx);
       }
-      chThdSleepUntil(nextTime);
+      eris_sleep_until(&nextTime);
     }
   }
   
@@ -143,13 +143,13 @@ namespace Features{
       isReady[i] = false;
     }
 
-    chMtxObjectInit(&extractMtx);
+    eris_mutex_init(&extractMtx);
     
     //Initializes the mask so that every value is false. It should be changed to the actual masks using the F_MASK command
     memset(mask, 1, 2*BIOM_NUMCHANNELS*6*FEATS_NUM);
 
     // create tasks
-    extractFeatures=chThdCreateStatic(waExtractFeatures_T, sizeof(waExtractFeatures_T), NORMALPRIO+5, ExtractFeatures_T, NULL);
+    extractFeatures=eris_thread_create(waExtractFeatures_T, 256, NORMALPRIO+5, ExtractFeatures_T, NULL);
   }
 
 }

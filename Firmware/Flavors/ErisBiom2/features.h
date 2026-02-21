@@ -17,8 +17,8 @@ extern uint8_t regInc;
 
 extern uint8_t classIdx;
 
-extern mutex_t extractMtx;
-extern binary_semaphore_t xfeaturesFullSemaphore;
+extern eris_mutex_t extractMtx;
+extern eris_binary_sem_t xfeaturesFullSemaphore;
 
 void send();
 void start();
