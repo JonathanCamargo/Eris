@@ -4,6 +4,7 @@
 #include "configuration.h"
 #include "customtypes.h"
 #include <eriscommon.h>
+#include <eris_rtos.h>
 #include <Arduino.h>
 
 // Project Includes

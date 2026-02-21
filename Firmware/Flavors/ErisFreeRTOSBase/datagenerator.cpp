@@ -8,9 +8,7 @@ namespace DataGenerator{
   static const float kFrequency=1.0;
 
   // DataGenerator thread producing synthetic data for testing purposes
-  void Task_DataGenerator(void *pvParameters)  // This is a task.
-  {
-      (void) pvParameters;    
+  ERIS_THREAD_FUNC(Task_DataGenerator) {
       long idx=0;
       while(true){
         if (idx>=10000){
@@ -19,16 +17,16 @@ namespace DataGenerator{
         else{
         idx=idx+1;
         }
-        
-        float timestamp = ((float)(micros() - Eris::t0))/1.0e3;        
-        float value=3.3*sin(2*M_PI*kFrequency*((float)idx)/1.0e4);                      
+
+        float timestamp = ((float)(micros() - Eris::t0))/1.0e3;
+        float value=3.3*sin(2*M_PI*kFrequency*((float)idx)/1.0e4);
         floatSample_t thisSample;
 
         thisSample.timestamp=timestamp;
-        thisSample.value=value;    
-        buffer.append(thisSample);        
-        vTaskDelay(pdMS_TO_TICKS(DATAGENERATOR_PERIOD_MS)); // wait for one second
-      
+        thisSample.value=value;
+        buffer.append(thisSample);
+        eris_sleep_ms(DATAGENERATOR_PERIOD_MS); // wait for one second
+
       }
   }
   	
@@ -36,13 +34,8 @@ namespace DataGenerator{
     buffer.init();
     
     // Start the DataGenerator task
-    xTaskCreate(
-    Task_DataGenerator
-    ,  "DataGenerator"   // A name just for humans
-    ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+    ERIS_THREAD_WA(waDataGenerator, 128*sizeof(StackType_t));
+    eris_thread_create(waDataGenerator, 128*sizeof(StackType_t), 1, Task_DataGenerator, NULL);
 	}
 
   void PrintSample(floatSample_t sample){
