@@ -33,12 +33,12 @@ void setup(){
   Serial.println(F("HELLO, This is Eris"));
   /*************** Configure HW pins *******************/    
   //Start threads
-  chBegin(start);      
+  eris_scheduler_start(start);
   while(true){}
 }
 
 
 
 void loop(){    
-    chThdSleepMilliseconds(10000);
+    eris_sleep_ms(10000);
 }

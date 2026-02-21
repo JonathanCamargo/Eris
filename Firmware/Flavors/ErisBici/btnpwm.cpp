@@ -3,8 +3,8 @@
 
 namespace ButtonPWM{
 	
-thread_t *generatePWM = NULL;
-thread_t *transitions = NULL;
+eris_thread_ref_t generatePWM = NULL;
+eris_thread_ref_t transitions = NULL;
 
 static const int PERIOD_LOW_MS=(int) 1000/FREQ_LOW_HZ;
 static const int PERIOD_HIGH_MS=(int) 1000/FREQ_HIGH_HZ;
@@ -30,22 +30,22 @@ typedef enum pwmstates_t{
 static pwmstates_t pwmstate=PWM_ZERO; // Current state of the PWM
 static pwmstates_t pwmvel=PWM_LOW; // Current velocity of the PWM
 
-static THD_WORKING_AREA(waGeneratePWM_T, 16);
-static THD_FUNCTION(GeneratePWM_T, arg) {        
+ERIS_THREAD_WA(waGeneratePWM_T, 16);
+ERIS_THREAD_FUNC(GeneratePWM_T) {        
   while(1){      
     // Update the pulse    
     switch (pwmstate){
       case PWM_ZERO:
           digitalWrite(PIN_LED,HIGH);        
-          chThdSleepMilliseconds(PERIOD_LOW_MS);       
+          eris_sleep_ms(PERIOD_LOW_MS);       
           break;
       case PWM_LOW:        
           digitalWrite(PIN_LED,!digitalRead(PIN_LED));                                
-          chThdSleepMilliseconds(PERIOD_LOW_MS);                       
+          eris_sleep_ms(PERIOD_LOW_MS);                       
           break;
       case PWM_HIGH:
           digitalWrite(PIN_LED,!digitalRead(PIN_LED));                                
-          chThdSleepMilliseconds(PERIOD_HIGH_MS);       
+          eris_sleep_ms(PERIOD_HIGH_MS);       
           break;                
     }        
 }
@@ -66,8 +66,8 @@ void PrintState(){
 }
 
 event_source_t action_event_source;
-static THD_WORKING_AREA(waTransitions_T, 16);
-static THD_FUNCTION(Transitions_T, arg) {  
+ERIS_THREAD_WA(waTransitions_T, 16);
+ERIS_THREAD_FUNC(Transitions_T) {  
   long t0=millis();
   long elapsed=0;    
   // Check the button acctions and transition the state of the system
@@ -128,16 +128,16 @@ static THD_FUNCTION(Transitions_T, arg) {
     
     
            
-    chThdSleepMilliseconds(20);
+    eris_sleep_ms(20);
   }
 }
 
 static long prevTime=0;
 static void ISR_PIN_BTN(){  
-    chSysLockFromISR();    
+    ERIS_CRITICAL_ENTER();    
     long time=millis();    
     if ((time-prevTime)<20){ //Prevent bouncing
-      chSysUnlockFromISR();
+      ERIS_CRITICAL_EXIT();
       return;
     }
     prevTime=time;
@@ -156,7 +156,7 @@ static void ISR_PIN_BTN(){
         chEvtBroadcastFlagsI(&action_event_source,ACTION_RELEASE);               
         break;        
     }             
-    chSysUnlockFromISR();
+    ERIS_CRITICAL_EXIT();
 }
 
 
@@ -172,8 +172,8 @@ static void ISR_PIN_BTN(){
     */    
     attachInterrupt(digitalPinToInterrupt(PIN_BTN), ISR_PIN_BTN,CHANGE);    
     // create tasks at priority lowest priority
-    generatePWM=chThdCreateStatic(waGeneratePWM_T, sizeof(waGeneratePWM_T),NORMALPRIO+1, GeneratePWM_T, NULL);
-    transitions=chThdCreateStatic(waTransitions_T, sizeof(waTransitions_T),NORMALPRIO+1, Transitions_T, NULL);
+    generatePWM=eris_thread_create(waGeneratePWM_T, 16, NORMALPRIO+1, GeneratePWM_T, NULL);
+    transitions=eris_thread_create(waTransitions_T, 16, NORMALPRIO+1, Transitions_T, NULL);
 	}
 	
 	
