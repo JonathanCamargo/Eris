@@ -10,7 +10,7 @@
 
 namespace FSR{
   
-thread_t *readAnalog = NULL;
+eris_thread_ref_treadAnalog = NULL;
 
 
 IntervalTimer timer0; // Timer for ADC
@@ -26,13 +26,13 @@ ErisBuffer<float> buffer_timestamp;
 static float fsrTimestamp;
 
 // Semaphore to feature extractor
-static binary_semaphore_t xsamplesSemaphore;
+static eris_binary_sem_t xsamplesSemaphore;
 
 // Indices and flags
 
 static long test=0;
 static void ISR_NewSample(){  
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   fsrTimestamp = ((float)(micros() - SerialCom::startTime))/1.0e6;  
 
   //Sample every analog channel
@@ -49,7 +49,7 @@ static void ISR_NewSample(){
       #endif
   }  
 
-  chSysUnlockFromISR();  
+  ERIS_CRITICAL_EXIT();  
 }
 
 void start(void){ 
@@ -60,7 +60,7 @@ void start(void){
         buffer_timestamp.init();                 
      }
      
-    chBSemObjectInit(&xsamplesSemaphore,true);    
+    eris_bsem_init(&xsamplesSemaphore,true);    
     
     // Timer interrupt to take the ADC samples        
     //Set up ADC

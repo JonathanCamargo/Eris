@@ -10,8 +10,8 @@
 
 namespace EMG{
 
-thread_t *extractFeaturesEMG = NULL;
-thread_t *readSensor1 = NULL;
+eris_thread_ref_textractFeaturesEMG = NULL;
+eris_thread_ref_treadSensor1 = NULL;
 
 //Buffer for readings 
 ErisBuffer<float> ** buffer=new ErisBuffer<float> *[NUMEMGCHANNELS]; //Buffer holds emg data ch0 to chi
@@ -23,7 +23,7 @@ volatile bool bufferFlag=false; // Use as a flag to enable buffer reading from t
 bool wasFull=false; // Use as a flag to determine if there is buffer overflow.
 
 // Semaphore to feature extractor
-static binary_semaphore_t xsensor1FullSemaphore;
+static eris_binary_sem_t xsensor1FullSemaphore;
 
 // Each emg channel has independent timestamps
 static FastDualBuffer<float,ADS1256_BUFFERSIZE> *EMGTimestamps[NUMEMGCHANNELS];
@@ -37,7 +37,7 @@ uint8_t currChannel=0;
 
 
 static void ISR_NewSample(){
-	chSysLockFromISR();
+	ERIS_CRITICAL_ENTER();
   //Reading is sequential ch0,ch1,ch2,... so on.
   // right now we are reading currChannel  
   EMGTimestamps[currChannel]->add(((float)(micros() - SerialCom::startTime))/1.0e6);
@@ -46,18 +46,18 @@ static void ISR_NewSample(){
      //This thread should wakeup before the second buffer in sensor1 fills up make sure this happens!
      //You can serialprint the pointer to the data here and in the thread confirm that they are the same.
      // on debugging. 
-     chBSemSignalI(&xsensor1FullSemaphore); 
+     eris_bsem_signal_i(&xsensor1FullSemaphore); 
 	} 
   currChannel=currChannel+1;
   currChannel=(currChannel>=NUMEMGCHANNELS) ? 0:currChannel;
-  chSysUnlockFromISR();
+  ERIS_CRITICAL_EXIT();
 }
 
-static THD_WORKING_AREA(waSensor1_T, 256);
-static THD_FUNCTION(Sensor1_T, arg) {
+ERIS_THREAD_WA(waSensor1_T, 256);
+ERIS_THREAD_FUNC(Sensor1_T) {
   while(1){
-    msg_t msg = chBSemWaitTimeout(&xsensor1FullSemaphore, MS2ST(10)); 
-    if (msg == MSG_TIMEOUT) { 
+    eris_msg_t msg = eris_bsem_wait_timeout(&xsensor1FullSemaphore, ERIS_MS_TO_TICKS(10));
+    if (msg == ERIS_MSG_TIMEOUT) { 
       continue;
     } 
   // Retrieve pointers for where the info is stored
@@ -85,7 +85,7 @@ void start(void){
     
     sensor1.setNumChannels(NUMEMGCHANNELS);
         
-    chBSemObjectInit(&xsensor1FullSemaphore,true);
+    eris_bsem_init(&xsensor1FullSemaphore,true);
     buffer_timestamps.init();
     for (uint8_t emgChan=0;emgChan<NUMEMGCHANNELS;emgChan++){
       buffer[emgChan]=new ErisBuffer<float> ();
@@ -101,7 +101,7 @@ void start(void){
     sensor1.startCollecting();
 
 		// create tasks at priority lowest priority
-	  readSensor1=chThdCreateStatic(waSensor1_T, sizeof(waSensor1_T),NORMALPRIO, Sensor1_T, NULL);  
+	  readSensor1=eris_thread_create(waSensor1_T, sizeof(waSensor1_T),NORMALPRIO, Sensor1_T, NULL);  
 	}
 
 }

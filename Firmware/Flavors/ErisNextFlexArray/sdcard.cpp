@@ -11,8 +11,8 @@
 namespace SDCard{
     
 const int chipSelect = BUILTIN_SDCARD;    
-thread_t *writeFiles = NULL;
-static binary_semaphore_t xbufferFullSemaphore;
+eris_thread_ref_twriteFiles = NULL;
+static eris_binary_sem_t xbufferFullSemaphore;
 static bool recording=false;  
 static bool isSDOK=false;
 static uint8_t lastEtiChan=-1; 
@@ -56,11 +56,11 @@ static FastDualBuffer<float,SDBUFFERSIZE> FSRTimeBuffer;
 
 static long temp = 0;
 
-static THD_WORKING_AREA(waWriteFiles_T, 8192);
-static THD_FUNCTION(WriteFiles_T, arg) {  
+ERIS_THREAD_WA(waWriteFiles_T, 8192);
+ERIS_THREAD_FUNC(WriteFiles_T) {  
   while(true){    
-    msg_t msg = chBSemWaitTimeout(&xbufferFullSemaphore, MS2ST(10));
-    if (msg == MSG_TIMEOUT) {
+    eris_msg_t msg = eris_bsem_wait_timeout(&xbufferFullSemaphore, ERIS_MS_TO_TICKS(10));
+    if (msg == ERIS_MSG_TIMEOUT) {
       continue;
     }  
     if (!recording){
@@ -163,7 +163,7 @@ void addSine(float value){
   if (!recording){return;}
   if(sineDataBuffer.add(value)){
      bufferType=SINE;                  
-     //chBSemSignalI(&xbufferFullSemaphore);     
+     //eris_bsem_signal_i(&xbufferFullSemaphore);     
   }       
 }
 
@@ -178,7 +178,7 @@ void addEMG(float value, float currTime, uint8_t chan){
       bufferType = EMG;
       
       temp = micros();
-      chBSemSignalI(&xbufferFullSemaphore);         
+      eris_bsem_signal_i(&xbufferFullSemaphore);         
     }
   } else if (chan < NUMEMGCHANNELS){
     EMGDataBuffers[chan]->add(value);
@@ -194,7 +194,7 @@ void addFSR(float value, float currTime, uint8_t chan){
     if(FSRDataBuffers[chan]->add(value)){      
       bufferType = FSR;
       
-      chBSemSignalI(&xbufferFullSemaphore);         
+      eris_bsem_signal_i(&xbufferFullSemaphore);         
     }     
   }
   else if (chan<NUMFSRCHANNELS){
@@ -314,7 +314,7 @@ char* getTrialName() {
 
 void start(void){   
     recording=false;
-    chBSemObjectInit(&xbufferFullSemaphore,true);
+    eris_bsem_init(&xbufferFullSemaphore,true);
     //chCondObjectInit(&recordingCond);
     // Initialize SDCard  
     initSD();
@@ -328,6 +328,6 @@ void start(void){
     } 
           
     // create tasks at priority lowest priority
-    writeFiles=chThdCreateStatic(waWriteFiles_T, sizeof(waWriteFiles_T),NORMALPRIO, WriteFiles_T, NULL);
+    writeFiles=eris_thread_create(waWriteFiles_T, sizeof(waWriteFiles_T),NORMALPRIO, WriteFiles_T, NULL);
  }
 }

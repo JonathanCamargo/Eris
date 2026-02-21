@@ -13,7 +13,7 @@
 
 namespace SineWave{
 	
-thread_t *generateWave = NULL;
+eris_thread_ref_tgenerateWave = NULL;
 
 //Buffer for readings 
 ErisBuffer<float> buffer;
@@ -22,8 +22,8 @@ long idx;
 
 static const float FREQ=1;
   
-static THD_WORKING_AREA(waGenerateWave_T, 128);
-static THD_FUNCTION(GenerateWave_T, arg) {  
+ERIS_THREAD_WA(waGenerateWave_T, 128);
+ERIS_THREAD_FUNC(GenerateWave_T) {  
   while(1){
     if (idx>=10000){
 	  idx=0;
@@ -40,7 +40,7 @@ static THD_FUNCTION(GenerateWave_T, arg) {
         SDCard::addSine(value);
     #endif 
        
-    chThdSleepMilliseconds(10);    
+    eris_sleep_ms(10);    
   }
 }
 
@@ -49,7 +49,7 @@ static THD_FUNCTION(GenerateWave_T, arg) {
     idx=0;    
     buffer.init();
     // create tasks at priority lowest priority
-    generateWave=chThdCreateStatic(waGenerateWave_T, sizeof(waGenerateWave_T),NORMALPRIO, GenerateWave_T, NULL);
+    generateWave=eris_thread_create(waGenerateWave_T, sizeof(waGenerateWave_T),NORMALPRIO, GenerateWave_T, NULL);
 	}
 	
 	

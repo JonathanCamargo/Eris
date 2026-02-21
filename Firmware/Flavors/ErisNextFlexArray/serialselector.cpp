@@ -8,16 +8,16 @@
 
 
 namespace SerialSelector{
-  thread_t *readSerial = NULL;  
+  eris_thread_ref_treadSerial = NULL;  
   
   /********************** Threads *********************************/
 	   
-	static THD_WORKING_AREA(waReadSerial_T, 128);
-	static THD_FUNCTION(ReadSerial_T, arg) {  		  	 
+	ERIS_THREAD_WA(waReadSerial_T, 128);
+	ERIS_THREAD_FUNC(ReadSerial_T) {  		  	 
 	  while(1){		    
 		//Check serial buffer and see if there is anything there 			
 		ReadSerial();		   
-		chThdSleepMilliseconds(100);
+		eris_sleep_ms(100);
 	  }
 	}
 
@@ -63,7 +63,7 @@ namespace SerialSelector{
 
    Serial.println("Electrode selector ready");
   	// create task at priority one
-	readSerial=chThdCreateStatic(waReadSerial_T, sizeof(waReadSerial_T),NORMALPRIO, ReadSerial_T, NULL);    
+	readSerial=eris_thread_create(waReadSerial_T, sizeof(waReadSerial_T),NORMALPRIO, ReadSerial_T, NULL);    
 	}
 
 }
