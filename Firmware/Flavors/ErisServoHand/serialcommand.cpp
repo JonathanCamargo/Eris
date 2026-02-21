@@ -9,12 +9,10 @@ SerialCommand sCmd;
 //////////////////////////
 // Task_ReadSerial: monitor serial0 port for commands and respond 
 // on callback functions.
-void Task_ReadSerial(void *pvParameters)  // This is a task.
-{
-    (void) pvParameters;    
+ERIS_THREAD_FUNC(Task_ReadSerial) {
     while(1){
       sCmd.readSerial();
-      vTaskDelay(pdMS_TO_TICKS(READSERIAL_PERIOD_MS)); // wait for one second
+      eris_sleep_ms(READSERIAL_PERIOD_MS); // wait for one second
     }
 }
   
@@ -29,14 +27,9 @@ void start(void){
   sCmd.setDefaultHandler(unrecognized);  // Handler for command that isn't matched  (says "What?")
   Console.println("Serial Commands are ready");
 
-  // create task at priority one      
-  xTaskCreate(
-    Task_ReadSerial
-    ,  "ReadSerial"   // A name just for humans
-    ,  512  // This stack size can be checked & adjusted by reading the Stack Highwater
-    ,  NULL
-    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+  // create task at priority one
+  ERIS_THREAD_WA(waReadSerial, 512*sizeof(StackType_t));
+  eris_thread_create(waReadSerial, 512*sizeof(StackType_t), 0, Task_ReadSerial, NULL);
   }
 
 void XParser(){
