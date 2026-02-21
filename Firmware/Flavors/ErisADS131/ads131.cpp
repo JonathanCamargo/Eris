@@ -28,8 +28,8 @@ namespace ADS131{
   uint8_t byteCount = 0;
   uint8_t SPIbuffer[32];
 
-  static binary_semaphore_t xConvertBytesSemaphore;
-  thread_t *convertBytes;
+  static eris_binary_sem_t xConvertBytesSemaphore;
+  eris_thread_ref_t convertBytes;
   
   long data_temp; //uint32_t
   bool configStatus = false;
@@ -87,27 +87,27 @@ namespace ADS131{
   
   void collectData()
   {
-    chSysLockFromISR();
-    
+    ERIS_CRITICAL_ENTER();
+
     memset(SPIbuffer,0,sizeof(SPIbuffer));
     digitalWrite(ss0, LOW);
     SPI.transfer(SPIbuffer, 27);
     digitalWrite(ss0, HIGH);
 
-    chBSemSignalI(&xConvertBytesSemaphore);
-    chSysUnlockFromISR();
+    eris_bsem_signal_i(&xConvertBytesSemaphore);
+    ERIS_CRITICAL_EXIT();
   }
   
-  static THD_WORKING_AREA(waConvertBytes_T, 256);
-  static THD_FUNCTION(ConvertBytes_T, arg) {
+  ERIS_THREAD_WA(waConvertBytes_T, 256);
+  ERIS_THREAD_FUNC(ConvertBytes_T) {
     //take it initially
-    chBSemWait(&xConvertBytesSemaphore);
-    
+    eris_bsem_wait_timeout(&xConvertBytesSemaphore, TIME_INFINITE);
+
     while(1) {
-  
-      chBSemWait(&xConvertBytesSemaphore);
-      
-      chSysLockFromISR();
+
+      eris_bsem_wait_timeout(&xConvertBytesSemaphore, TIME_INFINITE);
+
+      ERIS_CRITICAL_ENTER();
 
       EMGSample_t sample;
       sample.timestamp=(float)(micros() - t0)/1000.0 ;
@@ -119,7 +119,7 @@ namespace ADS131{
         sample.ch[chan]=2*(vref)*(data_temp)/(pow(2, 24)-1);
       }
       buffer.append(sample);  
-      chSysUnlockFromISR();
+      ERIS_CRITICAL_EXIT();
     }
   }
     
@@ -208,8 +208,7 @@ namespace ADS131{
     
     startup();
 
-    chBSemObjectInit(&xConvertBytesSemaphore, true);
-    convertBytes = chThdCreateStatic(waConvertBytes_T, sizeof(waConvertBytes_T),
-                                        NORMALPRIO, ConvertBytes_T, NULL);
+    eris_bsem_init(&xConvertBytesSemaphore, true);
+    convertBytes = eris_thread_create(waConvertBytes_T, 256, NORMALPRIO, ConvertBytes_T, NULL);
   }
 }
