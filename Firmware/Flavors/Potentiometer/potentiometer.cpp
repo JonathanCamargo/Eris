@@ -3,14 +3,14 @@
 
 namespace Potentiometer{
 	
-thread_t *getSample = NULL;
+eris_thread_ref_t getSample = NULL;
 
 //Buffer for readings 
 ErisBuffer<floatSample_t> buffer;
 
   
-static THD_WORKING_AREA(waGetSample_T, 128);
-static THD_FUNCTION(GetSample_T, arg) {  
+ERIS_THREAD_WA(waGetSample_T, 128);
+ERIS_THREAD_FUNC(GetSample_T) {  
   static long idx=0;
   while(1){
     
@@ -22,14 +22,14 @@ static THD_FUNCTION(GetSample_T, arg) {
     thisSample.value=value;    
     buffer.append(thisSample); 
        
-    chThdSleepMilliseconds(POTENTIOMETER_PERIOD_MS);    
+    eris_sleep_ms(POTENTIOMETER_PERIOD_MS);    
   }
 }
 	
 void start(void){        
     buffer.init();
     // create tasks at priority lowest priority
-    getSample=chThdCreateStatic(waGetSample_T, sizeof(waGetSample_T),NORMALPRIO+1, GetSample_T, NULL);
+    getSample=eris_thread_create(waGetSample_T, 128,NORMALPRIO+1, GetSample_T, NULL);
 }
 	
 	
