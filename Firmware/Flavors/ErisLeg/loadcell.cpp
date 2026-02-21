@@ -16,11 +16,11 @@ namespace Loadcell{
   
   //Scheduled tasks  
  
-  thread_t *readDatal = NULL;// TODO: ReadCurrent_T (100Hz) read current in motor
+  eris_thread_ref_t readDatal = NULL;// TODO: ReadCurrent_T (100Hz) read current in motor
 
   
-static THD_WORKING_AREA(waReadData_T, 512);
-static THD_FUNCTION(ReadData_T, arg) {  
+ERIS_THREAD_WA(waReadData_T, 512);
+ERIS_THREAD_FUNC(ReadData_T) {  
   // Read the loadcell
     while (!chThdShouldTerminateX()){      
       bool readingsOk=true;
@@ -78,7 +78,7 @@ void start(void){
     }
     
     if (loadcellOk){            
-       readDatal=chThdCreateStatic(waReadData_T, sizeof(waReadData_T),NORMALPRIO, ReadData_T, NULL);
+       readDatal=eris_thread_create(waReadData_T, 512,NORMALPRIO, ReadData_T, NULL);
 	  }	
     else{       
        Error::RaiseError(CANBUS,(char *)"loadcell");       

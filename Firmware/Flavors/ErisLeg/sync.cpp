@@ -20,13 +20,13 @@ ErisBuffer<uint8_tSample_t> buffer ;
 // Indices and flags
 
 static void ISR_SYNC_CHANGE(){  
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   float timestamp = ((float)(micros() - SerialCom::startTime))/1.0e3;   
   uint8_tSample_t thisSample;
   thisSample.timestamp=timestamp;    
   thisSample.value=digitalRead(PIN_SYNC);     
   buffer.append(thisSample);    
-  chSysUnlockFromISR();  
+  ERIS_CRITICAL_EXIT();  
 }
 
 void start(void){   

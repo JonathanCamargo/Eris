@@ -7,8 +7,8 @@
 namespace Joints {
 
 //Scheduled tasks
-thread_t *writeCurrent = NULL;// UpdateCurrent_T send new TC command
-thread_t *readCurrent = NULL;// TODO: ReadCurrent_T (100Hz) read current in motor
+eris_thread_ref_t writeCurrent = NULL;// UpdateCurrent_T send new TC command
+eris_thread_ref_t readCurrent = NULL;// TODO: ReadCurrent_T (100Hz) read current in motor
 
 //Buffer for readings
 ErisBuffer<JointStateSample_t> kneebuffer;
@@ -49,7 +49,7 @@ void UpdateState(JointStateSample_t newKneeState, JointStateSample_t newAnkleSta
   lastKneeJointState = newKneeState;
   lastAnkleJointState = newAnkleState;
 
-  chSysUnlockFromISR();
+  ERIS_CRITICAL_EXIT();
 
 }
 
@@ -115,10 +115,10 @@ void GetIP(ImpedanceParameters_t paramsK, ImpedanceParameters_t paramsA) {
   paramsA.theta_eq = ipA.theta_eq;
 }
 
-static THD_WORKING_AREA(waWriteCurrent_T, 512);
-static THD_FUNCTION(WriteCurrent_T, arg) {
+ERIS_THREAD_WA(waWriteCurrent_T, 512);
+ERIS_THREAD_FUNC(WriteCurrent_T) {
   // Take the last joint state reading and update the impedance law to produce the new torque command for the motor
-  systime_t time = chVTGetSystemTime();
+  systime_t time = eris_get_time();
   while (!chThdShouldTerminateX()) {
 #if DEBUG_TIME
     chTMStopMeasurementX(&time);
@@ -153,7 +153,7 @@ static THD_FUNCTION(WriteCurrent_T, arg) {
     //eriscommon::println(OutputAnkle);
 
     time = time + US2ST(ELMO_RATE_US);
-    chThdSleepUntil(time);
+    eris_sleep_until(&time);
   }
   eriscommon::println("Joint thread terminated");
 }
@@ -254,7 +254,7 @@ void start(void) {
   }
 
   if (motorsOk) {
-    writeCurrent = chThdCreateStatic(waWriteCurrent_T, sizeof(waWriteCurrent_T), NORMALPRIO + 1, WriteCurrent_T, NULL);
+    writeCurrent = eris_thread_create(waWriteCurrent_T, 512, NORMALPRIO + 1, WriteCurrent_T, NULL);
   }
 }
 }
