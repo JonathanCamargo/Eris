@@ -11,8 +11,8 @@ namespace SerialCom{
 
   SerialCommand sCmd;
 
-  thread_t *readSerial = NULL;
-  thread_t *streamSerial = NULL;
+  eris_thread_ref_treadSerial = NULL;
+  eris_thread_ref_tstreamSerial = NULL;
   static char strbuffer[128]; 
   static bool stream_en=false;
 
@@ -26,22 +26,22 @@ namespace SerialCom{
   
   /********************** Threads *********************************/
   //To process //Serial commands
-  static THD_WORKING_AREA(waReadSerial_T, 1024);
-	static THD_FUNCTION(ReadSerial_T, arg) {
+  ERIS_THREAD_WA(waReadSerial_T, 1024);
+	ERIS_THREAD_FUNC(ReadSerial_T) {
     while(1){
 		  sCmd.readSerial();
-		  chThdSleepMilliseconds(100);
+		  eris_sleep_ms(100);
     }
 	}
 
   //To process //Serial commands
-  static THD_WORKING_AREA(waStreamSerial_T, 1024);
-  static THD_FUNCTION(StreamSerial_T, arg) {    
+  ERIS_THREAD_WA(waStreamSerial_T, 1024);
+  ERIS_THREAD_FUNC(StreamSerial_T) {    
     while(1){
       if (stream_en){
         stream();  
       }                        
-      chThdSleepMilliseconds(10);
+      eris_sleep_ms(10);
     }
   }
  
@@ -75,8 +75,8 @@ namespace SerialCom{
     Serial.println("Serial Commands are ready");
 
     // create task at priority one
-    readSerial=chThdCreateStatic(waReadSerial_T, sizeof(waReadSerial_T),NORMALPRIO, ReadSerial_T, NULL);
-    streamSerial=chThdCreateStatic(waStreamSerial_T, sizeof(waStreamSerial_T),NORMALPRIO+3, StreamSerial_T, NULL);
+    readSerial=eris_thread_create(waReadSerial_T, sizeof(waReadSerial_T),NORMALPRIO, ReadSerial_T, NULL);
+    streamSerial=eris_thread_create(waStreamSerial_T, sizeof(waStreamSerial_T),NORMALPRIO+3, StreamSerial_T, NULL);
 
 	}
 
@@ -132,7 +132,7 @@ void StreamingStop(){
 
 void StreamingSetFeatures(){   
   char *arg;
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   Streaming::ClearFunctions();
   // Select the streaming function based on names
   arg = sCmd.next();
@@ -141,12 +141,12 @@ void StreamingSetFeatures(){
       if (!found){
         Error::RaiseError(COMMAND,(char *)"StreamingSetFeatures");
         Streaming::ClearFunctions();
-        chSysUnlockFromISR();        
+        ERIS_CRITICAL_EXIT();        
         return;
       }
       arg = sCmd.next();
   }      
-  chSysUnlockFromISR();
+  ERIS_CRITICAL_EXIT();
   Serial.println("Features Ready");   
 }
 
@@ -169,11 +169,11 @@ void LED_off() {
 }
 
 void TransmitSineWave(){
-   chSysLockFromISR();
+   ERIS_CRITICAL_ENTER();
    floatSample_t samples[MEMBUFFERSIZE];   
    int num=SineWave::buffer.FetchData(samples,(char*)"SINEWAVE",MEMBUFFERSIZE);
    long missed=SineWave::buffer.missed();   
-   chSysUnlockFromISR();   
+   ERIS_CRITICAL_EXIT();   
    Serial.print("SineWave:");   
    // Show number of missed points
    Serial.print("(missed:");
@@ -201,14 +201,14 @@ void TransmitSineWave(){
 
 void TransmitETI(){
 
-   chSysLockFromISR();
+   ERIS_CRITICAL_ENTER();
    
    TISample_t * samples=&tisamples[0];      
    int num=SerialETI::buffer.FetchData(samples,(char*)"ETI",MEMBUFFERSIZE);
    //Serial.println(SerialETI::temperatureBuffer[0] == NULL);
    long missed=SerialETI::buffer.missed();      
    
-   chSysUnlockFromISR();
+   ERIS_CRITICAL_EXIT();
  
    // Show number of missed points
    Serial.print("Temperature[ch0]:");
@@ -263,11 +263,11 @@ void TransmitETI(){
 
 
 void TransmitEMG(){
-   chSysLockFromISR();  
+   ERIS_CRITICAL_ENTER();  
    EMGSample_t * samples=emgsamples;      
    int num=EMG::buffer.FetchData(samples,(char*)"EMG",MEMBUFFERSIZE);
    long missed=EMG::buffer.missed();   
-   chSysUnlockFromISR();
+   ERIS_CRITICAL_EXIT();
 
    // Show number of missed points
    Serial.print("EMG[ch0]:");
@@ -296,11 +296,11 @@ void TransmitEMG(){
    
 
 void TransmitFSR(){    
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   FSRSample_t *samples=&fsrsamples[0];
   int num=FSR::buffer.FetchData(samples,(char*)"FSR",MEMBUFFERSIZE);
   long missed=FSR::buffer.missed();   
-  chSysUnlockFromISR();   
+  ERIS_CRITICAL_EXIT();   
   Serial.print("FSR[ch0]:");   
   // Show number of missed points
   Serial.print("(missed:");

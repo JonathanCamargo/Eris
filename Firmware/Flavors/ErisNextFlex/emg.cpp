@@ -9,8 +9,8 @@
 
 namespace EMG{
   
-thread_t *extractFeaturesEMG = NULL;
-thread_t *readSensor1 = NULL;
+eris_thread_ref_textractFeaturesEMG = NULL;
+eris_thread_ref_treadSensor1 = NULL;
 
 //Buffer for readings 
 ErisBuffer<EMGSample_t> buffer;
@@ -26,7 +26,7 @@ uint8_t currChannel=0; //Data gets collected sequentially for each channel this 
 EMGSample_t currSample; // Current sample
 
 static void ISR_NewSample(){
-	chSysLockFromISR();
+	ERIS_CRITICAL_ENTER();
 
   //Changing from mod to make it more readable
 
@@ -51,7 +51,7 @@ static void ISR_NewSample(){
   //Keep track of the current channel being read
   currChannel=currChannel+1;
   currChannel=(currChannel>=EMG_NUMCHANNELS) ? 0:currChannel;
-  chSysUnlockFromISR();
+  ERIS_CRITICAL_EXIT();
 }
 
   
