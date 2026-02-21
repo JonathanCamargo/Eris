@@ -6,7 +6,7 @@
 
 namespace EMG{
   
-thread_t *readAnalog = NULL;
+eris_thread_ref_treadAnalog = NULL;
 
 Tapok emg(2,CANTAPOK); //Tapok object to read the data
 
@@ -14,7 +14,7 @@ Tapok emg(2,CANTAPOK); //Tapok object to read the data
 ErisBuffer<EMGSample_t> buffer;
 
 static void ISR_NewSample(){  
-	chSysLockFromISR();
+	ERIS_CRITICAL_ENTER();
   float timestamp = ((float)(micros() - t0))/1.0e3;  
 
   EMGSample_t thisSample;
@@ -27,7 +27,7 @@ static void ISR_NewSample(){
       thisSample.ch[chan]=v;      
   }  
   buffer.append(thisSample); 
-  chSysUnlockFromISR();  
+  ERIS_CRITICAL_EXIT();  
 }
 
 void start(void){ 

@@ -9,7 +9,7 @@
 
 #include <Arduino.h>
 
-#include <ChRt.h>
+#include <eris_rtos.h>
 
 extern const char firmwareInfo[];
 

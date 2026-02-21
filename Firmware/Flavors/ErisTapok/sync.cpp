@@ -12,13 +12,13 @@ IntervalTimer timer0; // Timer for ADC
 ErisBuffer<uint8_tSample_t> buffer;
 
 // Semaphore to feature extractor
-static binary_semaphore_t xsamplesSemaphore;
+static eris_binary_sem_t xsamplesSemaphore;
 
 // Indices and flags
 
 static long test=0;
 static void ISR_NewSample(){  
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
 
   uint8_tSample_t thisSample;
   
@@ -29,7 +29,7 @@ static void ISR_NewSample(){
   thisSample.value=value;   
   buffer.append(thisSample); 
   
-  chSysUnlockFromISR();  
+  ERIS_CRITICAL_EXIT();  
 }
 
 void start(void){ 

@@ -7,7 +7,7 @@
 
 namespace FSR{
   
-thread_t * newSample = NULL;
+eris_thread_ref_t newSample = NULL;
 
 IntervalTimer timer0; // Timer for ADC
 
@@ -17,13 +17,13 @@ static const uint8_t pin_channels[FSR_NUMCHANNELS]={PIN_FSR};
 ErisBuffer<FSRSample_t> buffer ;
  
 // Semaphore to feature extractor
-static binary_semaphore_t xsamplesSemaphore;
+static eris_binary_sem_t xsamplesSemaphore;
  
 // Indices and flags
  
   
-static THD_WORKING_AREA(waNewSample_T, 128);
-static THD_FUNCTION(NewSample_T, arg) {   
+ERIS_THREAD_WA(waNewSample_T, 128);
+ERIS_THREAD_FUNC(NewSample_T) {   
   while(1){
     float timestamp = ((float)(micros() - t0))/1.0e3;    
     FSRSample_t thisSample;
@@ -35,18 +35,18 @@ static THD_FUNCTION(NewSample_T, arg) {
       thisSample.ch[chan]=v;     
     } 
     buffer.append(thisSample);   
-  chThdSleepMilliseconds(FSR_ADC_PERIOD_MS);   
+  eris_sleep_ms(FSR_ADC_PERIOD_MS);   
   }
 }
  
 void start(void){  
     buffer.init();                   
-    chBSemObjectInit(&xsamplesSemaphore,true);       
+    eris_bsem_init(&xsamplesSemaphore,true);       
     //Configure ADC for FSR
     analogReadAveraging(4); // set number of averages
     analogReadRes(10); // set bits of resolution  
      
     // create tasks at priority lowest priority
-    newSample=chThdCreateStatic(waNewSample_T, sizeof(waNewSample_T),NORMALPRIO+1, NewSample_T, NULL);
+    newSample=eris_thread_create(waNewSample_T, sizeof(waNewSample_T),NORMALPRIO+1, NewSample_T, NULL);
   }
 }
