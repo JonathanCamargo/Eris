@@ -1,0 +1,9 @@
+eris_imu
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_imu/cmake.lock /home/ossip/my_git/Eris/python/ros_ws/devel/./cmake.lock
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_imu/lib/pkgconfig/eris_imu.pc /home/ossip/my_git/Eris/python/ros_ws/devel/lib/pkgconfig/eris_imu.pc
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_imu/lib/python2.7/dist-packages/eris_imu/__init__.py /home/ossip/my_git/Eris/python/ros_ws/devel/lib/python2.7/dist-packages/eris_imu/__init__.py
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_imu/share/roseus/ros/eris_imu/manifest.l /home/ossip/my_git/Eris/python/ros_ws/devel/share/roseus/ros/eris_imu/manifest.l
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_imu/share/eris_imu/cmake/eris_imuConfig-version.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_imu/cmake/eris_imuConfig-version.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_imu/share/eris_imu/cmake/eris_imuConfig.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_imu/cmake/eris_imuConfig.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_imu/share/eris_imu/cmake/eris_imu-msg-extras.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_imu/cmake/eris_imu-msg-extras.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_imu/share/eris_imu/cmake/eris_imu-msg-paths.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_imu/cmake/eris_imu-msg-paths.cmake

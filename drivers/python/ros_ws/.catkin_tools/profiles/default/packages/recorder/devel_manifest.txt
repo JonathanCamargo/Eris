@@ -1,0 +1,9 @@
+recorder
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/recorder/cmake.lock /home/ossip/my_git/Eris/python/ros_ws/devel/./cmake.lock
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/recorder/lib/pkgconfig/recorder.pc /home/ossip/my_git/Eris/python/ros_ws/devel/lib/pkgconfig/recorder.pc
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/recorder/lib/python2.7/dist-packages/recorder/__init__.py /home/ossip/my_git/Eris/python/ros_ws/devel/lib/python2.7/dist-packages/recorder/__init__.py
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/recorder/share/recorder/cmake/recorderConfig.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/recorder/cmake/recorderConfig.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/recorder/share/recorder/cmake/recorder-msg-paths.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/recorder/cmake/recorder-msg-paths.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/recorder/share/recorder/cmake/recorderConfig-version.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/recorder/cmake/recorderConfig-version.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/recorder/share/recorder/cmake/recorder-msg-extras.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/recorder/cmake/recorder-msg-extras.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/recorder/share/roseus/ros/recorder/manifest.l /home/ossip/my_git/Eris/python/ros_ws/devel/share/roseus/ros/recorder/manifest.l

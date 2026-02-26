@@ -15,9 +15,9 @@
 #include <SPI.h>
 
 
-long t0=0; // Global start time for all modules 
+long t0=0; // Global start time for all modules
 
-thread_t *thread1 = NULL;
+eris_thread_ref_t thread1 = NULL;
 
 
 const char firmwareInfo[]=FIRMWARE_INFO;
@@ -25,13 +25,13 @@ const char firmwareInfo[]=FIRMWARE_INFO;
 /* ******************************** Global threads ************************************************** */
 
 // Mutex to enable or disable heartbeat
-static THD_WORKING_AREA(waThread1, 32);
-static THD_FUNCTION(Thread1, arg) {
+ERIS_THREAD_WA(waThread1, 32);
+ERIS_THREAD_FUNC(Thread1) {
   while (1) {
     // Sleep for 1000 milliseconds.
-    // Toggle pin to show heartbeat    
+    // Toggle pin to show heartbeat
     //digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-    chThdSleepMilliseconds(250);
+    eris_sleep_ms(250);
   }
 }
 /* ************************************************************************************************* */
@@ -39,37 +39,36 @@ static THD_FUNCTION(Thread1, arg) {
 
 void start(){
   // Initialize mutex for heartbeat
-  //chMtxObjectInit(&mtxhb);
-  /*************** Start Threads ************************/    
-  chThdCreateStatic(waThread1, sizeof(waThread1),
-                                   NORMALPRIO, Thread1, NULL);
+  //eris_mutex_init(&mtxhb);
+  /*************** Start Threads ************************/
+  thread1 = eris_thread_create(waThread1, 32, ERIS_NORMAL_PRIORITY, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
 
   #if SDCARD
   SDCard::start();
   #endif
-  
+
   // start special tasks from external sources
   SineWave::start();
   FSR::start();
   Sync::start();
-  // Command interfaces   
+  // Command interfaces
   SerialCom::start();
 
 }
 
-void setup(){  
+void setup(){
   Serial.begin(115200);
   // Wait for USB Serial.
   while (!Serial) {}
   delay(1000);
-  // Setup the initial configuration  
+  // Setup the initial configuration
   Serial.println("HELLO, This is Eris");
   /*************** Configure HW pins *******************/
-  pinMode(PIN_LED,OUTPUT); 
-  pinMode(PIN_LED_R,OUTPUT); 
-  digitalWrite(PIN_LED,LOW); 
-  digitalWrite(PIN_LED_R,LOW); 
+  pinMode(PIN_LED,OUTPUT);
+  pinMode(PIN_LED_R,OUTPUT);
+  digitalWrite(PIN_LED,LOW);
+  digitalWrite(PIN_LED_R,LOW);
   analogWrite(3, 10);
   // Setup battery pins
   // SPI chip select
@@ -77,17 +76,17 @@ void setup(){
   SPI.begin();
   /******************************************************/
   //Start threads
-  chBegin(start);   
+  eris_scheduler_start(start);
 
-  //Test analog write  
+  //Test analog write
 
-  
+
   while(true){}
 }
 
 
 
 
-void loop(){    
-    chThdSleepMilliseconds(10000);
+void loop(){
+    eris_sleep_ms(10000);
 }

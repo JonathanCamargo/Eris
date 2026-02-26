@@ -7,21 +7,21 @@
 #include <SPI.h>
 
 namespace SDCard{
-    
-const int chipSelect = BUILTIN_SDCARD;    
-thread_t *writeFiles = NULL;
-static binary_semaphore_t xwriteDataSemaphore;
-static bool recording=false;  
+
+const int chipSelect = BUILTIN_SDCARD;
+eris_thread_ref_t writeFiles = NULL;
+static eris_binary_sem_t xwriteDataSemaphore;
+static bool recording=false;
 static bool isSDOK=false;
 char * DEFAULT_TRIALNAME = (char*)"test";;
 char * trialname=DEFAULT_TRIALNAME;
-char newLine = '\n'; 
+char newLine = '\n';
 
 
 /******************** Custom code should go here ****************************/
 // Create file names for each type of data to store
 String fsrFileName;
-static File fsrFile; 
+static File fsrFile;
 String sineFileName;
 static File sineFile;
 String syncFileName;
@@ -32,44 +32,44 @@ ErisBuffer<floatSample_t> sinebuffer;
 ErisBuffer<uint8_tSample_t> syncbuffer;
 
 //Thread for periodically writing on the sdcard
-static THD_WORKING_AREA(waWriteFiles_T, 8192);
-static THD_FUNCTION(WriteFiles_T, arg) {  
-  while(true){            
-    msg_t msg = chBSemWaitTimeout(&xwriteDataSemaphore, TIME_MS2I(TIME_IMMEDIATE));
-    if (msg == MSG_TIMEOUT) {  
-      chThdSleepMilliseconds(10);            
+ERIS_THREAD_WA(waWriteFiles_T, 8192);
+ERIS_THREAD_FUNC(WriteFiles_T) {
+  while(true){
+    eris_msg_t msg = eris_bsem_wait_timeout(&xwriteDataSemaphore, ERIS_TIME_IMMEDIATE);
+    if (msg == ERIS_MSG_TIMEOUT) {
+      eris_sleep_ms(10);
       continue;
-    }          
+    }
     // Recording for each file
-    
+
     RecordSamples<FSRSample_t>(fsrbuffer,fsrFile);
     RecordSamples<floatSample_t>(sinebuffer,sineFile);
-    RecordSamples<uint8_tSample_t>(syncbuffer,syncFile);        
-    
-    chBSemSignal(&xwriteDataSemaphore);         
-    chThdSleepMilliseconds(50);   
+    RecordSamples<uint8_tSample_t>(syncbuffer,syncFile);
+
+    eris_bsem_signal(&xwriteDataSemaphore);
+    eris_sleep_ms(50);
   }
 }
 
-bool CreateFiles(void){   
+bool CreateFiles(void){
    digitalWrite(PIN_LED_R,HIGH);
    // Create the files for sensors in subfolders for each sensor
    // Sine file
-   sineFileName = String("sine/") + String(trialname) + String(".bin");       
-   fsrFileName = String("fsr/") + String(trialname) + String(".bin");    
-   syncFileName = String("sync/") + String(trialname) + String(".bin");    
+   sineFileName = String("sine/") + String(trialname) + String(".bin");
+   fsrFileName = String("fsr/") + String(trialname) + String(".bin");
+   syncFileName = String("sync/") + String(trialname) + String(".bin");
 
    if (SD.exists(sineFileName.c_str())) {
     Serial.println("File exists... overwriting");
     SD.remove(fsrFileName.c_str());
-    SD.remove(syncFileName.c_str());    
+    SD.remove(syncFileName.c_str());
    }
-      
+
    digitalWrite(PIN_LED_R,LOW);
-  
+
    // FSR File
-   SD.mkdir("fsr");     
-   fsrFile= SD.open(fsrFileName.c_str(), O_WRITE | O_CREAT); 
+   SD.mkdir("fsr");
+   fsrFile= SD.open(fsrFileName.c_str(), O_WRITE | O_CREAT);
    if(!fsrFile){
     return false;
    }
@@ -83,7 +83,7 @@ bool CreateFiles(void){
    fsrFile.println();
 
    SD.mkdir("sine");
-   sineFile = SD.open(sineFileName.c_str(), O_WRITE | O_CREAT); 
+   sineFile = SD.open(sineFileName.c_str(), O_WRITE | O_CREAT);
    if(!sineFile){
     return false;
    }
@@ -93,7 +93,7 @@ bool CreateFiles(void){
    sineFile.println("Header(ms),sync(units)");
 
    SD.mkdir("sync");
-   syncFile = SD.open(syncFileName.c_str(), O_WRITE | O_CREAT); 
+   syncFile = SD.open(syncFileName.c_str(), O_WRITE | O_CREAT);
    if(!syncFile){
     return false;
    }
@@ -113,53 +113,53 @@ bool initSD(void){
       eriscommon::printText("initialization failed. Things to check:");
       eriscommon::printText("* is a card inserted?");
       eriscommon::printText("* is your wiring correct?");
-      eriscommon::printText("* did you change the chipSelect pin to match your shield or module?"); 
+      eriscommon::printText("* did you change the chipSelect pin to match your shield or module?");
       return false;
     } else {
-     eriscommon::printText("SD card is present."); 
+     eriscommon::printText("SD card is present.");
      isSDOK = true;
      return true;
-    }    
+    }
 }
 void StopRecording(void){
-  chSysLockFromISR();
-  recording=false;  
-  chBSemReset(&xwriteDataSemaphore,true);
-  chSysUnlockFromISR();  
-  digitalWrite(PIN_LED_R,LOW); 
+  ERIS_CRITICAL_ENTER();
+  recording=false;
+  eris_bsem_reset(&xwriteDataSemaphore,true);
+  ERIS_CRITICAL_EXIT();
+  digitalWrite(PIN_LED_R,LOW);
   sineFile.close();
-  fsrFile.close(); 
-  syncFile.close();       
+  fsrFile.close();
+  syncFile.close();
 }
 
 bool StartRecording(void){
-  chSysLockFromISR();
+  ERIS_CRITICAL_ENTER();
   // Check SD and create files
   if (!isSDOK){
-    Error::RaiseError(MEMORY,(char *)F("SDCARD:isSDOK")); 
+    Error::RaiseError(MEMORY,(char *)F("SDCARD:isSDOK"));
     recording=false;
     return recording;
   }
   bool filesOk=CreateFiles();
-  if (!filesOk){           
+  if (!filesOk){
     recording=false;
     Error::RaiseError(MEMORY,(char *)F("SDCARD:CREATEFILES"));
-    return recording; 
-  }    
+    return recording;
+  }
   ResetTime();
-  recording=true;     
-  chBSemSignal(&xwriteDataSemaphore); 
-  chSysUnlockFromISR();
-  //unlock mutex to make the LED blink  
-  return recording; 
+  recording=true;
+  eris_bsem_signal(&xwriteDataSemaphore);
+  ERIS_CRITICAL_EXIT();
+  //unlock mutex to make the LED blink
+  return recording;
 }
 
-void ResetTime(){  
-  chSysLockFromISR();
+void ResetTime(){
+  ERIS_CRITICAL_ENTER();
   fsrbuffer.clear();
   sinebuffer.clear();
   syncbuffer.clear();
-  chSysUnlockFromISR();
+  ERIS_CRITICAL_EXIT();
 }
 
 void setTrialName(char * newtrialname){
@@ -167,21 +167,21 @@ void setTrialName(char * newtrialname){
 }
 
 char* getTrialName() {
-  return trialname; 
+  return trialname;
 }
 
-void start(void){   
+void start(void){
     recording=false;
-    chBSemObjectInit(&xwriteDataSemaphore,true);
-       
-    // Initialize SDCard  
+    eris_bsem_init(&xwriteDataSemaphore,true);
+
+    // Initialize SDCard
     initSD();
 
     fsrbuffer.init();
     sinebuffer.init();
     syncbuffer.init();
-    
+
     // create tasks at priority lowest priority
-    writeFiles=chThdCreateStatic(waWriteFiles_T, sizeof(waWriteFiles_T),NORMALPRIO, WriteFiles_T, NULL);
+    writeFiles=eris_thread_create(waWriteFiles_T, 8192, ERIS_NORMAL_PRIORITY, WriteFiles_T, NULL);
  }
 }

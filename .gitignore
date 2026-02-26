@@ -3,3 +3,4 @@
 **/devel/
 **/matlab_gen/
 **/*.pyc
+/.claude

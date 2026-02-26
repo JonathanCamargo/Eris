@@ -1,0 +1,9 @@
+eris_emg
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_emg/cmake.lock /home/ossip/my_git/Eris/python/ros_ws/devel/./cmake.lock
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_emg/lib/pkgconfig/eris_emg.pc /home/ossip/my_git/Eris/python/ros_ws/devel/lib/pkgconfig/eris_emg.pc
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_emg/lib/python2.7/dist-packages/eris_emg/__init__.py /home/ossip/my_git/Eris/python/ros_ws/devel/lib/python2.7/dist-packages/eris_emg/__init__.py
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_emg/share/roseus/ros/eris_emg/manifest.l /home/ossip/my_git/Eris/python/ros_ws/devel/share/roseus/ros/eris_emg/manifest.l
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_emg/share/eris_emg/cmake/eris_emg-msg-paths.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_emg/cmake/eris_emg-msg-paths.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_emg/share/eris_emg/cmake/eris_emg-msg-extras.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_emg/cmake/eris_emg-msg-extras.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_emg/share/eris_emg/cmake/eris_emgConfig-version.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_emg/cmake/eris_emgConfig-version.cmake
+/home/ossip/my_git/Eris/python/ros_ws/devel/.private/eris_emg/share/eris_emg/cmake/eris_emgConfig.cmake /home/ossip/my_git/Eris/python/ros_ws/devel/share/eris_emg/cmake/eris_emgConfig.cmake
