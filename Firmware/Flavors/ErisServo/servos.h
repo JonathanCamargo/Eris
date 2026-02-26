@@ -5,10 +5,10 @@
 
 namespace Servos{
   void start();
-  void move(uint8_t channel, int angle);
-  void moveAll(int* angles);
-  void smoothMove(uint8_t channel, int angle);
-  void smoothMoveAll(int* angles);
+  void move(uint8_t channel, float angle);
+  void moveAll(float* angles);
+  void smoothMove(uint8_t channel, float angle);
+  void smoothMoveAll(float* angles);
 }
 
 #endif

@@ -25,7 +25,7 @@ namespace SerialCom{
 	ERIS_THREAD_FUNC(ReadSerial_T) {
     while(1){
 		  sCmd.readSerial();
-		  eris_sleep_ms(100);
+		  eris_sleep_ms(10);
     }
 	}
 
@@ -175,12 +175,12 @@ void TransmitSineWave(){
 void ServoMove(){
   // Parse arguments: X <ch> <angle> or X <a0> <a1> ... <a15>
   char *arg;
-  int args[NUM_SERVOS];
+  float args[NUM_SERVOS];
   int nargs = 0;
 
   arg = sCmd.next();
   while (arg != NULL && nargs < NUM_SERVOS){
-    args[nargs] = atoi(arg);
+    args[nargs] = atof(arg);
     nargs++;
     arg = sCmd.next();
   }
@@ -188,7 +188,7 @@ void ServoMove(){
   if (nargs == 2){
     // Single servo: X <channel> <angle>
     uint8_t channel = (uint8_t)args[0];
-    int angle = args[1];
+    float angle = args[1];
     Servos::move(channel, angle);
     Serial.print("Servo ");
     Serial.print(channel);
@@ -210,12 +210,12 @@ void ServoMove(){
 void ServoSmoothMove(){
   // Parse arguments: Y <ch> <angle> or Y <a0> <a1> ... <a15>
   char *arg;
-  int args[NUM_SERVOS];
+  float args[NUM_SERVOS];
   int nargs = 0;
 
   arg = sCmd.next();
   while (arg != NULL && nargs < NUM_SERVOS){
-    args[nargs] = atoi(arg);
+    args[nargs] = atof(arg);
     nargs++;
     arg = sCmd.next();
   }
@@ -223,7 +223,7 @@ void ServoSmoothMove(){
   if (nargs == 2){
     // Single servo: Y <channel> <angle>
     uint8_t channel = (uint8_t)args[0];
-    int angle = args[1];
+    float angle = args[1];
     Servos::smoothMove(channel, angle);
     Serial.print("Smooth servo ");
     Serial.print(channel);

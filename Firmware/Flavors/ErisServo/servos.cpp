@@ -15,14 +15,19 @@ namespace Servos{
 
   static float stepToward(float current, float target){
     float diff = target - current;
-    if (diff > SERVO_SMOOTH_MAX_STEP) return current + SERVO_SMOOTH_MAX_STEP;
-    if (diff < -SERVO_SMOOTH_MAX_STEP) return current - SERVO_SMOOTH_MAX_STEP;
-    return target;
+    // Snap to target when close enough (avoids float oscillation)
+    if (diff > -SERVO_SMOOTH_EPSILON && diff < SERVO_SMOOTH_EPSILON) return target;
+    // Ease-out: proportional step, clamped to max speed
+    float step = diff * SERVO_SMOOTH_GAIN;
+    if (step > SERVO_SMOOTH_MAX_STEP) step = SERVO_SMOOTH_MAX_STEP;
+    if (step < -SERVO_SMOOTH_MAX_STEP) step = -SERVO_SMOOTH_MAX_STEP;
+    return current + step;
   }
 
   static void applyAngle(uint8_t channel, float angle){
-    int pulse = map((int)angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE, SERVO_MIN_PULSE, SERVO_MAX_PULSE);
-    pwm.setPWM(channel, 0, pulse);
+    // Float math for full 12-bit PCA9685 resolution (~4096 steps)
+    float pulse = SERVO_MIN_PULSE + (angle - SERVO_MIN_ANGLE) * (float)(SERVO_MAX_PULSE - SERVO_MIN_PULSE) / (SERVO_MAX_ANGLE - SERVO_MIN_ANGLE);
+    pwm.setPWM(channel, 0, (uint16_t)(pulse + 0.5f));
   }
 
   // Thread that steps servos toward their targets
@@ -30,7 +35,8 @@ namespace Servos{
   ERIS_THREAD_FUNC(SmoothServo_T) {
     while(1){
       for (uint8_t i = 0; i < NUM_SERVOS; i++){
-        if (currentAngles[i] != targetAngles[i]){
+        float diff = targetAngles[i] - currentAngles[i];
+        if (diff < -SERVO_SMOOTH_EPSILON || diff > SERVO_SMOOTH_EPSILON){
           currentAngles[i] = stepToward(currentAngles[i], targetAngles[i]);
           applyAngle(i, currentAngles[i]);
         }
@@ -53,32 +59,30 @@ namespace Servos{
     Serial.println("Servos ready");
   }
 
-  void move(uint8_t channel, int angle){
+  void move(uint8_t channel, float angle){
     if (channel >= NUM_SERVOS) return;
-    // Clip angle to valid range
     if (angle < SERVO_MIN_ANGLE) angle = SERVO_MIN_ANGLE;
     if (angle > SERVO_MAX_ANGLE) angle = SERVO_MAX_ANGLE;
     // Immediate move — also update smooth state so thread doesn't fight
     currentAngles[channel] = angle;
     targetAngles[channel] = angle;
-    int pulse = map(angle, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE, SERVO_MIN_PULSE, SERVO_MAX_PULSE);
-    pwm.setPWM(channel, 0, pulse);
+    applyAngle(channel, angle);
   }
 
-  void moveAll(int* angles){
+  void moveAll(float* angles){
     for (uint8_t i = 0; i < NUM_SERVOS; i++){
       move(i, angles[i]);
     }
   }
 
-  void smoothMove(uint8_t channel, int angle){
+  void smoothMove(uint8_t channel, float angle){
     if (channel >= NUM_SERVOS) return;
     if (angle < SERVO_MIN_ANGLE) angle = SERVO_MIN_ANGLE;
     if (angle > SERVO_MAX_ANGLE) angle = SERVO_MAX_ANGLE;
     targetAngles[channel] = angle;
   }
 
-  void smoothMoveAll(int* angles){
+  void smoothMoveAll(float* angles){
     for (uint8_t i = 0; i < NUM_SERVOS; i++){
       smoothMove(i, angles[i]);
     }
