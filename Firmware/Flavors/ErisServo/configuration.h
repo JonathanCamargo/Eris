@@ -33,10 +33,9 @@
 #define PCA9685_I2C_ADDR 0x40 // Default PCA9685 address
 
 // Smooth movement (rate-limited stepping with ease-out)
-#define SERVO_SMOOTH_MAX_STEP 0.45   // Max degrees per tick (0.45 * 200Hz = 90 deg/sec)
-#define SERVO_SMOOTH_LOOP_MS 5       // Tick interval (200 Hz)
-#define SERVO_SMOOTH_GAIN    0.08    // Proportional gain for ease-out (decel zone ~5.6 deg)
-#define SERVO_SMOOTH_EPSILON 0.02    // Snap-to-target threshold (degrees)
+#define SERVO_SMOOTH_SPEED     180.0  // Cruise speed (deg/sec)
+#define SERVO_SMOOTH_DECEL_DEG 6.0   // Degrees from target where deceleration begins
+#define SERVO_SMOOTH_LOOP_MS   5     // Tick interval (200 Hz)
 
 
 // DEBUGGING FLAGS

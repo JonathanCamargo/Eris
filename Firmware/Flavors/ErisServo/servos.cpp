@@ -8,6 +8,11 @@ namespace Servos{
 
   Adafruit_PWMServoDriver pwm(PCA9685_I2C_ADDR);
 
+  // Derived constants from configuration
+  static constexpr float maxStep = SERVO_SMOOTH_SPEED * SERVO_SMOOTH_LOOP_MS / 1000.0f;
+  static constexpr float gain    = maxStep / SERVO_SMOOTH_DECEL_DEG;
+  static constexpr float epsilon = 0.02f;
+
   // Smooth movement state
   static float currentAngles[NUM_SERVOS];
   static float targetAngles[NUM_SERVOS];
@@ -15,12 +20,10 @@ namespace Servos{
 
   static float stepToward(float current, float target){
     float diff = target - current;
-    // Snap to target when close enough (avoids float oscillation)
-    if (diff > -SERVO_SMOOTH_EPSILON && diff < SERVO_SMOOTH_EPSILON) return target;
-    // Ease-out: proportional step, clamped to max speed
-    float step = diff * SERVO_SMOOTH_GAIN;
-    if (step > SERVO_SMOOTH_MAX_STEP) step = SERVO_SMOOTH_MAX_STEP;
-    if (step < -SERVO_SMOOTH_MAX_STEP) step = -SERVO_SMOOTH_MAX_STEP;
+    if (diff > -epsilon && diff < epsilon) return target;
+    float step = diff * gain;
+    if (step > maxStep) step = maxStep;
+    if (step < -maxStep) step = -maxStep;
     return current + step;
   }
 
@@ -36,7 +39,7 @@ namespace Servos{
     while(1){
       for (uint8_t i = 0; i < NUM_SERVOS; i++){
         float diff = targetAngles[i] - currentAngles[i];
-        if (diff < -SERVO_SMOOTH_EPSILON || diff > SERVO_SMOOTH_EPSILON){
+        if (diff < -epsilon || diff > epsilon){
           currentAngles[i] = stepToward(currentAngles[i], targetAngles[i]);
           applyAngle(i, currentAngles[i]);
         }
