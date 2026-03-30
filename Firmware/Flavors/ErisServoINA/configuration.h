@@ -1,0 +1,56 @@
+#ifndef CONFIGURATION_H
+#define CONFIGURATION_H
+
+
+#include <Arduino.h>
+
+#define FIRMWARE_VERSION "v3.0"
+
+/* Global configuration such as pins, rates etc */
+
+/***********************************************/
+
+////////////////////////////////////////////////
+/// LED
+/// (classic arduino led)
+///
+#ifndef PIN_LED
+#define PIN_LED 13   //(Already defined in Arduino.h)
+#endif
+
+/////////// MEMORY CONFIGURATION
+#define TXBUFFERSIZE 16 // Default size for transmision buffer for streaming
+#define STRBUFFERSIZE 64
+#define MEMBUFFERSIZE 128
+
+////////////////////////////////////////////////
+/// SERVO CONFIGURATION (PCA9685 via I2C)
+///
+#define NUM_SERVOS 16
+#define SERVO_MIN_PULSE 150   // ~0 degrees (Adafruit PWM ticks out of 4096)
+#define SERVO_MAX_PULSE 600   // ~180 degrees
+#define SERVO_MIN_ANGLE 0
+#define SERVO_MAX_ANGLE 180
+#define PCA9685_I2C_ADDR 0x40 // Default PCA9685 address
+
+// Smooth movement (rate-limited stepping with ease-out)
+#define SERVO_SMOOTH_SPEED     180.0  // Cruise speed (deg/sec)
+#define SERVO_SMOOTH_DECEL_DEG 6.0   // Degrees from target where deceleration begins
+#define SERVO_SMOOTH_LOOP_MS   5     // Tick interval (200 Hz)
+
+////////////////////////////////////////////////
+/// INA219 CONFIGURATION
+///
+#define INA219_I2C_ADDR 0x40  // Default INA219 address (A0=GND, A1=GND)
+#define INA219_SAMPLE_RATE_HZ 100
+#define INA219_SAMPLE_PERIOD_MS (1000 / INA219_SAMPLE_RATE_HZ)
+
+// DEBUGGING FLAGS
+#define DEBUG true
+
+// FIRMWARE INFO STRING
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define FIRMWARE_INFO TOSTRING(FIRMWARE_VERSION) "ErisServoINA by ossip"
+
+#endif
