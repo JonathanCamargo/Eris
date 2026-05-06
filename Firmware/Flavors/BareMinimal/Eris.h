@@ -1,7 +1,7 @@
 #ifndef ERIS_H
 #define ERIS_H
 #include "configuration.h"
-
+#include <ChRt.h>
 #include "customtypes.h"
 #include <eriscommon.h>
 #include <eris_streaming.h>

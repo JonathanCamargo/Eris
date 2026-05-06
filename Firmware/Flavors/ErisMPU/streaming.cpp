@@ -2,7 +2,6 @@
 #include "streaming.h"
 
 #include "imu.h"
-#include "fsr.h"
 #include "sinewave.h"
 
 #include <string.h>
@@ -29,12 +28,7 @@ bool AddFunction(char * arg){
     #endif
     streamfnc[Nfunctions]=&SineWave;
     Nfunctions=Nfunctions+1;
-  }  
-  else if (!strncmp("FSR",arg,MAXSTRCMP)){
-    Serial.println("FSR selected");
-    streamfnc[Nfunctions]=&FSR;
-    Nfunctions=Nfunctions+1;
-  }   
+  }    
   else if (!strncmp("IMU_0",arg,MAXSTRCMP)){
     #if DEBUG
       Serial.println("IMU_0 selected");
@@ -48,22 +42,7 @@ bool AddFunction(char * arg){
     #endif
     streamfnc[Nfunctions]=&IMU_1;
     Nfunctions=Nfunctions+1;
-  }    
-  else if (!strncmp("IMU_2",arg,MAXSTRCMP)){
-    #if DEBUG
-      Serial.println("IMU_2 selected");
-    #endif
-    streamfnc[Nfunctions]=&IMU_2;
-    Nfunctions=Nfunctions+1;
-  }    
-  else if (!strncmp("IMU_3",arg,MAXSTRCMP)){
-    #if DEBUG
-      Serial.println("IMU_3 selected");
-    #endif
-    streamfnc[Nfunctions]=&IMU_3;
-    Nfunctions=Nfunctions+1;
-  }    
-
+  }
   else {
     return false;
   }
@@ -80,33 +59,20 @@ bool AddFunction(char * arg){
  void IMU_1(){
   IMU_byIdx(1);
 }
- void IMU_2(){
-  IMU_byIdx(2);
-}
- void IMU_3(){
-  IMU_byIdx(3);
-}
 
  void IMU_byIdx(int imuidx){
-  ErisBuffer<IMUSample_t> * imubuffer;  
+  ErisBuffer<IMUSample_t> * imubuffer;
     switch (imuidx){
-      case 0: 
-        imubuffer=&IMU::bufferTrunk;
+      case 0:
+        imubuffer=&IMU::buffer0;
         break;
       case 1:
-        imubuffer=&IMU::bufferThigh;
-        break;
-      case 2:
-        imubuffer=&IMU::bufferShank;
-        break;
-      case 3:
-        imubuffer=&IMU::bufferFoot;
+        imubuffer=&IMU::buffer1;
         break;
       default:
-        imubuffer=&IMU::bufferTrunk;
+        imubuffer=&IMU::buffer0;
         break;
-  
-    }         
+    }
 
     StreamSamples<IMUSample_t,IMU_TXBUFFERSIZE>(*imubuffer,packet);
     //StreamSamplesMemoryEfficient<IMUSample_t,IMU_TXBUFFERSIZE>(*imubuffer,packet,imusamples);
@@ -116,10 +82,6 @@ bool AddFunction(char * arg){
  void SineWave(){
     //StreamSamplesMemoryEfficient<floatSample_t,TXBUFFERSIZE>(SineWave::buffer,packet,floatsamples);
     StreamSamples<floatSample_t,TXBUFFERSIZE>(SineWave::buffer,packet);
-}
- void FSR(){    
-    //StreamSamplesMemoryEfficient<FSRSample_t,FSR_TXBUFFERSIZE>(FSR::buffer,packet,fsrsamples);
-    StreamSamples<FSRSample_t,FSR_TXBUFFERSIZE>(FSR::buffer,packet);
 }
 
 void Stream(){

@@ -1,32 +1,25 @@
 #include "Eris.h"
+#include "imu.h"
 #include "MPU9250.h"
 #include "configuration.h"
 #include "error.h"
 
 namespace IMU{
   
-eris_thread_ref_t readAnalog = NULL;
-
-IntervalTimer timer0; // Timer for triggering IMU collection
+static eris_thread_ref_t imuThread = NULL;
 
 int failures = -1;
 
-bool imuTrunkOK=true;
-bool imuThighOK=true;
-bool imuShankOK=true;
-bool imuFootOK=true;
+bool imu0OK=true;
+bool imu1OK=false;
 
-MPU9250 imuTrunk(SPI,PIN_IMU_TRUNK);
-MPU9250 imuThigh(SPI,PIN_IMU_THIGH);
-MPU9250 imuShank(SPI,PIN_IMU_SHANK);
-MPU9250 imuFoot(SPI,PIN_IMU_FOOT);
+MPU9250 imu0(Wire,0x68);
+MPU9250 imu1(Wire,0x69);
 MPU9250 * imuptr;
 
 //Buffer for readings 
-ErisBuffer<IMUSample_t> bufferTrunk;
-ErisBuffer<IMUSample_t> bufferThigh;
-ErisBuffer<IMUSample_t> bufferShank;
-ErisBuffer<IMUSample_t> bufferFoot;
+ErisBuffer<IMUSample_t> buffer0;
+ErisBuffer<IMUSample_t> buffer1;
 
 void IMUGetDataHelper(MPU9250 * imu, IMUSample_t & sample ){
   sample.ax=imu->getAccelX_mss();
@@ -44,30 +37,17 @@ static void ISR_NewSample(){
   //Sample every channel
   IMUSample_t thisSample;
   thisSample.timestamp=timestamp; 
-  
-  //Trunk
-  if (imuTrunkOK){  
-  imuTrunk.readSensor();
-  IMUGetDataHelper(&imuTrunk,thisSample);   
-  bufferTrunk.append(thisSample);
+    
+  if (imu0OK){  
+  imu0.readSensor();
+  IMUGetDataHelper(&imu0,thisSample);
+  buffer0.append(thisSample);
   }
 
-  if (imuThighOK){
-  imuThigh.readSensor();
-  IMUGetDataHelper(&imuThigh,thisSample);   
-  bufferThigh.append(thisSample);
-  }
-
-  if (imuShankOK){
-  imuShank.readSensor();
-  IMUGetDataHelper(&imuShank,thisSample);   
-  bufferShank.append(thisSample);
-  }
-
-  if (imuFootOK){
-  imuFoot.readSensor();
-  IMUGetDataHelper(&imuFoot,thisSample);   
-  bufferFoot.append(thisSample);
+  if (imu1OK){
+  imu1.readSensor();
+  IMUGetDataHelper(&imu1,thisSample);   
+  buffer1.append(thisSample);
   }
   
   ERIS_CRITICAL_EXIT();  
@@ -75,23 +55,21 @@ static void ISR_NewSample(){
 
 void InitIMU(void){
   eriscommon::println("Initializing IMU");
-  timer0.end();
+  //timer0.end();
   int status=0;
   failures = -1;
 
-  imuTrunkOK=true;
-  imuThighOK=true;
-  imuShankOK=true;
-  imuFootOK=true;
+  imu0OK=true;
+  imu1OK=false;
 
-  imuptr=&imuTrunk;
+  imuptr=&imu0;
   // Start the IMU configuration 
-  eriscommon::println("Initializing IMU Trunk");
+  eriscommon::println("Initializing IMU 0");
   status = imuptr->begin();
   if (status<0){
     failures |= B1000;
-    Error::RaiseError(Error::SENSOR,"Trunk IMU initialization unsuccessful");
-    imuTrunkOK=false;
+    Error::RaiseError(Error::SENSOR,"IMU 0 initialization unsuccessful");
+    imu0OK=false;
   }
   imuptr->setSrd(0); // 1000Hz
   imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
@@ -100,79 +78,39 @@ void InitIMU(void){
   imuptr->setAccelCalY(0,1);
   imuptr->setAccelCalZ(0,1);
 
-  imuptr=&imuThigh;
-  eriscommon::println("Initializing IMU Thigh");
-  status = imuptr->begin();
-  if (status<0){
-    failures |= B0100;
-    RaiseError(Error::SENSOR,"Thigh IMU initialization unsuccessful");    
-    imuThighOK=false;
-  }
-  imuptr->setSrd(0); // 1000Hz
-  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
-  imuptr->setAccelCalX(0.15,1);
-  imuptr->setAccelCalY(0.15,1);
-  imuptr->setAccelCalZ(0.29,0.98);
+  //imuptr=&imu1;
+  //eriscommon::println("Initializing IMU 1");
+  //status = imuptr->begin();
+  //if (status<0){
+  //  failures |= B0100;
+  //  RaiseError(Error::SENSOR,"IMU 1 initialization unsuccessful");    
+  //  imuThighOK=false;
+  //}
+  //imuptr->setSrd(0); // 1000Hz
+  //imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
+  //imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
+  //imuptr->setAccelCalX(0.15,1);
+  //imuptr->setAccelCalY(0.15,1);
+  //imuptr->setAccelCalZ(0.29,0.98);
 
-  imuptr=&imuShank;
-  eriscommon::println("Initializing IMU Shank");
-  status = imuptr->begin();
-  if (status<0){
-    failures |= B0010;
-  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-    RaiseError(Error::SENSOR,"Shank IMU initialization unsuccessful");
-    
-    imuShankOK=false;
-  }
-  imuptr->setSrd(0); // 1000Hz
-  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
-  imuptr->setAccelCalX(0.04,1);
-  imuptr->setAccelCalY(0.04,1);
-  imuptr->setAccelCalZ(0.13,0.99);
+ 
+  eriscommon::println("Starting IMU collection");  
 
-  imuptr=&imuFoot;
-  eriscommon::println("Initializing IMU Foot");
-  status = imuptr->begin();
-  if (status<0){
-    failures |= B0001;
-    RaiseError(Error::SENSOR,"Foot IMU initialization unsuccessful");    
-    imuFootOK=false;
-  }
-  imuptr->setSrd(0); // 1000Hz
-  imuptr->setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-  imuptr->setAccelRange(MPU9250::ACCEL_RANGE_8G);
-  imuptr->setAccelCalX(-.01,1);
-  imuptr->setAccelCalY(-.04,1);
-  imuptr->setAccelCalZ(-.05,.98);
-
-  eriscommon::println("Starting IMU collection");
-  timer0.begin(ISR_NewSample, IMU_PERIOD_US);    
+  // Attach interrupt function
+  //timer0.begin(ISR_NewSample, IMU_PERIOD_US);    
+  TimerTc3.initialize(IMU_PERIOD_US); // 500000 us = 0.5 seconds
+  // Attach interrupt function
+  TimerTc3.attachInterrupt(ISR_NewSample);
 }
 
 void start(void){
-  pinMode(PIN_IMU_TRUNK,OUTPUT);
-  pinMode(PIN_IMU_THIGH,OUTPUT);
-  pinMode(PIN_IMU_SHANK,OUTPUT);
-  pinMode(PIN_IMU_FOOT,OUTPUT);
-  digitalWrite(PIN_IMU_TRUNK,HIGH);
-  digitalWrite(PIN_IMU_THIGH,HIGH);
-  digitalWrite(PIN_IMU_SHANK,HIGH);
-  digitalWrite(PIN_IMU_FOOT,HIGH);
-  SPI.begin();
+  Wire.begin();
   failures=0;
   // Start ErisBuffers            
-  bufferTrunk.init();   
-  bufferThigh.init();   
-  bufferShank.init();   
-  bufferFoot.init();            
-
+  buffer0.init();   
+  buffer1.init();   
+  //imuThread = eris_thread_create(waIMU_T, ERIS_STACK_MEDIUM, ERIS_NORMAL_PRIORITY+1, IMU_T, NULL);
   InitIMU();
-   
-  //Start samples semaphore for feature extraction
-  //chBSemObjectInit(&xsamplesSemaphore,true);        
-  // Initialize interrupt to take the samples      
-  // Timer interrupt to take the IMU samples        
-  //Set up ADC   
-  }
+  Serial.println("IMU ready");
+}
 }

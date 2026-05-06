@@ -1,16 +1,13 @@
 #ifndef ERIS_H
 #define ERIS_H
 #include "configuration.h"
+#include <ChRt.h>
 
 #include "customtypes.h"
 #include <eriscommon.h>
 #include <eris_streaming.h>
 #include <eris_sd.h>
-
-
-
 #include <Arduino.h>
-
 #include <eris_rtos.h>
 
 extern const char firmwareInfo[];

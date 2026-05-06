@@ -4,13 +4,12 @@
 #include "Eris.h"
 
 #include <Arduino.h>
+#include "TimerTC3.h"
 
 namespace IMU{
 
-extern ErisBuffer<IMUSample_t> bufferTrunk;
-extern ErisBuffer<IMUSample_t> bufferThigh;
-extern ErisBuffer<IMUSample_t> bufferShank;
-extern ErisBuffer<IMUSample_t> bufferFoot;
+extern ErisBuffer<IMUSample_t> buffer0;
+extern ErisBuffer<IMUSample_t> buffer1;
 extern int failures;
 void start(void);
 void InitIMU(void);

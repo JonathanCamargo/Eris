@@ -16,11 +16,6 @@ typedef struct IMUSample{
   float wz;
 } IMUSample_t;
 
-typedef struct FSRSample{
-  float timestamp;
-  float ch[FSR_NUMCHANNELS];    
-} FSRSample_t;
-
 typedef struct floatSample{
   float timestamp;
   float value;    

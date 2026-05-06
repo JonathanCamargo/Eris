@@ -3,24 +3,22 @@
 
 #include "configuration.h"
 #include "Eris.h"
-
-#include "fsr.h"
 #include "imu.h"
 #include "sinewave.h"
 #include "serialcommand.h"
 
-#include <SPI.h>
-
-eris_thread_ref_t thread1 = NULL;
+#include <Wire.h>
 
 long t0=0; // Global time
+
+eris_thread_ref_t thread1 = NULL;
 
 const char firmwareInfo[]=FIRMWARE_INFO;
 
 /* ******************************** Global threads ************************************************** */
 
 // Mutex to enable or disable heartbeat
-ERIS_THREAD_WA(waThread1, 32);
+ERIS_THREAD_WA(waThread1, ERIS_STACK_TINY);
 ERIS_THREAD_FUNC(Thread1) {
   while (1) {
     // Sleep for 1000 milliseconds.
@@ -38,45 +36,34 @@ void start(){
   // Initialize mutex for heartbeat
   //chMtxObjectInit(&mtxhb);
   /*************** Start Threads ************************/    
-  eris_thread_create(waThread1, 32,
-                                   NORMALPRIO, Thread1, NULL);
+  thread1 = eris_thread_create(waThread1, ERIS_STACK_TINY, ERIS_NORMAL_PRIORITY, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
 
   t0=micros();
 
   // start special tasks from external sources
   SineWave::start();
-  IMU::start();
-  FSR::start();
+  IMU::start();  
   
   // Serial command interface   
   SerialCom::start();
-
-  
 
 }
 
 void setup(){  
   Serial.begin(115200);
-  pinMode(PIN_LED,OUTPUT);
-  digitalWrite(PIN_LED,LOW);
   // Wait for USB Serial.  
-  delay(2000);
+  while (!Serial) {}
+  delay(1000);
   // Setup the initial configuration  
   Serial.println("HELLO, This is Eris");
   /*************** Configure HW pins *******************/
   pinMode(PIN_LED,OUTPUT); 
-  pinMode(PIN_LED_R,OUTPUT); 
-  digitalWrite(PIN_LED,LOW); 
-  digitalWrite(PIN_LED_R,LOW); 
-  // Setup battery pins
-    
+  digitalWrite(PIN_LED,LOW);   
   /******************************************************/
 
-  /******************************************************/
   //Start threads
-  eris_scheduler_start(start);
-  digitalWrite(PIN_LED,HIGH); 
+  eris_scheduler_start(start);  
   while(true){}
 }
 

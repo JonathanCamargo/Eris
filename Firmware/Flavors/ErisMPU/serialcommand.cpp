@@ -1,15 +1,10 @@
 #include "Eris.h"
 #include "serialcommand.h"
-
-
 #include "imu.h"
-#include "fsr.h"
 #include "sinewave.h"
-
 #include "streaming.h"
 
 //Static allocation to avoid moving a lot of memory in RTOS
-static FSRSample_t fsrsamples[MEMBUFFERSIZE];   
 static IMUSample_t imusamples[MEMBUFFERSIZE];
 
 char strbuffer[STRBUFFERSIZE];
@@ -56,8 +51,7 @@ namespace SerialCom{
     
     sCmd.addCommand("SINE",TransmitSineWave); // Transmit the current sinewave buffer    
     sCmd.addCommand("INITIMU",InitIMU); // Transmit the current IMU buffer  
-    sCmd.addCommand("IMU",TransmitIMU); // Transmit the current IMU buffer  
-    sCmd.addCommand("FSR",TransmitFSR); // Transmit the current FSR buffer
+    sCmd.addCommand("IMU",TransmitIMU); // Transmit the current IMU buffer      
     sCmd.addCommand("FAIL",ShowFailures); // Configure the streaming functions
 
     sCmd.addCommand("TIME0",SynchronizeTime); //Synchronize time
@@ -192,25 +186,19 @@ void TransmitIMU(){
     Serial.print("] ");
     int imuidx=atoi(arg);
     switch (imuidx){
-      case 0: 
-        imubuffer=&IMU::bufferTrunk;
+      case 0:
+        imubuffer=&IMU::buffer0;
         break;
       case 1:
-        imubuffer=&IMU::bufferThigh;
-        break;
-      case 2:
-        imubuffer=&IMU::bufferShank;
-        break;
-      case 3:
-        imubuffer=&IMU::bufferFoot;
+        imubuffer=&IMU::buffer1;
         break;
       default:
-        imubuffer=&IMU::bufferTrunk;
+        imubuffer=&IMU::buffer0;
         break;
-    }    
+    }
   }
   else {
-      imubuffer=&IMU::bufferTrunk;
+      imubuffer=&IMU::buffer0;
   }
       
   ERIS_CRITICAL_ENTER();
@@ -243,37 +231,6 @@ void TransmitIMU(){
    else {
      Serial.println();
    }           
-}
-
-void TransmitFSR(){    
-  ERIS_CRITICAL_ENTER();
-  FSRSample_t *samples=&fsrsamples[0];
-  int num=FSR::buffer.FetchData(samples,(char*)"FSR",MEMBUFFERSIZE);
-  long missed=FSR::buffer.missed();   
-  ERIS_CRITICAL_EXIT();   
-  Serial.print("FSR[ch0]:");   
-  // Show number of missed points
-  Serial.print("(missed:");
-  Serial.print(missed);
-  Serial.print(") ");   
-  // Show the data
-   if (num>0){
-     uint8_t i=0;
-     Serial.print("(@");
-     Serial.print(samples[0].timestamp,2);
-     Serial.print("ms)");         
-     for (i=0;i<num-1;i++){
-        Serial.print(samples[i].ch[0],2);
-        Serial.print(",");
-     }     
-     Serial.print(samples[i].ch[0],2);
-     Serial.print("(@");
-     Serial.print(samples[i].timestamp,2);
-     Serial.println("ms)");   
-   } 
-   else {
-     Serial.println();
-   }      
 }
 
 void SayHello() {

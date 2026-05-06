@@ -21,9 +21,6 @@ void SineWave();
 void IMU_byIdx(int index);
 void IMU_0();
 void IMU_1();
-void IMU_2();
-void IMU_3();
-void FSR();
 void Stream();
 
 }

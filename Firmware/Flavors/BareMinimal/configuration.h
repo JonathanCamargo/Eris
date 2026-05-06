@@ -1,7 +1,6 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-
 #include <Arduino.h>
 
 #define FIRMWARE_VERSION "v3.0" 
