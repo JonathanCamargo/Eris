@@ -1,7 +1,7 @@
 #include "Eris.h"
 #include "streaming.h"
 
-#include "sinewave.h"
+#include <modules/sinewave.h>
 
 #include <string.h>
 

@@ -3,13 +3,11 @@
 
 #include "configuration.h"
 #include "Eris.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "serialcommand.h"
 
 #include <SPI.h>
 
-
-long t0=0; // Global start time for all modules 
 eris_thread_ref_t thread1 = NULL;
 const char firmwareInfo[]=FIRMWARE_INFO;
 
@@ -30,9 +28,8 @@ ERIS_THREAD_FUNC(Thread1) {
 
 void start(){
   // Initialize mutex for heartbeat
-  //chMtxObjectInit(&mtxhb);
   /*************** Start Threads ************************/    
-  eris_thread_create(waThread1, 32, NORMALPRIO, Thread1, NULL);
+  eris_thread_create(waThread1, 32, ERIS_NORMAL_PRIORITY, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
 
   // start special tasks from external sources

@@ -30,7 +30,7 @@ ERIS_THREAD_FUNC(UpdatePID_T) {
 	void start(void){        
     //buffer.init();
     // create tasks at priority lowest priority
-    updatepid=eris_thread_create(waUpdatePID_T, 128,NORMALPRIO+1, UpdatePID_T, NULL);
+    updatepid=eris_thread_create(waUpdatePID_T, 128,ERIS_NORMAL_PRIORITY+1, UpdatePID_T, NULL);
     pinMode(PIN_MOT_0_A,OUTPUT);
     pinMode(PIN_MOT_0_B,OUTPUT);
     pid.SetMode(AUTOMATIC);

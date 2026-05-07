@@ -1,6 +1,33 @@
+# Build artifacts
 **/Build/
 **/build/
 **/devel/
 **/matlab_gen/
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Arduino IDE
+*.hex
+*.elf
+*.bin
+
+# Python
 **/*.pyc
+**/__pycache__/
+*.egg-info/
+.venv/
+venv/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Claude / agent state
 /.claude

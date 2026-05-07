@@ -2,7 +2,7 @@
 #include "streaming.h"
 
 #include "imu.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 
 #include <string.h>
 

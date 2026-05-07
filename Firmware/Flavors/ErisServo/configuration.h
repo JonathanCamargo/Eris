@@ -23,14 +23,14 @@
 #define STRBUFFERSIZE 64
 
 ////////////////////////////////////////////////
-/// SERVO CONFIGURATION (PCA9685 via I2C)
+/// SERVO CONFIGURATION (Arduino Servo.h, direct PWM)
 ///
-#define NUM_SERVOS 16
-#define SERVO_MIN_PULSE 150   // ~0 degrees (Adafruit PWM ticks out of 4096)
-#define SERVO_MAX_PULSE 600   // ~180 degrees
+// NUM_SERVOS must match the length of SERVO_PINS. Limited by available
+// hardware PWM channels (~12 on Teensy 4.x, fewer on SAMD21 / AVR).
+#define NUM_SERVOS 6
+#define SERVO_PINS 2, 3, 4, 5, 6, 7
 #define SERVO_MIN_ANGLE 0
 #define SERVO_MAX_ANGLE 180
-#define PCA9685_I2C_ADDR 0x40 // Default PCA9685 address
 
 // Smooth movement (rate-limited stepping with ease-out)
 #define SERVO_SMOOTH_SPEED     180.0  // Cruise speed (deg/sec)

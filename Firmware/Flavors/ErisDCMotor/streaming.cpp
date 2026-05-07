@@ -2,12 +2,12 @@
 #include "streaming.h"
 
 #include "potentiometer.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 
 #include <string.h>
 
 namespace Streaming{
-  
+
 #define MAXSTRCMP 5
 #define MAXFNC 10
 
@@ -29,25 +29,25 @@ bool AddFunction(char * arg){
     #endif
     streamfnc[Nfunctions]=&SineWave;
     Nfunctions=Nfunctions+1;
-  }    
+  }
   else if (!strncmp("POT",arg,MAXSTRCMP)){
     #if DEBUG
       eriscommon::println("Potentiometer selected");
     #endif
     streamfnc[Nfunctions]=&Potentiometer;
     Nfunctions=Nfunctions+1;
-  }    
+  }
   else {
     return false;
   }
   if (Nfunctions>MAXFNC){
-    Error::RaiseError(MEMORY,(char *)"STREAMFNC");
+    Error::RaiseError(Error::MEMORY,(char *)"STREAMFNC");
   }
   return true;
 }
 
 void SineWave(){
-//    StreamSamples<floatSample_t,TXBUFFERSIZE>(SineWave::buffer,packet);
+    StreamSamples<floatSample_t,TXBUFFERSIZE>(SineWave::buffer,packet);
 }
 
 void Potentiometer(){
@@ -57,11 +57,11 @@ void Potentiometer(){
 
 void Stream(){
   //Fetch data from desired buffers and send via serial
-  packet.start(Packet::PacketType::DATA); 
+  packet.start(Packet::PacketType::DATA);
   for (uint8_t i=0;i<Nfunctions;i++){
     (*streamfnc[i])();
-  }   
-  packet.send(); 
+  }
+  packet.send();
 }
 
 }

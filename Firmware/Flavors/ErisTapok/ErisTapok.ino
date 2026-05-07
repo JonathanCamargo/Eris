@@ -29,7 +29,7 @@ ERIS_THREAD_FUNC(Thread1) {
 void start(){  
   /*************** Start Threads ************************/    
   eris_thread_create(waThread1, sizeof(waThread1),
-                                   NORMALPRIO, Thread1, NULL);
+                                   ERIS_NORMAL_PRIORITY, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
   
   // start special tasks from extenal sources
@@ -44,7 +44,6 @@ void start(){
 
 void setup(){  
   // Initialize mutex for heartbeat
-  //chMtxObjectInit(&mtxhb);
   Serial.begin(115200);
   //while (!Serial) {
   //  ; // wait for //Serial port to connect. Needed for native USB

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eris"
+version = "3.0.0"
+description = "Host-side driver for the Eris real-time DAQ/streaming firmware framework."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.7"
+authors = [
+    {name = "Jonathan Camargo", email = "jon-cama@gatech.edu"},
+]
+keywords = ["arduino", "teensy", "daq", "streaming", "rtos", "biomechanics", "emg"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "pyserial",
+    "construct",
+    "cobs",
+    "numpy",
+]
+
+[project.optional-dependencies]
+analysis = ["pandas", "h5py"]
+dev = ["pytest", "ruff"]
+
+[project.urls]
+Homepage = "https://github.com/jonathancamargo/Eris"
+Documentation = "https://github.com/jonathancamargo/Eris#readme"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["eris*"]
+exclude = ["Examples*", "ros_ws*", "roshandlers*", "flavors*", "featureextraction*"]

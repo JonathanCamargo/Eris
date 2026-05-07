@@ -16,32 +16,32 @@ import sys
 
 
 class Eris:
-        """ python Eris  is the driver for the Eris firmware on the microcontroller.
-        Eris is a firmware for data collection and machine learning in arduino based
-        on real time OS ChibiOS.
+        """python Eris is the host-side driver for the Eris firmware on the microcontroller.
+        Eris is an Arduino firmware framework for real-time data acquisition, streaming,
+        and control built on an RTOS (ChibiOS or FreeRTOS).
 
-        The firmware responds to serial commands to configure and trigger different actions
-        and responds by streaming out packets that contain information. There are 2 types
-        of packets 'D'(data) and 'T'(text). Other type of packets can be included to extend
-        functionality if these two do not cover all the needs.
+        The firmware accepts serial commands to configure and trigger actions, and streams
+        COBS-framed packets back. Three packet types are defined: 'D' (data), 'T' (text),
+        and 'E' (error).
 
-        The Data packet is a defined as a concatenation of a uint8 (len) and a user define type
-        structure defined using Construct (pip install construct). The construct definition
-        and the typedef in the firmware MUST be consistent so that the information can be
-        interpreted correctly.
+        The Data packet is a concatenation of a uint8 (len) and a user-defined record type
+        described using Construct (pip install construct). The construct definition and the
+        firmware's typedef MUST be consistent so the byte stream is interpreted correctly.
 
 
         How to use:
-        1. Upload the firmware in the arduino and do the edits to make sure that the system responds the command SETD to configure the D packets.
+        1. Upload a flavor to the microcontroller and verify that it accepts the streaming
+           configuration command S_F (Set Features):
 
-        	In the serial monitor try: SETD <dataName1> <dataName2> ... <dataNameN>
+        	In the serial monitor try: S_F <feature1> <feature2> ... <featureN>
 
-        	<dataNameith> could be any name meaningful to you: eg. SETD EMG FSR
+        	<featureN> matches a feature name registered in the flavor's streaming.cpp,
+        	e.g. S_F SINE FSR EMG.
 
-           If it was successful you should see that Eris responds confirming that your data were selected.
+           Eris responds with "Features Ready" when the configuration is accepted.
 
-        2. In your python code create an eris object. You can create multiple objects to interface with multiple microcontrollers (just make sure that the ports
-        	are different).
+        2. In your Python code create an Eris object. Multiple objects can interface with
+           multiple microcontrollers (just use different serial ports).
 
         	dataNames=['dataname1','dataname2',...]
         	format=[dataName1_format,dataName2_format, ...]
@@ -73,11 +73,13 @@ class Eris:
             ispython2=False
 
         def __init__(self,features,format,port='/dev/ttyACM0'):
-            """Create an eris object features,types,lengths,port)\n
-            pass a list of features (type of data that you want to activate in the streaming
-            format is a c format to interpreting the streaming packets.
-            Optional port is the serial port to be used (defaults to ttyACM0)\n
-            e.g. Eris(['RMS'],format,'/dev/ttyACM0')"""
+            """Create an Eris object (features, format, port).
+            features: list of feature names to activate in the streaming, matching the
+                      names accepted by S_F in the firmware's streaming.cpp.
+            format:   list of construct/struct format strings used to decode each feature.
+            port:     serial port. Default '/dev/ttyACM0'. On Windows use 'COM3' etc.
+            e.g. Eris(['SineWave'], ['float'], '/dev/ttyACM0')
+            """
 
             if type(features) != list:
                 features=[features]

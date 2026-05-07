@@ -186,7 +186,7 @@ void Default(){
     }
     
     // create task at normal priority
-    extractRegression=eris_thread_create(waExtractRegression_T, 1024,NORMALPRIO+1, ExtractRegression_T, NULL);
+    extractRegression=eris_thread_create(waExtractRegression_T, 1024,ERIS_NORMAL_PRIORITY+1, ExtractRegression_T, NULL);
   }
   
 }

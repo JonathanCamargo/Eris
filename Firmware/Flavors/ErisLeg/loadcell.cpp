@@ -78,7 +78,7 @@ void start(void){
     }
     
     if (loadcellOk){            
-       readDatal=eris_thread_create(waReadData_T, 512,NORMALPRIO, ReadData_T, NULL);
+       readDatal=eris_thread_create(waReadData_T, 512,ERIS_NORMAL_PRIORITY, ReadData_T, NULL);
 	  }	
     else{       
        Error::RaiseError(CANBUS,(char *)"loadcell");       

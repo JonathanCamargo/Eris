@@ -1,12 +1,12 @@
 #include "Eris.h"
 #include "servos.h"
 
-#include <Wire.h>
-#include <Adafruit_PWMServoDriver.h>
+#include <Servo.h>
 
 namespace Servos{
 
-  Adafruit_PWMServoDriver pwm(PCA9685_I2C_ADDR);
+  static Servo servos[NUM_SERVOS];
+  static const uint8_t pins[NUM_SERVOS] = {SERVO_PINS};
 
   // Derived constants from configuration
   static constexpr float maxStep = SERVO_SMOOTH_SPEED * SERVO_SMOOTH_LOOP_MS / 1000.0f;
@@ -28,9 +28,7 @@ namespace Servos{
   }
 
   static void applyAngle(uint8_t channel, float angle){
-    // Float math for full 12-bit PCA9685 resolution (~4096 steps)
-    float pulse = SERVO_MIN_PULSE + (angle - SERVO_MIN_ANGLE) * (float)(SERVO_MAX_PULSE - SERVO_MIN_PULSE) / (SERVO_MAX_ANGLE - SERVO_MIN_ANGLE);
-    pwm.setPWM(channel, 0, (uint16_t)(pulse + 0.5f));
+    servos[channel].write((int)(angle + 0.5f));
   }
 
   // Thread that steps servos toward their targets
@@ -49,15 +47,12 @@ namespace Servos{
   }
 
   void start(){
-    Wire.begin();
-    pwm.begin();
-    pwm.setPWMFreq(50); // 50Hz for standard servos
-    // Initialize smooth state to center position
     for (uint8_t i = 0; i < NUM_SERVOS; i++){
-      currentAngles[i] = 90.0;
-      targetAngles[i] = 90.0;
+      servos[i].attach(pins[i]);
+      currentAngles[i] = 90.0f;
+      targetAngles[i]  = 90.0f;
+      servos[i].write(90);
     }
-    // Start smooth movement thread
     smoothThread = eris_thread_create(waSmoothServo_T, ERIS_STACK_MEDIUM, ERIS_NORMAL_PRIORITY+1, SmoothServo_T, NULL);
     Serial.println("Servos ready");
   }
@@ -66,7 +61,7 @@ namespace Servos{
     if (channel >= NUM_SERVOS) return;
     if (angle < SERVO_MIN_ANGLE) angle = SERVO_MIN_ANGLE;
     if (angle > SERVO_MAX_ANGLE) angle = SERVO_MAX_ANGLE;
-    // Immediate move — also update smooth state so thread doesn't fight
+    // Immediate move — also update smooth state so the thread doesn't fight us
     currentAngles[channel] = angle;
     targetAngles[channel] = angle;
     applyAngle(channel, angle);

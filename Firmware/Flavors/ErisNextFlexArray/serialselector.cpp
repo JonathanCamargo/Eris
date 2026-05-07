@@ -63,7 +63,7 @@ namespace SerialSelector{
 
    Serial.println("Electrode selector ready");
   	// create task at priority one
-	readSerial=eris_thread_create(waReadSerial_T, sizeof(waReadSerial_T),NORMALPRIO, ReadSerial_T, NULL);    
+	readSerial=eris_thread_create(waReadSerial_T, sizeof(waReadSerial_T),ERIS_NORMAL_PRIORITY, ReadSerial_T, NULL);    
 	}
 
 }

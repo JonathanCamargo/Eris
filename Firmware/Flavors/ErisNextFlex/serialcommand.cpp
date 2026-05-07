@@ -75,8 +75,8 @@ namespace SerialCom{
     Serial.println("Serial Commands are ready");
 
     // create task at priority one
-    readSerial=eris_thread_create(waReadSerial_T, sizeof(waReadSerial_T),NORMALPRIO, ReadSerial_T, NULL);
-    streamSerial=eris_thread_create(waStreamSerial_T, sizeof(waStreamSerial_T),NORMALPRIO+3, StreamSerial_T, NULL);
+    readSerial=eris_thread_create(waReadSerial_T, sizeof(waReadSerial_T),ERIS_NORMAL_PRIORITY, ReadSerial_T, NULL);
+    streamSerial=eris_thread_create(waStreamSerial_T, sizeof(waStreamSerial_T),ERIS_NORMAL_PRIORITY+3, StreamSerial_T, NULL);
 
 	}
 

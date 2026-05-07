@@ -1,16 +1,9 @@
-#ifndef EMG_H
-#define EMG_H
+#ifndef ANALOG_H
+#define ANALOG_H
 
-#include "Eris.h"
-#include <eriscommon.h>
+#include <modules/analog.h>
+#include "configuration.h"
 
-#include <Arduino.h>
-
-namespace Analog{
-
-extern ErisBuffer<AnalogSample_t> buffer;
-void start(void);
-
-}
+extern Analog::Driver<ANALOG_NUMCHANNELS> analog;
 
 #endif

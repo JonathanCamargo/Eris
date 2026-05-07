@@ -18,7 +18,6 @@ void ClearFunctions();
 
 // Sinusoidal wave
 void SineWave();
-
 void Stream();
 
 }

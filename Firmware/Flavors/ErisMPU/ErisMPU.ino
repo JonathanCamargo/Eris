@@ -4,13 +4,11 @@
 #include "configuration.h"
 #include "Eris.h"
 #include "imu.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "serialcommand.h"
 
 #include <Wire.h>
-
-long t0=0; // Global time
-
+c:\git\Eris\Firmware\Flavors\ErisMPU\serialcommand.h
 eris_thread_ref_t thread1 = NULL;
 
 const char firmwareInfo[]=FIRMWARE_INFO;
@@ -34,7 +32,6 @@ void start(){
   eriscommon::setPrintPacketMode(true); //send prints to eris
   
   // Initialize mutex for heartbeat
-  //chMtxObjectInit(&mtxhb);
   /*************** Start Threads ************************/    
   thread1 = eris_thread_create(waThread1, ERIS_STACK_TINY, ERIS_NORMAL_PRIORITY, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)

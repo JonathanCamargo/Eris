@@ -172,8 +172,8 @@ static void ISR_PIN_BTN(){
     */    
     attachInterrupt(digitalPinToInterrupt(PIN_BTN), ISR_PIN_BTN,CHANGE);    
     // create tasks at priority lowest priority
-    generatePWM=eris_thread_create(waGeneratePWM_T, 16, NORMALPRIO+1, GeneratePWM_T, NULL);
-    transitions=eris_thread_create(waTransitions_T, 16, NORMALPRIO+1, Transitions_T, NULL);
+    generatePWM=eris_thread_create(waGeneratePWM_T, 16, ERIS_NORMAL_PRIORITY+1, GeneratePWM_T, NULL);
+    transitions=eris_thread_create(waTransitions_T, 16, ERIS_NORMAL_PRIORITY+1, Transitions_T, NULL);
 	}
 	
 	

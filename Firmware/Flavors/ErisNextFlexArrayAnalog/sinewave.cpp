@@ -42,7 +42,7 @@ ERIS_THREAD_FUNC(GenerateWave_T) {
   void start(void){        
     buffer.init();
     // create tasks at priority lowest priority
-    generateWave=eris_thread_create(waGenerateWave_T, sizeof(waGenerateWave_T),NORMALPRIO+1, GenerateWave_T, NULL);
+    generateWave=eris_thread_create(waGenerateWave_T, sizeof(waGenerateWave_T),ERIS_NORMAL_PRIORITY+1, GenerateWave_T, NULL);
   }
   
   

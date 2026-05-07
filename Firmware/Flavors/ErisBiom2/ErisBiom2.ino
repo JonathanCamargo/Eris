@@ -35,7 +35,7 @@ void start(){
   
   /*************** Start Threads ************************/    
   eris_thread_create(waThread1, 32,
-                                   NORMALPRIO-10, Thread1, NULL);
+                                   ERIS_NORMAL_PRIORITY-10, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
   
   // start special tasks from extenal sources

@@ -149,7 +149,7 @@ namespace Features{
     memset(mask, 1, 2*BIOM_NUMCHANNELS*6*FEATS_NUM);
 
     // create tasks
-    extractFeatures=eris_thread_create(waExtractFeatures_T, 256, NORMALPRIO+5, ExtractFeatures_T, NULL);
+    extractFeatures=eris_thread_create(waExtractFeatures_T, 256, ERIS_NORMAL_PRIORITY+5, ExtractFeatures_T, NULL);
   }
 
 }

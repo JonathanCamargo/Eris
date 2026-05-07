@@ -254,7 +254,7 @@ void start(void) {
   }
 
   if (motorsOk) {
-    writeCurrent = eris_thread_create(waWriteCurrent_T, 512, NORMALPRIO + 1, WriteCurrent_T, NULL);
+    writeCurrent = eris_thread_create(waWriteCurrent_T, 512, ERIS_NORMAL_PRIORITY + 1, WriteCurrent_T, NULL);
   }
 }
 }

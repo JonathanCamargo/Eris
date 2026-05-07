@@ -209,6 +209,6 @@ namespace ADS131{
     startup();
 
     eris_bsem_init(&xConvertBytesSemaphore, true);
-    convertBytes = eris_thread_create(waConvertBytes_T, 256, NORMALPRIO, ConvertBytes_T, NULL);
+    convertBytes = eris_thread_create(waConvertBytes_T, 256, ERIS_NORMAL_PRIORITY, ConvertBytes_T, NULL);
   }
 }

@@ -32,7 +32,7 @@ ERIS_THREAD_FUNC(SampleFSR_T) {
   void start(void){        
     buffer.init();
     // create tasks at priority lowest priority
-    sampleFSR=eris_thread_create(waSampleFSR_T, sizeof(waSampleFSR_T),NORMALPRIO+1, SampleFSR_T, NULL);
+    sampleFSR=eris_thread_create(waSampleFSR_T, sizeof(waSampleFSR_T),ERIS_NORMAL_PRIORITY+1, SampleFSR_T, NULL);
   }
   
   

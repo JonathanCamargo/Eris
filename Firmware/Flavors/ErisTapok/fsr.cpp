@@ -47,6 +47,6 @@ void start(void){
     analogReadRes(10); // set bits of resolution  
      
     // create tasks at priority lowest priority
-    newSample=eris_thread_create(waNewSample_T, sizeof(waNewSample_T),NORMALPRIO+1, NewSample_T, NULL);
+    newSample=eris_thread_create(waNewSample_T, sizeof(waNewSample_T),ERIS_NORMAL_PRIORITY+1, NewSample_T, NULL);
   }
 }

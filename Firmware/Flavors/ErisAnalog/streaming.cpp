@@ -2,7 +2,7 @@
 #include "streaming.h"
 
 #include "analog.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 
 #include <string.h>
 
@@ -48,7 +48,7 @@ void Hola()
 }
 
 void Analog(){
-    StreamSamples<AnalogSample_t,ANALOG_TXBUFFERSIZE>(Analog::buffer,packet);
+    StreamSamples<AnalogSample_t,ANALOG_TXBUFFERSIZE>(analog.buffer,packet);
 }
 
 void SineWave(){

@@ -37,7 +37,6 @@ static void ISR_NewSample(){
   float timestamp = ((float)(micros() - SDCard::startTime))/1000.0;  
 	if (sensor1.collectData()) {
 	
-		//chBSemSignalI(&xsensor1FullSemaphore);     
     //Sample every channel
     EMGSample_t thisSample;
     thisSample.timestamp=timestamp; 
@@ -104,9 +103,5 @@ void start(void){
     attachInterrupt(digitalPinToInterrupt(PIN_EMG_ADC0_DRDY),ISR_NewSample,FALLING);
 
     sensor1.startCollecting();
-    
-		// create tasks at priority lowest priority
-	  //readSensor1=chThdCreateStatic(waSensor1_T, sizeof(waSensor1_T),NORMALPRIO+5, Sensor1_T, NULL);     
-	
 	}
 }

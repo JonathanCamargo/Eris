@@ -3,13 +3,13 @@
 
 #include "configuration.h"
 #include "Eris.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
+#include "multiwave.h"
 #include "serialcommand.h"
 
 #include <SPI.h>
 
 
-long t0=0; // Global start time for all modules 
 eris_thread_ref_t thread1 = NULL;
 const char firmwareInfo[]=FIRMWARE_INFO;
 
@@ -20,7 +20,7 @@ ERIS_THREAD_WA(waThread1, 32);
 ERIS_THREAD_FUNC(Thread1) {
   while (1) {
     // Sleep for 1000 milliseconds.
-    // Toggle pin to show heartbeat    
+    // Toggle pin to show heartbeat
     //digitalWrite(PIN_LED,!digitalRead(PIN_LED));
     eris_sleep_ms(250);
   }
@@ -29,34 +29,35 @@ ERIS_THREAD_FUNC(Thread1) {
 
 
 void start(){
-  /*************** Start Threads ************************/    
-  eris_thread_create(waThread1, 32, NORMALPRIO, Thread1, NULL);
+  /*************** Start Threads ************************/
+  eris_thread_create(waThread1, 32, ERIS_NORMAL_PRIORITY, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
   // start special tasks from external sources
   SineWave::start();
-  // Command interfaces   
+  MultiWave::start();
+  // Command interfaces
   SerialCom::start();
 
 }
 
-void setup(){  
+void setup(){
   Serial.begin(115200);
   // Wait for USB Serial.
   while (!Serial) {}
   delay(500);
-  // Setup the initial configuration  
+  // Setup the initial configuration
   Serial.println("HELLO, This is Eris");
   /*************** Configure HW pins *******************/
-  
+
   //Start threads
   eris_scheduler_start(start);
-   
+
   //while(true){}
 }
 
 
 
 
-void loop(){    
+void loop(){
     eris_sleep_ms(10000);
 }

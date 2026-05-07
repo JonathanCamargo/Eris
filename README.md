@@ -29,19 +29,22 @@ Eris/
       BareMinimal/        Template for custom flavors
       ...                 See full list in Flavors/
   eriscommon/             Shared Arduino library (RTOS abstraction, buffers, protocol)
-  python/
-    eris/                 Python driver library
-    Examples/             Usage examples and notebooks
-    flavors/              Flavor-specific Python code
-    ros_ws/               ROS workspace
-    roshandlers/          ROS message handlers
-  matlab/
-    +eris/                Matlab bindings (SD card binary reader)
-  c/
-    serial/               Cross-platform serial library
-    mypkg/                ROS2 package with COBS/SLIP encoding
+                          (lives under ../ArduinoLibraries/eriscommon — installed once
+                          into your Arduino libraries folder)
+  drivers/
+    python/
+      eris/               Python driver library (pip-installable, see drivers/python/README.md)
+      Examples/           Usage examples and notebooks
+      flavors/            Flavor-specific Python code
+      ros_ws/             ROS workspace
+      roshandlers/        ROS message handlers
+    matlab/
+      +eris/              Matlab bindings (SD card binary reader)
+    c/
+      serial/             Cross-platform serial library
+      mypkg/              ROS2 package with COBS/SLIP encoding
+  demos/                  End-to-end demos (e.g. servo_joystick)
   doc/                    Documentation and notes
-  dev/                    Test and debug scripts
 ```
 
 ## Installation
@@ -130,16 +133,18 @@ Install via Arduino Library Manager (Sketch > Include Library > Manage Libraries
 ### Python Driver Installation
 
 ```bash
-cd python/
-pip install -r requirements.txt
+cd drivers/python/
+pip install -e .
+# or with optional analysis extras (pandas, h5py for SD-card binary parsing):
+pip install -e ".[analysis]"
 ```
 
-This installs: `pandas`, `h5py`, `pyserial`, `construct`, `cobs`
+The driver is published as the `eris` package — see `drivers/python/README.md` for the API.
 
 ### ROS Integration (optional)
 
 ```bash
-cd python/ros_ws/
+cd drivers/python/ros_ws/
 catkin build
 source devel/setup.bash
 ```
@@ -149,27 +154,42 @@ Requires ROS 1 (Melodic/Noetic) with `catkin_tools`.
 ## Supported Hardware
 
 **Microcontrollers:**
-- Teensy 3.x / 4.x
-- Arduino Due
+- Teensy 3.x / 4.x (ChibiOS via ChRt — primary target)
+- Arduino Due (FreeRTOS)
+- Seeeduino XIAO SAMD21 (FreeRTOS)
 
-**Sensors (by flavor):**
+## Flavors
 
-| Flavor | Sensor | Interface | Description |
-|--------|--------|-----------|-------------|
-| ErisADS1299 | ADS1299 | SPI | 8-channel 24-bit EMG/ECG bioamplifier |
-| ErisADS131 | ADS131 | SPI | 8-channel 24-bit low-power EMG |
-| ErisAnalog | Built-in ADC | Analog | Configurable-channel analog EMG |
-| ErisMPU | MPU6050 | I2C | 6-DOF IMU (accelerometer + gyroscope) |
-| ErisServoHand | PCA9685 | I2C | 5-DOF servo hand |
-| ErisDCMotor | DC Motor | PWM | Motor feedback and control |
-| ErisBiom / ErisBiom2 | Multi-sensor | Mixed | Biomechanics motion capture |
-| ErisLeg | Pressure + IMU | Mixed | Leg exoskeleton sensors |
-| ErisNextFlex* | Flex sensors | Various | 4 variants (analog, array, combined) |
-| ErisBici | Button + PWM | Digital | Bicycle interface (Arduino Nano) |
-| ErisTapok / ErisTapok2 | CAN bus | CAN | Tapok sensor integration |
-| Potentiometer | Potentiometer | Analog | Position sensing |
-| BareMinimal | None | -- | Template for custom flavors |
-| ErisBandwidthTest | None | -- | Serial throughput testing |
+Status legend: ✅ Verified working · 🟡 Updated, awaiting verification · 🟠 Experimental · ⚪ Reference / template
+
+| Flavor | Status | Sensor / Purpose | Interface | Target board |
+|--------|--------|------------------|-----------|--------------|
+| `Eris` | 🟡 | Base reference (FSR + SineWave + Sync + optional SD logging) | Analog | Teensy |
+| `ErisServo` | ✅ | 16-channel servo control via PCA9685 | I2C | Teensy / SAMD21 |
+| `ErisMPU` | ✅ | 6-DOF IMU (MPU9250) | I2C | SAMD21 (TimerTc3) |
+| `ErisServoHand` | 🟡 | 5-DOF robotic hand (OPEN / CLOSE / SHAKA + DOF aperture) | I2C (PCA9685) | SAMD21 |
+| `ErisServoINA` | 🟡 | Servo control + INA219 current monitoring | I2C | Teensy |
+| `ErisADS1299` | ✅ | 8-channel 24-bit EMG/ECG bioamplifier (+ SD logging) | SPI | Teensy |
+| `ErisADS131` | 🟡 | 8-channel 24-bit low-power EMG | SPI | Teensy |
+| `ErisAnalog` | 🟡 | Configurable-channel analog EMG | ADC | Teensy |
+| `ErisBiom` | 🟠 | Biomechanics motion capture | Mixed | Teensy |
+| `ErisBiom2` | 🟠 | Biomechanics + on-device feature extraction | Mixed | Teensy |
+| `ErisDCMotor` | 🟠 | DC motor feedback + control | PWM + ADC | Teensy |
+| `ErisLeg` | 🟠 | Leg exoskeleton sensors (FSR, IMU, load cell, joints) | Mixed | Teensy |
+| `ErisNextFlex` | 🟠 | Flex sensor (single channel) | Mixed | Teensy |
+| `ErisNextFlexAnalog` | 🟠 | Flex sensor (analog read) | ADC | Teensy |
+| `ErisNextFlexArray` | 🟠 | Flex sensor array | Mixed | Teensy |
+| `ErisNextFlexArrayAnalog` | 🟠 | Flex sensor array (analog) | ADC | Teensy |
+| `ErisTapok` | 🟠 | CAN bus integration | CAN (FlexCAN) | Teensy |
+| `ErisTapok2` | 🟠 | CAN bus + feature extraction + SD | CAN | Teensy |
+| `ErisBici` | 🟠 | Bicycle interface (button + PWM) | Digital | Arduino Nano |
+| `Potentiometer` | 🟠 | Potentiometer position sensing | ADC | Teensy |
+| `BareMinimal` | ⚪ | Minimum viable Eris build (SineWave + serial only) | -- | Teensy / SAMD21 |
+| `ErisMinimal` | ⚪ | Minimal portable foundation (no Teensy-specific code) | -- | Any |
+| `ErisFreeRTOSBase` | ⚪ | FreeRTOS-only baseline reference | -- | SAMD21 / Due |
+| `ErisBandwidthTest` | ⚪ | Serial throughput benchmark | -- | Teensy |
+
+See each flavor's `README.md` for pin assignments, sensor wiring, and the full per-flavor command set.
 
 Most flavors also include FSR (force sensitive resistor) support on analog pins and a sync input for external trigger timestamping.
 
@@ -312,11 +332,11 @@ e.stop()
 
 ### Examples
 
-- `python/Examples/SineWave.py` -- Basic sinewave streaming
-- `python/Examples/BandwidthTest.py` -- Serial throughput measurement
-- `python/Examples/SineWaveROS.py` -- ROS-integrated streaming
-- `python/Examples/BandwidthTest2.ipynb` -- Interactive bandwidth test
-- `python/Examples/ROStest.ipynb` -- ROS topic latency measurement
+- `drivers/python/Examples/SineWave.py` -- Basic sinewave streaming
+- `drivers/python/Examples/BandwidthTest.py` -- Serial throughput measurement
+- `drivers/python/Examples/SineWaveROS.py` -- ROS-integrated streaming
+- `drivers/python/Examples/BandwidthTest2.ipynb` -- Interactive bandwidth test
+- `drivers/python/Examples/ROStest.ipynb` -- ROS topic latency measurement
 
 ## Matlab
 

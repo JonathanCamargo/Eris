@@ -43,7 +43,7 @@ ERIS_THREAD_FUNC(ReadPotentiometer_T) {
 	void start(void){        
     buffer.init();
     // create tasks at priority lowest priority
-    readPotentiometer=eris_thread_create(waReadPotentiometer_T, 128,NORMALPRIO+1, ReadPotentiometer_T, NULL);
+    readPotentiometer=eris_thread_create(waReadPotentiometer_T, 128,ERIS_NORMAL_PRIORITY+1, ReadPotentiometer_T, NULL);
 	}
 	
 	

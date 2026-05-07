@@ -4,11 +4,12 @@
 
 #include "configuration.h"
 #include "Eris.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "analog.h"
 #include "serialcommand.h"
 
-long t0=0; // Global start time for all modules 
+Analog::Driver<ANALOG_NUMCHANNELS> analog;
+const uint32_t analog_pins[ANALOG_NUMCHANNELS] = {PINS_ANALOG};
 
 eris_thread_ref_t thread1 = NULL;
 
@@ -30,14 +31,14 @@ ERIS_THREAD_FUNC(Thread1) {
 
 void start(){
   /*************** Start Threads ************************/    
-  eris_thread_create(waThread1, 32, NORMALPRIO, Thread1, NULL);
+  eris_thread_create(waThread1, 32, ERIS_NORMAL_PRIORITY, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
 
   // start special tasks from external sources
   SineWave::start();
-  Analog::start();
-  // Command interfaces   
-  SerialCom::start();   
+  analog.start(analog_pins, ANALOG_PERIOD_US);
+  // Command interfaces
+  SerialCom::start();
   /******************************************************/  
  
 }

@@ -101,7 +101,7 @@ void start(void){
     sensor1.startCollecting();
 
 		// create tasks at priority lowest priority
-	  readSensor1=eris_thread_create(waSensor1_T, sizeof(waSensor1_T),NORMALPRIO, Sensor1_T, NULL);  
+	  readSensor1=eris_thread_create(waSensor1_T, sizeof(waSensor1_T),ERIS_NORMAL_PRIORITY, Sensor1_T, NULL);  
 	}
 
 }

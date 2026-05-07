@@ -1,47 +1,61 @@
-#READ SineWave generated from teensy and publish as a ROS topic
+"""Read SineWave samples streamed from an Eris-flavored MCU.
 
-import threading
-import numpy as np
+Usage:
+    python SineWave.py [--port COM3] [--duration 10] [--rate 10]
 
-
-from threading import Thread,Lock
+Defaults to ERIS_PORT environment variable, then platform-specific guess.
+"""
+import argparse
+import os
+import sys
+from threading import Thread
 from time import sleep
+
+import numpy as np
 
 from eris.eris import Eris
 
-M=5     #Samples
-dt=10.0/1000 #(s) sampling period of sineWave
-TOTALTIME=10 #How long to run this node
-RATE=10
 
-#Setup eris
-e=Eris(['SineWave'],['float'],[5],'/dev/ttyACM0')
+def default_port():
+    return os.environ.get(
+        "ERIS_PORT",
+        "COM3" if sys.platform.startswith("win") else "/dev/ttyACM0",
+    )
 
-def printData(data):
-    #Print sinewave
-    d=e.parse(data)
-    allsamples=np.array([])
-    for packet in d:
-        samples=np.array(packet['SineWave'])
-        n=np.isnan(samples)
-	allsamples=np.concatenate([allsamples,samples[~n]])
-    
-    SineWave_dt=np.flip(np.arange(0,len(allsamples)),0)*dt*-1    
-    for i,sample in enumerate(allsamples):
-        print(sample)
 
-print('Inicio')
+def main():
+    parser = argparse.ArgumentParser(description="Stream a SineWave from Eris firmware.")
+    parser.add_argument("--port", default=default_port(),
+                        help="Serial port (default: $ERIS_PORT or platform guess)")
+    parser.add_argument("--duration", type=float, default=10.0,
+                        help="Total run time in seconds (default: 10)")
+    parser.add_argument("--rate", type=float, default=10.0,
+                        help="Read polling rate in Hz (default: 10)")
+    args = parser.parse_args()
 
-for i in range(0,int(TOTALTIME*RATE)):
-    #Read the data from eris
-    out=e.read()
-    #Every loop iteration we have m samples of every topic
-    #And launch independent threads to publish
-    if len(out)>0:
-        #All in a thread
-        t=Thread(target=printData,args=((out,)))
-        t.start()
-    sleep(1.0/RATE)
+    e = Eris(['SineWave'], ['float'], [5], args.port)
 
-e.stop()
+    def print_data(data):
+        d = e.parse(data)
+        all_samples = np.array([])
+        for packet in d:
+            samples = np.array(packet['SineWave'])
+            n = np.isnan(samples)
+            all_samples = np.concatenate([all_samples, samples[~n]])
+        for sample in all_samples:
+            print(sample)
 
+    print(f"Streaming SineWave from {args.port} for {args.duration}s")
+    iterations = int(args.duration * args.rate)
+    for _ in range(iterations):
+        out = e.read()
+        if len(out) > 0:
+            t = Thread(target=print_data, args=(out,))
+            t.start()
+        sleep(1.0 / args.rate)
+
+    e.stop()
+
+
+if __name__ == "__main__":
+    main()

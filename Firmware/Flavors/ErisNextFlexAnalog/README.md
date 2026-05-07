@@ -1,20 +1,51 @@
-Eris is an arduino firmware that facilitates the implementation 
-of data aquisition, machine learning and control code in arduino.
+# ErisNextFlexAnalog
 
-// ErisEMG is the Eris flavor for reading EMG from stretchmed sensors
+NextFlex variant that reads EMG straight from the amplifier cable on the built-in ADC (instead of via SPI ADS1256). One EMG channel + one FSR channel + ETI telemetry.
 
-// Any modifications that are not customization of the main modules must be 
-// inserted into barebones Eris.
+## Status
+Experimental (variant of the verified `ErisNextFlex`)
 
+## Hardware
+- **Target board:** Teensy 3.x/4.x (uses `IntervalTimer`)
+- **RTOS:** Auto-detected ChibiOS or FreeRTOS
+- **Sensor / interface:** Built-in ADC for EMG and FSR; one auxiliary UART for ETI
 
-// IT USES ANALOG FOR NOW BUT IT WILL BE MODIFIED FOR USING THE SPI DATA
-// Preserves sinewave module for demonstration and debugging purposes.
+## Pin assignments
+- `PIN_LED 13`
+- `PIN_EMG A21` — `EMG_NUMCHANNELS 1` @ `EMG_PERIOD_US 1000` (1 kHz)
+- `PIN_FSR A20` — `FSR_NUMCHANNELS 1` @ 100 Hz
+- ETI auxiliary UART: `ETI_SERIAL0 Serial2`
 
+## Dependencies
+- eriscommon
+- ChRt or Arduino_FreeRTOS
+- SerialCommand, PacketSerial
+- IntervalTimer
 
-Dependencies:
+## Serial Commands
+| Command | Description |
+|---------|-------------|
+| `INFO` | Print firmware info |
+| `ON` / `OFF` | LED on/off |
+| `SINE` / `EMG` / `FSR` / `ETI` | Dump named buffer |
+| `TIME0` | Reset `t0` |
+| `S_F <feat...>` / `S_ON` / `S_OFF` | Streaming control |
+| `START` / `KILL` | Start/kill threads (stubs) |
 
-Code is based on ChibiOS (ChRt) to handle tasks
-// lib folder contains all the required libraries 
+## Streaming Features
+`S_F` accepts: `SINE`, `EMG`, `ETI`, `FSR`.
 
+## Sample Session
+```
+> INFO
+> S_F EMG FSR ETI
+> TIME0
+> S_ON
+... 1 kHz EMG + 100 Hz FSR + low-rate ETI stream ...
+> S_OFF
+```
 
-Questions: Jonathan Camargo <mailto:jon-cama@gatech.edu>
+## Notes
+- No SD card support — pure streaming variant.
+- Uses legacy `TIME0` for time sync rather than `S_TIME`.
+- "ETI" = electrode temperature/impedance from the amplifier cable's UART telemetry.

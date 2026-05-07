@@ -1,12 +1,13 @@
 #include "Eris.h"
 #include "streaming.h"
 
-#include "sinewave.h"
+#include <modules/sinewave.h>
+#include "multiwave.h"
 
 #include <string.h>
 
 namespace Streaming{
-  
+
 #define MAXSTRCMP 5
 #define MAXFNC 10
 
@@ -28,7 +29,7 @@ bool AddFunction(char * arg){
     #endif
     streamfnc[Nfunctions]=&SineWave;
     Nfunctions=Nfunctions+1;
-  }    
+  }
   else {
     return false;
   }
@@ -40,16 +41,16 @@ bool AddFunction(char * arg){
 
 void SineWave(){
     StreamSamples<floatSample_t,TXBUFFERSIZE>(SineWave::buffer,packet);
-    StreamSamples<multiSample_t,TXBUFFERSIZE>(SineWave::buffer2,packet);
+    StreamSamples<multiSample_t,TXBUFFERSIZE>(MultiWave::buffer,packet);
 }
 
 void Stream(){
   //Fetch data from desired buffers and send via serial
-  packet.start(Packet::PacketType::DATA); 
+  packet.start(Packet::PacketType::DATA);
   for (uint8_t i=0;i<Nfunctions;i++){
     (*streamfnc[i])();
-  }   
-  packet.send(); 
+  }
+  packet.send();
 }
 
 }

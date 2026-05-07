@@ -185,6 +185,6 @@ void start(void){
     syncbuffer.init();
     
     // create tasks at priority lowest priority
-    writeFiles=eris_thread_create(waWriteFiles_T, 8192, NORMALPRIO, WriteFiles_T, NULL);
+    writeFiles=eris_thread_create(waWriteFiles_T, 8192, ERIS_NORMAL_PRIORITY, WriteFiles_T, NULL);
  }
 }

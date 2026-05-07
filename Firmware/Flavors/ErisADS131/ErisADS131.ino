@@ -27,7 +27,7 @@ ERIS_THREAD_FUNC(Thread1) {
 
 void start(){
   /*************** Start Threads ************************/    
-  eris_thread_create(waThread1, 32, NORMALPRIO, Thread1, NULL);
+  eris_thread_create(waThread1, 32, ERIS_NORMAL_PRIORITY, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
 
   // start special tasks from external sources

@@ -35,10 +35,9 @@ ERIS_THREAD_FUNC(Thread1) {
 
 void start() {
   // Initialize mutex for heartbeat
-  //chMtxObjectInit(&mtxhb);
   /*************** Start Threads ************************/
   eris_thread_create(waThread1, 32,
-                    NORMALPRIO, Thread1, NULL);
+                    ERIS_NORMAL_PRIORITY, Thread1, NULL);
   Error::start(); // Start error notification task (Do not disable)
   eriscommon::setPrintPacketMode(true);
   // start special tasks from external sources

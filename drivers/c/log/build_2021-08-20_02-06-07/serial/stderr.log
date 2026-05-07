@@ -1,4 +1,0 @@
-[01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:[m[K In function ‘[01m[Kstd::string format(const char*, ...)[m[K’:
-[01m[K/home/ossip/mygit/Eris/c/serial/src/impl/list_ports/list_ports_linux.cc:248:31:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: ‘[01m[Kint[m[K’ and ‘[01m[Ksize_t[m[K’ {aka ‘[01m[Klong unsigned int[m[K’} [[01;35m[K-Wsign-compare[m[K]
-  248 |         else if( [01;35m[Kreturn_value >= buffer_size_bytes[m[K )
-      |                  [01;35m[K~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~[m[K

@@ -26,11 +26,6 @@ typedef struct FSRSample{
   float ch[FSR_NUMCHANNELS];    
 } FSRSample_t;
 
-typedef struct floatSample{
-  float timestamp;
-  float value;    
-} floatSample_t;
-
 typedef struct  __attribute((__packed__)) uint8_tSample{
   float timestamp;
   uint8_t value;    
