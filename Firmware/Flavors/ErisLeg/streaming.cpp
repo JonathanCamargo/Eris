@@ -2,7 +2,7 @@
 #include "streaming.h"
 #include "configuration.h"
 #include "fsr.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "sync.h"
 #include "joints.h"
 #include "loadcell.h"
@@ -28,49 +28,34 @@ bool AddFunction(char * arg){
     eriscommon::println(arg);
   #endif
   if (!strncmp("KNEE",arg,MAXSTRCMP)){
-    #if DEBUG
-      eriscommon::println("Knee selected");
-    #endif
     streamfnc[Nfunctions]=&KneeJoint;
     Nfunctions=Nfunctions+1;
   }
   else if (!strncmp("ANKLE",arg,MAXSTRCMP)){
-    #if DEBUG
-      eriscommon::println("Ankle selected");
-    #endif
     streamfnc[Nfunctions]=&AnkleJoint;
     Nfunctions=Nfunctions+1;
   }
   else if (!strncmp("LC",arg,MAXSTRCMP)){
-    #if DEBUG
-      eriscommon::println("Loadcell selected");
-    #endif
     streamfnc[Nfunctions]=&Loadcell;
     Nfunctions=Nfunctions+1;
   }
   else if (!strncmp("SINE",arg,MAXSTRCMP)){
-    #if DEBUG
-      eriscommon::println("SineWave selected");
-    #endif
     streamfnc[Nfunctions]=&SineWave;
     Nfunctions=Nfunctions+1;
   }
   else if (!strncmp("FSR",arg,MAXSTRCMP)){
-    eriscommon::println("FSR selected");
     streamfnc[Nfunctions]=&FSR;
     Nfunctions=Nfunctions+1;
   }
   else if (!strncmp("SYNC",arg,MAXSTRCMP)){
-    eriscommon::println("SYNC selected");
     streamfnc[Nfunctions]=&Sync;
     Nfunctions=Nfunctions+1;
   }
-
   else {
     return false;
   }
   if (Nfunctions>MAXFNC){
-    Error::RaiseError(MEMORY,(char *)"STREAMFNC");
+    Error::RaiseError(Error::MEMORY,(char *)"STREAMFNC");
   }
   return true;
 }
@@ -102,7 +87,6 @@ void Sync(){
 
 
 void Stream(){
-  //Fetch data from desired buffers and send via serial
   packet.start(Packet::PacketType::DATA);
   for (uint8_t i=0;i<Nfunctions;i++){
     (*streamfnc[i])();

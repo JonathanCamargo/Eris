@@ -4,502 +4,122 @@
 #include "fsr.h"
 #include "joints.h"
 #include "loadcell.h"
-#include "sinewave.h"
 #include "sync.h"
-#include "streaming.h"
 
-//static Packet packet;
+namespace SerialCom {
 
-//Static allocation to avoid moving a lot of memory in RTOS
-static FSRSample_t fsrsamples[MEMBUFFERSIZE];
-static uint8_tSample_t syncsamples[MEMBUFFERSIZE];
+// Static allocation to avoid large stack frames in the ReadSerial thread.
 static JointStateSample_t kneevalues[MEMBUFFERSIZE];
 static JointStateSample_t anklevalues[MEMBUFFERSIZE];
-static LoadcellSample_t loadcellsamples[MEMBUFFERSIZE];
+static LoadcellSample_t   loadcellsamples[MEMBUFFERSIZE];
 
-char strbuffer[STRBUFFERSIZE];
+static void printFSRFields(const FSRSample_t& s)        { Serial.print(s.ch[0], 2); }
+static void printSyncFields(const uint8_tSample_t& s)   { Serial.print(s.value); }
 
-namespace SerialCom{
+void TransmitFSR()  { transmitBuffer(FSR::buffer,  "FSR[ch0]", printFSRFields); }
+void TransmitSync() { transmitBuffer(Sync::buffer, "Sync",     printSyncFields); }
 
-  SerialCommand sCmd;
+void TransmitJointState() {
+    ERIS_CRITICAL_ENTER();
+    int numKnee  = Joints::kneebuffer.FetchData(kneevalues,  (char*)"JOINTS_RAW", MEMBUFFERSIZE);
+    int numAnkle = Joints::anklebuffer.FetchData(anklevalues,(char*)"JOINTS_RAW", MEMBUFFERSIZE);
+    ERIS_CRITICAL_EXIT();
 
-  eris_thread_ref_t readSerial = NULL;
-  eris_thread_ref_t streamSerial = NULL;
-  static bool stream_en=false;
-
-  long startTime = 0;
-
-
-  /********************** Threads *********************************/
-  //To process //Serial commands
-  ERIS_THREAD_WA(waReadSerial_T, 1024);
-	ERIS_THREAD_FUNC(ReadSerial_T) {
-    while(1){
-		  sCmd.readSerial();
-		  eris_sleep_ms(100);
+    int n = (numKnee < numAnkle) ? numKnee : numAnkle;
+    eriscommon::println("(Knee)theta,theta_dot,torque,(Ankle)theta,theta_dot,torque");
+    for (int i = 0; i < n; i++) {
+        eriscommon::print(kneevalues[i].theta, 2);     eriscommon::print(",");
+        eriscommon::print(kneevalues[i].theta_dot, 2); eriscommon::print(",");
+        eriscommon::print(kneevalues[i].torque, 2);    eriscommon::print(",");
+        eriscommon::print(anklevalues[i].theta, 2);    eriscommon::print(",");
+        eriscommon::print(anklevalues[i].theta_dot, 2); eriscommon::print(",");
+        eriscommon::println(anklevalues[i].torque, 2);
     }
-	}
+}
 
-  //To process //Serial commands
-  ERIS_THREAD_WA(waStreamSerial_T, 1024);
-  ERIS_THREAD_FUNC(StreamSerial_T) {
-    while(1){
-      if (stream_en){
-        stream();
-      }
-      eris_sleep_ms(10);
+void TransmitLoadcellState() {
+    ERIS_CRITICAL_ENTER();
+    int num = Loadcell::buffer.FetchData(loadcellsamples, (char*)"LOADCELL_RAW", MEMBUFFERSIZE);
+    ERIS_CRITICAL_EXIT();
+    for (int i = 0; i < num; i++) {
+        const LoadcellSample_t* d = &loadcellsamples[i];
+        eriscommon::print("forceX:");  eriscommon::print(d->forceX, 2);
+        eriscommon::print(", forceY:"); eriscommon::print(d->forceY, 2);
+        eriscommon::print(", forceZ:"); eriscommon::print(d->forceZ, 2);
+        eriscommon::print(", momentX:"); eriscommon::print(d->momentX, 2);
+        eriscommon::print(", momentY:"); eriscommon::print(d->momentY, 2);
+        eriscommon::print(", momentZ:"); eriscommon::println(d->momentZ, 2);
     }
-  }
-
-  /***************************************************************/
-
-	void start(void){
-
-    //COMMANDS:
-    sCmd.addCommand("INFO",INFO);  // Display information about the firmware
-    sCmd.addCommand("ON",LED_on);       // Turns LED on
-    sCmd.addCommand("OFF",LED_off);        // Turns LED off
-    
-
-    sCmd.addCommand("SINE",TransmitSineWave); // Transmit the current sinewave buffer
-    sCmd.addCommand("FSR",TransmitFSR); // Transmit the current FSR buffer
-    sCmd.addCommand("SYNC",TransmitSync); // Transmit the current SYNC buffer
-    sCmd.addCommand("JOINT",TransmitJointState); // Transmit the current joint state
-    sCmd.addCommand("LC",TransmitLoadcellState); // Transmit the current loadcell buffer
-    sCmd.addCommand("IP",SetIP);  // Modify impedance parameters
-    sCmd.addCommand("IPA",SetIPA);  // Modify impedance parameters of Ankle
-    sCmd.addCommand("IPK",SetIPK);  // Modify impedance parameters of Knee
-    sCmd.addCommand("IP?",GetIP);  // Modify impedance parameters
-
-    sCmd.addCommand("S_F",StreamingSetFeatures); // Configure the streaming functions
-    sCmd.addCommand("S_ON",StreamingStart); // Stream the buffers' data
-    sCmd.addCommand("S_OFF",StreamingStop); // Stop streaming
-
-    sCmd.addCommand("KILL",KillThreads); //Kill threads *Experimental*
-    sCmd.addCommand("START",StartThreads);//Start threads *Experimental*
-
-    sCmd.setDefaultHandler(unrecognized);  // Handler for command that isn't matched  (says "What?")
-    eriscommon::println("Serial Commands are ready");
-
-    // create task at priority one
-    readSerial=eris_thread_create(waReadSerial_T, 1024,ERIS_NORMAL_PRIORITY, ReadSerial_T, NULL);
-    streamSerial=eris_thread_create(waStreamSerial_T, 1024,ERIS_NORMAL_PRIORITY+3, StreamSerial_T, NULL);
-
-	}
-
-
-void INFO() {
-  sprintf(strbuffer, "Firmware: %s", FIRMWARE_INFO);
-  eriscommon::printText(strbuffer);
 }
 
-void StartThreads(){
-	eriscommon::println("Starting threads manually");
-	Joints::start();
-	Loadcell::start();
-	}
-
-void KillThreads(){
-  eriscommon::println("Killing threads");
-  Joints::kill();
-  Loadcell::kill();
-}
-
-void StreamingStart(){
-  stream_en=true;
-}
-
-void StreamingStop(){
-  stream_en=false;
-  eriscommon::println("Streaming off");
-}
-
-void StreamingSetFeatures(){
-  char *arg;
-  ERIS_CRITICAL_ENTER();
-  Streaming::ClearFunctions();
-  // Select the streaming function based on names
-  arg = sCmd.next();
-  while(arg!= NULL){
-      bool found=Streaming::AddFunction(arg);
-      if (!found){
-        Error::RaiseError(COMMAND,(char *)"StreamingSetFeatures");
-        Streaming::ClearFunctions();
-        ERIS_CRITICAL_EXIT();
-        return;
-      }
-      arg = sCmd.next();
-  }
-  ERIS_CRITICAL_EXIT();
-  eriscommon::println("Features Ready");
-}
-
-void stream(){
-  Streaming::Stream();
-}
-
-void LED_on() {
-  eriscommon::println("LED on");
-  digitalWrite(PIN_LED, HIGH);
-}
-
-void LED_off() {
-  eriscommon::println("LED off");
-  digitalWrite(PIN_LED, LOW);
-}
-
-void TransmitSineWave(){
-   ERIS_CRITICAL_ENTER();
-   floatSample_t samples[MEMBUFFERSIZE];
-   int num=SineWave::buffer.FetchData(samples,(char*)"SINEWAVE",MEMBUFFERSIZE);
-   long missed=SineWave::buffer.missed();
-   ERIS_CRITICAL_EXIT();
-   eriscommon::print("SineWave:");
-   // Show number of missed points
-   eriscommon::print("(missed:");
-   eriscommon::print(missed);
-   eriscommon::print(") ");
-   // Show the data
-   if (num>0){
-     uint8_t i=0;
-     eriscommon::print("(@");
-     eriscommon::print(samples[0].timestamp,2);
-     eriscommon::print("ms)");
-     for (i=0;i<num-1;i++){
-        eriscommon::print(samples[i].value,2);
-        eriscommon::print(",");
-     }
-     eriscommon::print(samples[i].value,2);
-     eriscommon::print("(@");
-     eriscommon::print(samples[i].timestamp,2);
-     eriscommon::println("ms)");
-   }
-   else {
-     eriscommon::println("num < 0");
-   }
-}
-
-void TransmitFSR(){
-  ERIS_CRITICAL_ENTER();
-  FSRSample_t *samples=&fsrsamples[0];
-  int num=FSR::buffer.FetchData(samples,(char*)"FSR",MEMBUFFERSIZE);
-  long missed=FSR::buffer.missed();
-  ERIS_CRITICAL_EXIT();
-  eriscommon::print("FSR[ch0]:");
-  // Show number of missed points
-  eriscommon::print("(missed:");
-  eriscommon::print(missed);
-  eriscommon::print(") ");
-  // Show the data
-   if (num>0){
-     uint8_t i=0;
-     eriscommon::print("(@");
-     eriscommon::print(samples[0].timestamp,2);
-     eriscommon::print("ms)");
-     for (i=0;i<num-1;i++){
-        eriscommon::print(samples[i].ch[0],2);
-        eriscommon::print(",");
-     }
-     eriscommon::print(samples[i].ch[0],2);
-     eriscommon::print("(@");
-     eriscommon::print(samples[i].timestamp,2);
-     eriscommon::println("ms)");
-   }
-   else {
-     eriscommon::println("num < 0");
-   }
-}
-
-
-void TransmitSync(){
-  ERIS_CRITICAL_ENTER();
-  uint8_tSample_t *samples=&syncsamples[0];
-  int num=Sync::buffer.FetchData(samples,(char*)"SYNC",MEMBUFFERSIZE);
-  long missed=Sync::buffer.missed();
-  ERIS_CRITICAL_EXIT();
-  eriscommon::print("Sync:");
-  // Show number of missed points
-  eriscommon::print("(missed:");
-  eriscommon::print(missed);
-  eriscommon::print(") ");
-  // Show the data
-   if (num>0){
-     uint8_t i=0;
-     eriscommon::print("(@");
-     eriscommon::print(samples[0].timestamp,2);
-     eriscommon::print("ms)");
-     for (i=0;i<num-1;i++){
-        eriscommon::print(samples[i].value,2);
-        eriscommon::print(",");
-     }
-     eriscommon::print(samples[i].value,2);
-     eriscommon::print("(@");
-     eriscommon::print(samples[i].timestamp,2);
-     eriscommon::println("ms)");
-   }
-   else {
-     eriscommon::println("num < 0");
-   }
-}
-
-void TransmitJointState(){
-   #if DEBUG_TIME
-      chTMStartMeasurementX(&time);
-   #endif
-   ERIS_CRITICAL_ENTER();
-   int numKnee=Joints::kneebuffer.FetchData(kneevalues,(char*)"JOINTS_RAW",MEMBUFFERSIZE);   
-   int numAnkle=Joints::anklebuffer.FetchData(anklevalues,(char*)"JOINTS_RAW",MEMBUFFERSIZE);
-   ERIS_CRITICAL_EXIT();
-   #if DEBUG_TIME
-      chTMStopMeasurementX(&time);
-   #endif
-
-   // Show the data
-   uint8_t i=0;
-   int numsamples=(numKnee < numAnkle) ? numKnee : numAnkle;
-   
-   eriscommon::println("(Knee)theta,theta_dot,torque,(Ankle)theta,theta_dot,torque");
-      
-   for (i=0;i<numsamples;i++){
-       eriscommon::print(kneevalues[i].theta,2);
-       eriscommon::print(",");
-       eriscommon::print(kneevalues[i].theta_dot,2);
-       eriscommon::print(",");
-       eriscommon::print(kneevalues[i].torque,2);
-       eriscommon::print(",");
-       eriscommon::print(anklevalues[i].theta,2);
-       eriscommon::print(",");
-       eriscommon::print(anklevalues[i].theta_dot,2);
-       eriscommon::print(",");
-       eriscommon::println(anklevalues[i].torque,2);
-   }   
-   
-   #if DEBUG_TIME
-      ERIS_CRITICAL_ENTER();
-      time_measurement_t tmptime;
-      tmptime=Joints::time;
-      ERIS_CRITICAL_EXIT();
-      eriscommon::print("Write Current: ");
-      eriscommon::print("Last:");eriscommon::print(tmptime.last/DEBUG_SYSCLK);eriscommon::print("(us) ");
-      eriscommon::print("Best:");eriscommon::print(tmptime.best/DEBUG_SYSCLK);eriscommon::print("(us) ");
-      eriscommon::print("Worst:");eriscommon::print(tmptime.worst/DEBUG_SYSCLK);eriscommon::println("(us) ");
-      eriscommon::print("n=");eriscommon::print(tmptime.n);eriscommon::println("samples");
-      ERIS_CRITICAL_ENTER();
-      tmptime=time;
-      ERIS_CRITICAL_EXIT();
-      eriscommon::print("READING: ");
-      eriscommon::print("Last:");eriscommon::print(tmptime.last/DEBUG_SYSCLK);eriscommon::print("(us) ");
-      eriscommon::print("Best:");eriscommon::print(tmptime.best/DEBUG_SYSCLK);eriscommon::print("(us) ");
-      eriscommon::print("Worst:");eriscommon::print(tmptime.worst/DEBUG_SYSCLK);eriscommon::print("(us) ");
-      eriscommon::print("n=");eriscommon::print(tmptime.n);eriscommon::println("samples");
-   #endif
-}
-
-void TransmitLoadcellState(){
-   ERIS_CRITICAL_ENTER();   
-   int num=Loadcell::buffer.FetchData(loadcellsamples,(char*)"LOADCELL_RAW",MEMBUFFERSIZE);
-   ERIS_CRITICAL_EXIT();
-   // Show the data
-   uint8_t i=0;
-   for (i=0;i<num;i++){
-       LoadcellSample_t * data=&loadcellsamples[i];
-       eriscommon::print("forceX:");
-       eriscommon::print(data->forceX,2);
-       eriscommon::print(", forceY:");
-       eriscommon::print(data->forceY,2);
-       eriscommon::print(", forceZ:");
-       eriscommon::print(data->forceZ,2);
-       eriscommon::print(", momentX:");
-       eriscommon::print(data->momentX,2);
-       eriscommon::print(", momentY:");
-       eriscommon::print(data->momentY,2);
-       eriscommon::print(", momentZ:");
-       eriscommon::println(data->momentZ,2);
-   }
-}
-
-void SayHello() {
-  char *arg;
-  arg = sCmd.next();    // Get the next argument from the //SerialCommand object buffer
-  if (arg != NULL) {    // As long as it existed, take it
-    eriscommon::print("Hello ");
-    eriscommon::println(arg);
-  }
-  else {
-    eriscommon::println("Hello!");
-  }
-}
-
-
-
-
+// IP <kKnee> <bKnee> <theta_eqKnee> <kAnkle> <bAnkle> <theta_eqAnkle>
 void SetIP() {
-  float kKnee,bKnee,theta_eqKnee;
-  float kAnkle,bAnkle,theta_eqAnkle;
-  char *arg;
-
-  //Knee
-  arg = sCmd.next();
-  if (arg != NULL) {
-    kKnee = atof(arg);    // Converts a char string to an integer
-  }
-  else {
-    eriscommon::println("No arguments");
-    return;
-  }
-  arg = sCmd.next();
-  if (arg != NULL) {
-    bKnee = atof(arg);
-  }
-  else {
-    eriscommon::println("No second argument");
-    return;
-  }
-
-  arg = sCmd.next();
-  if (arg != NULL) {
-    theta_eqKnee = atof(arg);
-  }
-  else {
-    eriscommon::println("No third argument");
-    return;
-  }
-
-    arg = sCmd.next();
-  if (arg != NULL) {
-    kAnkle = atof(arg);    // Converts a char string to an integer
-  }
-  else {
-    eriscommon::println("No arguments");
-    return;
-  }
-  arg = sCmd.next();
-  if (arg != NULL) {
-    bAnkle = atof(arg);
-  }
-  else {
-    eriscommon::println("No second argument");
-    return;
-  }
-
-  arg = sCmd.next();
-  if (arg != NULL) {
-    theta_eqAnkle = atof(arg);
-  }
-  else {
-    eriscommon::println("No third argument");
-    return;
-  }
-
-  Joints::SetIP(kKnee,bKnee,theta_eqKnee,kAnkle,bAnkle,theta_eqAnkle);
-  eriscommon::print("Updated impedance parameters:");
-  eriscommon::print("kKnee=");eriscommon::print(kKnee,2);
-  eriscommon::print(", bKnee=");eriscommon::print(bKnee,2);
-  eriscommon::print(", theta_eqKnee=");eriscommon::print(theta_eqKnee,2);
-  eriscommon::print(" kAnkle=");eriscommon::print(kAnkle,2);
-  eriscommon::print(", bAnkle=");eriscommon::print(bAnkle,2);
-  eriscommon::print(", theta_eqAnkle=");eriscommon::println(theta_eqAnkle,2);
+    float kK, bK, teK, kA, bA, teA;
+    char* arg;
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No arguments"); return; } kK  = atof(arg);
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No second argument"); return; } bK  = atof(arg);
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No third argument"); return; } teK = atof(arg);
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No fourth argument"); return; } kA  = atof(arg);
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No fifth argument"); return; } bA  = atof(arg);
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No sixth argument"); return; } teA = atof(arg);
+    Joints::SetIP(kK, bK, teK, kA, bA, teA);
+    eriscommon::print("Updated impedance parameters:");
+    eriscommon::print("kKnee=");        eriscommon::print(kK, 2);
+    eriscommon::print(", bKnee=");      eriscommon::print(bK, 2);
+    eriscommon::print(", theta_eqKnee="); eriscommon::print(teK, 2);
+    eriscommon::print(" kAnkle=");      eriscommon::print(kA, 2);
+    eriscommon::print(", bAnkle=");     eriscommon::print(bA, 2);
+    eriscommon::print(", theta_eqAnkle="); eriscommon::println(teA, 2);
 }
 
+// IPA <k> <b> <theta_eq>  (Ankle only)
 void SetIPA() {
-  float k,b,theta_eq;
-  char *arg;
-
-  //Knee
-  arg = sCmd.next();
-  if (arg != NULL) {
-    k = atof(arg);    // Converts a char string to an integer
-  }
-  else {
-    eriscommon::println("No arguments");
-    return;
-  }
-  arg = sCmd.next();
-  if (arg != NULL) {
-    b = atof(arg);
-  }
-  else {
-    eriscommon::println("No second argument");
-    return;
-  }
-
-  arg = sCmd.next();
-  if (arg != NULL) {
-    theta_eq = atof(arg);
-  }
-  else {
-    eriscommon::println("No third argument");
-    return;
-  }
-
-  Joints::SetIPA(k,b,theta_eq);
-  eriscommon::print("Updated impedance parameters:");
-  eriscommon::print(" kAnkle=");eriscommon::print(k,2);
-  eriscommon::print(", bAnkle=");eriscommon::print(b,2);
-  eriscommon::print(", theta_eqAnkle=");eriscommon::println(theta_eq,2);
+    float k, b, te;
+    char* arg;
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No arguments"); return; }      k  = atof(arg);
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No second argument"); return; } b  = atof(arg);
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No third argument"); return; } te = atof(arg);
+    Joints::SetIPA(k, b, te);
+    eriscommon::print("Updated impedance parameters:");
+    eriscommon::print(" kAnkle=");      eriscommon::print(k, 2);
+    eriscommon::print(", bAnkle=");     eriscommon::print(b, 2);
+    eriscommon::print(", theta_eqAnkle="); eriscommon::println(te, 2);
 }
 
-
+// IPK <k> <b> <theta_eq>  (Knee only)
 void SetIPK() {
-  float k,b,theta_eq;
-  char *arg;
-
-  //Knee
-  arg = sCmd.next();
-  if (arg != NULL) {
-    k = atof(arg);    // Converts a char string to an integer
-  }
-  else {
-    eriscommon::println("No arguments");
-    return;
-  }
-  arg = sCmd.next();
-  if (arg != NULL) {
-    b = atof(arg);
-  }
-  else {
-    eriscommon::println("No second argument");
-    return;
-  }
-
-  arg = sCmd.next();
-  if (arg != NULL) {
-    theta_eq = atof(arg);
-  }
-  else {
-    eriscommon::println("No third argument");
-    return;
-  }
-  Joints::SetIPK(k,b,theta_eq);
-  eriscommon::print("Updated impedance parameters:");
-  eriscommon::print(" kKnee=");eriscommon::print(k,2);
-  eriscommon::print(", bKnee=");eriscommon::print(b,2);
-  eriscommon::print(", theta_eqKnee=");eriscommon::println(theta_eq,2);
+    float k, b, te;
+    char* arg;
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No arguments"); return; }      k  = atof(arg);
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No second argument"); return; } b  = atof(arg);
+    arg = sCmd.next(); if (!arg) { eriscommon::println("No third argument"); return; } te = atof(arg);
+    Joints::SetIPK(k, b, te);
+    eriscommon::print("Updated impedance parameters:");
+    eriscommon::print(" kKnee=");       eriscommon::print(k, 2);
+    eriscommon::print(", bKnee=");      eriscommon::print(b, 2);
+    eriscommon::print(", theta_eqKnee="); eriscommon::println(te, 2);
 }
 
 void GetIP() {
-  float kKnee=0,bKnee=0,theta_eqKnee=0;
-  float kAnkle=0,bAnkle=0,theta_eqAnkle=0;
-  Joints::GetIP(kKnee,bKnee,theta_eqKnee,kAnkle,bAnkle,theta_eqAnkle);
-  eriscommon::print("kKnee=");eriscommon::print(kKnee,2);
-  eriscommon::print(", bKnee=");eriscommon::print(bKnee,2);
-  eriscommon::print(", theta_eqKnee=");eriscommon::print(theta_eqKnee,2);
-  eriscommon::print(" kAnkle=");eriscommon::print(kAnkle,2);
-  eriscommon::print(", bAnkle=");eriscommon::print(bAnkle,2);
-  eriscommon::print(", theta_eqAnkle=");eriscommon::println(theta_eqAnkle,2);
+    float kK = 0, bK = 0, teK = 0, kA = 0, bA = 0, teA = 0;
+    Joints::GetIP(kK, bK, teK, kA, bA, teA);
+    eriscommon::print("kKnee=");        eriscommon::print(kK, 2);
+    eriscommon::print(", bKnee=");      eriscommon::print(bK, 2);
+    eriscommon::print(", theta_eqKnee="); eriscommon::print(teK, 2);
+    eriscommon::print(" kAnkle=");      eriscommon::print(kA, 2);
+    eriscommon::print(", bAnkle=");     eriscommon::print(bA, 2);
+    eriscommon::print(", theta_eqAnkle="); eriscommon::println(teA, 2);
 }
 
-void GetID() {
-  eriscommon::print("Firmware:");
-  eriscommon::println(FIRMWARE_INFO);
-
+void registerCommands(SerialCommand& sCmd) {
+    sCmd.addCommand("FSR",   TransmitFSR);
+    sCmd.addCommand("SYNC",  TransmitSync);
+    sCmd.addCommand("JOINT", TransmitJointState);
+    sCmd.addCommand("LC",    TransmitLoadcellState);
+    sCmd.addCommand("IP",    SetIP);
+    sCmd.addCommand("IPA",   SetIPA);
+    sCmd.addCommand("IPK",   SetIPK);
+    sCmd.addCommand("IP?",   GetIP);
 }
 
-// This gets set as the default handler, and gets called when no other command matches.
-void unrecognized(const char *command) {
-  Error::RaiseError(COMMAND);
-  eriscommon::println("What?");
-}
-
-
-}
+} // namespace SerialCom

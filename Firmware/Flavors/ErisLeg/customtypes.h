@@ -2,47 +2,25 @@
 #define CUSTOMTYPES_H
 
 #include <stdint.h>
-/* 
-Definition of custom types that are general to the application and used in both Eris and external hardware
-*/
-
-typedef struct EMGSample{
-  float timestamp;
-  float ch[EMG_NUMCHANNELS];    
-} EMGSample_t;
-
-typedef struct IMUSample{
-  float timestamp;
-  float ax;
-  float ay;
-  float az;  
-  float wx;
-  float wy;
-  float wz;
-} IMUSample_t;
+#include <customtypes.h>  // eriscommon: floatSample_t, uint8_tSample_t, AnalogSample<N>
 
 typedef struct FSRSample{
   float timestamp;
-  float ch[FSR_NUMCHANNELS];    
+  float ch[FSR_NUMCHANNELS];
 } FSRSample_t;
-
-typedef struct floatSample{
-  float timestamp;
-  float value;    
-} floatSample_t;
 
 typedef struct ImpedanceParameters{
   float timestamp;
   float k;
   float b;
-  float theta_eq;    
+  float theta_eq;
 } ImpedanceParameters_t;
 
 typedef struct JointStateSample{
   float timestamp;
   float theta;
   float theta_dot;
-  float torque;    
+  float torque;
 } JointStateSample_t;
 
 typedef struct LoadcellSample{
@@ -52,13 +30,7 @@ typedef struct LoadcellSample{
   float forceZ;
   float momentX;
   float momentY;
-  float momentZ;   
+  float momentZ;
 } LoadcellSample_t;
-
-typedef struct  __attribute((__packed__)) uint8_tSample{
-  float timestamp;
-  uint8_t value;    
-} uint8_tSample_t;
-
 
 #endif

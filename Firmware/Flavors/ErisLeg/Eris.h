@@ -16,6 +16,4 @@ extern char strbuffer[STRBUFFERSIZE]; // Buffer for str data for use across all 
 //Mutex to take control of the LED
 extern eris_mutex_t mtxhb;
 
-extern long t0;
-
 #endif

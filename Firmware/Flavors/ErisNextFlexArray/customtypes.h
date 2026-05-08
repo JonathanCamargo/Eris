@@ -2,11 +2,8 @@
 #define CUSTOMTYPES_H
 
 #include <stdint.h>
-/* 
-Definition of custom types that are general to the application and used in both Eris and external hardware
-*/
+#include <customtypes.h>  // eriscommon: floatSample_t, uint8_tSample_t, AnalogSample<N>
 
-
-
+// This flavor uses raw float[] buffers — no flavor-specific sample types.
 
 #endif

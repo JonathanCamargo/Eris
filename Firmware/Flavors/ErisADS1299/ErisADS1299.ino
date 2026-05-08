@@ -5,7 +5,7 @@
 #include "Eris.h"
 #include "emg.h"
 #include "fsr.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "sync.h"
 #include "serialcommand.h"
 #if SDCARD

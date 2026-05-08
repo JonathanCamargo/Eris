@@ -3,7 +3,7 @@
 
 #include "biom.h"
 #include "features.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "gait.h"
 
 #include <string.h>
@@ -13,13 +13,11 @@ namespace Streaming{
 static void (*streamfnc[MAXFNC])();
 uint8_t Nfunctions=0;
 
-static Packet packet;
-
 void ClearFunctions(){
   Nfunctions=0;
 }
 
-bool AddFunction(char * arg){  
+bool AddFunction(char * arg){
     Serial.print("Function requested: ");
     Serial.println(arg);
   if (!strncmp("SineWave",arg,MAXSTRCMP)){
@@ -41,7 +39,7 @@ bool AddFunction(char * arg){
     return false;
   }
   if (Nfunctions>MAXFNC){
-    Error::RaiseError(MEMORY,(char *)"STREAMFNC");
+    Error::RaiseError(Error::MEMORY,(char *)"STREAMFNC");
   }
   return true;
 }

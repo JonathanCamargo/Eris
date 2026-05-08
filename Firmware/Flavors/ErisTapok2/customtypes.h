@@ -2,29 +2,22 @@
 #define CUSTOMTYPES_H
 
 #include <stdint.h>
-/* 
-Definition of custom types that are general to the application and used in both Eris and external hardware
-*/
+#include <customtypes.h>  // eriscommon: floatSample_t, uint8_tSample_t, AnalogSample<N>
 
 typedef struct EMGSample{
   float timestamp;
-  float ch[EMG_NUMCHANNELS];    
+  float ch[EMG_NUMCHANNELS];
 } EMGSample_t;
 
 typedef struct FSRSample{
   float timestamp;
-  float ch[FSR_NUMCHANNELS];    
+  float ch[FSR_NUMCHANNELS];
 } FSRSample_t;
 
-typedef struct floatSample{
-  float timestamp;
-  float value;    
-} floatSample_t;
-
+// Sync uses bool here (vs uint8_t in eriscommon).
 typedef struct boolSample{
   float timestamp;
-  bool value;    
+  bool value;
 } boolSample_t;
-
 
 #endif

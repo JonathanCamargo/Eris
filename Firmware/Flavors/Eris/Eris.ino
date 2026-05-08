@@ -5,7 +5,7 @@
 #include "Eris.h"
 #include "fsr.h"
 #include "sync.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "serialcommand.h"
 
 #if SDCARD
@@ -13,9 +13,6 @@
 #endif
 
 #include <SPI.h>
-
-
-long t0=0; // Global start time for all modules
 
 eris_thread_ref_t thread1 = NULL;
 

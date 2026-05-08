@@ -3,7 +3,7 @@
 
 #include "biom.h"
 #include "features.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "gait.h"
 
 #include <string.h>
@@ -14,13 +14,11 @@ namespace Streaming{
 static void (*streamfnc[MAXFNC])();
 uint8_t Nfunctions=0;
 
-static Packet packet;
-
 void ClearFunctions(){
   Nfunctions=0;
 }
 
-bool AddFunction(char * arg){  
+bool AddFunction(char * arg){
     Serial.print("Function requested: ");
     Serial.println(arg);
   if (!strncmp("SineWave",arg,MAXSTRCMP)){
@@ -42,7 +40,7 @@ bool AddFunction(char * arg){
     return false;
   }
   if (Nfunctions>MAXFNC){
-    Error::RaiseError(MEMORY,(char *)"STREAMFNC");
+    Error::RaiseError(Error::MEMORY,(char *)"STREAMFNC");
   }
   return true;
 }
@@ -52,7 +50,6 @@ void SineWave(){
 }
 
 void Biom(){
-  //Transmit Biometrics buffer
   StreamSamples<BiomSample_t,BIOM_TXBUFFERSIZE>(Biom::buffer,packet);
 }
 
@@ -64,7 +61,6 @@ void Gait() {
 void Stream(){
   if(Nfunctions > 0) {
     packet.start(Packet::PacketType::DATA);
-    //Fetch data from desired buffers and send via serial
     for (uint8_t i=0;i<Nfunctions;i++){
       (*streamfnc[i])();
     }

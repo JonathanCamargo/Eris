@@ -4,14 +4,11 @@
 #include "configuration.h"
 #include "Eris.h"
 #include "biom.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "features.h"
 #include "serialcommand.h"
 
 eris_thread_ref_t thread1 = NULL;
-
-//Global start time for all nodes
-long t0 = 0;
 
  const char firmwareInfo[]=FIRMWARE_INFO;
  char strbuffer[STRBUFFERSIZE]="\0";

@@ -2,28 +2,18 @@
 #define CUSTOMTYPES_H
 
 #include <stdint.h>
-/* 
-Definition of custom types that are general to the application and used in both Eris and external hardware
-*/
+#include <customtypes.h>  // eriscommon: floatSample_t, uint8_tSample_t, AnalogSample<N>
 
 typedef struct BiomSample{
   float timestamp;
-  float ch[BIOM_NUMCHANNELS];    
+  float ch[BIOM_NUMCHANNELS];
 } BiomSample_t;
 
-typedef struct floatSample{
-  float timestamp;
-  float value;    
-} floatSample_t;
-
-typedef struct  __attribute((__packed__)) uint8_tSample{
-  float timestamp;
-  uint8_t value;    
-} uint8_tSample_t;
-
+// Sync uses bool (vs uint8_t in other flavors). Kept separate from eriscommon
+// to preserve wire format for this flavor's existing host-side parsers.
 typedef struct boolSample{
   float timestamp;
-  bool value;    
+  bool value;
 } boolSample_t;
 
 #endif

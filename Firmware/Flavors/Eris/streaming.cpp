@@ -2,13 +2,13 @@
 #include "streaming.h"
 
 #include "fsr.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "sync.h"
 
 #include <string.h>
 
 namespace Streaming{
-  
+
 #define MAXSTRCMP 5
 #define MAXFNC 10
 
@@ -30,29 +30,24 @@ bool AddFunction(char * arg){
     #endif
     streamfnc[Nfunctions]=&SineWave;
     Nfunctions=Nfunctions+1;
-  }  
+  }
   else if (!strncmp("FSR",arg,MAXSTRCMP)){
     Serial.println("FSR selected");
     streamfnc[Nfunctions]=&FSR;
     Nfunctions=Nfunctions+1;
-  }  
+  }
   else if (!strncmp("SYNC",arg,MAXSTRCMP)){
     Serial.println("SYNC selected");
     streamfnc[Nfunctions]=&Sync;
     Nfunctions=Nfunctions+1;
-  }  
-
+  }
   else {
     return false;
   }
   if (Nfunctions>MAXFNC){
-    Error::RaiseError(MEMORY,(char *)"STREAMFNC");
+    Error::RaiseError(Error::MEMORY,(char *)"STREAMFNC");
   }
   return true;
-}
-void Hola()
-{
-   Serial.print("hola");
 }
 
 void SineWave(){
@@ -69,11 +64,11 @@ void Sync(){
 
 void Stream(){
   //Fetch data from desired buffers and send via serial
-  packet.start(Packet::PacketType::DATA); 
+  packet.start(Packet::PacketType::DATA);
   for (uint8_t i=0;i<Nfunctions;i++){
     (*streamfnc[i])();
-  }   
-  packet.send(); 
+  }
+  packet.send();
 }
 
 }

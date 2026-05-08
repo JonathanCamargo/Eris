@@ -5,8 +5,6 @@
 
 #include <SPI.h>
 
-long t0=0; // Global start time for all modules 
-
 eris_thread_ref_t thread1 = NULL;
 
 

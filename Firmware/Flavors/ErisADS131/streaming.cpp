@@ -8,8 +8,6 @@ namespace Streaming{
 static void (*streamfnc[MAXFNC])();
 uint8_t Nfunctions=0;
 
-static Packet packet;
-
 void ClearFunctions(){
   Nfunctions=0;
 }
@@ -29,26 +27,22 @@ bool AddFunction(char * arg){
     return false;
   }
   if (Nfunctions>MAXFNC){
-    Error::RaiseError(MEMORY,(char *)"STREAMFNC");
+    Error::RaiseError(Error::MEMORY,(char *)"STREAMFNC");
   }
   return true;
 }
-void Hola()
-{
-   Serial.print("hola");
-}
 
 void EMG(){
-    StreamSamples<EMGSample_t,TXBUFFERSIZE>(ADS131::buffer,packet);  
-  }
+    StreamSamples<EMGSample_t,TXBUFFERSIZE>(ADS131::buffer,packet);
+}
 
 void Stream(){
   //Fetch data from desired buffers and send via serial
-  packet.start(Packet::PacketType::DATA); 
+  packet.start(Packet::PacketType::DATA);
   for (uint8_t i=0;i<Nfunctions;i++){
     (*streamfnc[i])();
-  }   
-  packet.send(); 
+  }
+  packet.send();
 }
 
 }

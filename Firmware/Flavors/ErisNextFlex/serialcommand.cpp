@@ -2,354 +2,88 @@
 #include "serialcommand.h"
 #include "emg.h"
 #include "fsr.h"
-#include "sinewave.h"
 #include "serialeti.h"
+
+#if SDCARD
 #include "sdcard.h"
-#include "streaming.h"
+#endif
 
-namespace SerialCom{
+namespace SerialCom {
 
-  SerialCommand sCmd;
+static TISample_t tisamples[MEMBUFFERSIZE];
 
-  eris_thread_ref_treadSerial = NULL;
-  eris_thread_ref_tstreamSerial = NULL;
-  static char strbuffer[128]; 
-  static bool stream_en=false;
+static void printEMGFields(const EMGSample_t& s) { Serial.print(s.ch[0], 2); }
+static void printFSRFields(const FSRSample_t& s) { Serial.print(s.ch[0], 2); }
 
-  long startTime = 0;
+void TransmitEMG() { transmitBuffer(EMG::buffer, "EMG[ch0]", printEMGFields); }
+void TransmitFSR() { transmitBuffer(FSR::buffer, "FSR[ch0]", printFSRFields); }
 
-  //Static allocation to avoid moving a lot of memory in RTOS
-   TISample_t tisamples[MEMBUFFERSIZE];      
-   EMGSample_t emgsamples[MEMBUFFERSIZE];      
-   FSRSample_t fsrsamples[MEMBUFFERSIZE];      
+void TransmitETI() {
+    ERIS_CRITICAL_ENTER();
+    int num = SerialETI::buffer.FetchData(tisamples, (char*)"ETI", MEMBUFFERSIZE);
+    long missed = SerialETI::buffer.missed();
+    ERIS_CRITICAL_EXIT();
 
-  
-  /********************** Threads *********************************/
-  //To process //Serial commands
-  ERIS_THREAD_WA(waReadSerial_T, 1024);
-	ERIS_THREAD_FUNC(ReadSerial_T) {
-    while(1){
-		  sCmd.readSerial();
-		  eris_sleep_ms(100);
+    Serial.print("Temperature[ch0]:");
+    Serial.print("(missed:"); Serial.print(missed); Serial.print(") ");
+    if (num > 0) {
+        uint8_t i = 0;
+        Serial.print("(@"); Serial.print(tisamples[0].timestamp, 2); Serial.print("ms)");
+        for (i = 0; i < num - 1; i++) {
+            Serial.print(tisamples[i].temperature[0], 2);
+            Serial.print(",");
+        }
+        Serial.print(tisamples[i].temperature[0], 2);
+        Serial.print("(@"); Serial.print(tisamples[i].timestamp, 2); Serial.println("ms)");
+    } else {
+        Serial.println();
     }
-	}
 
-  //To process //Serial commands
-  ERIS_THREAD_WA(waStreamSerial_T, 1024);
-  ERIS_THREAD_FUNC(StreamSerial_T) {    
-    while(1){
-      if (stream_en){
-        stream();  
-      }                        
-      eris_sleep_ms(10);
+    Serial.print("Impedance[ch0]:");
+    Serial.print("(missed:"); Serial.print(missed); Serial.print(") ");
+    if (num > 0) {
+        uint8_t i = 0;
+        Serial.print("(@"); Serial.print(tisamples[0].timestamp, 2); Serial.print("ms)");
+        for (i = 0; i < num - 1; i++) {
+            Serial.print(tisamples[i].impedance[0], 2);
+            Serial.print(",");
+        }
+        Serial.print(tisamples[i].impedance[0], 2);
+        Serial.print("(@"); Serial.print(tisamples[i].timestamp, 2); Serial.println("ms)");
+    } else {
+        Serial.println();
     }
-  }
- 
-  /***************************************************************/
-
-	void start(void){ 
-
-    //COMMANDS:
-    sCmd.addCommand("INFO",INFO);  // Display information about the firmware
-    sCmd.addCommand("ON",LED_on);       // Turns LED on
-    sCmd.addCommand("OFF",LED_off);        // Turns LED off
-    
-    sCmd.addCommand("SINE",TransmitSineWave); // Transmit the current sinewave buffer    
-    sCmd.addCommand("EMG",TransmitEMG); // Transmit the current EMG buffer  
-    sCmd.addCommand("FSR",TransmitFSR); // Transmit the current FSR buffer
-    sCmd.addCommand("ETI",TransmitETI); // Transmit the current ETI buffer
-    
-       
-
-    sCmd.addCommand("S_F",StreamingSetFeatures); // Configure the streaming functions
-    sCmd.addCommand("S_ON",StreamingStart); // Stream the buffers' data
-    sCmd.addCommand("S_OFF",StreamingStop); // Stop streaming
-
-    sCmd.addCommand("KILL",KillThreads); //Kill threads *Experimental*
-    sCmd.addCommand("START",StartThreads);//Start threads *Experimental*
-
-    sCmd.addCommand("SD_REC",StartRecording); //Save to sd card
-    sCmd.addCommand("SD_NREC",StopRecording); //Save to sd card
-    
-    sCmd.setDefaultHandler(unrecognized);  // Handler for command that isn't matched  (says "What?")
-    Serial.println("Serial Commands are ready");
-
-    // create task at priority one
-    readSerial=eris_thread_create(waReadSerial_T, sizeof(waReadSerial_T),ERIS_NORMAL_PRIORITY, ReadSerial_T, NULL);
-    streamSerial=eris_thread_create(waStreamSerial_T, sizeof(waStreamSerial_T),ERIS_NORMAL_PRIORITY+3, StreamSerial_T, NULL);
-
-	}
-
-
-void INFO() {
-  packet.start(Packet::PacketType::TEXT); 
-  char temp[50]; 
-  int num = sprintf(temp, "Firmware: %s", FIRMWARE_INFO); 
-  //Serial.print(temp); 
-  packet.append((uint8_t *)temp, num); 
-  packet.send(); 
 }
 
-void StartRecording(){
-  #if not SDCARD
-    eriscommon::print("SDCARD disabled in configuration.h"); 
-  #else
-  char * arg = sCmd.next();  
-  if (arg != NULL) {
-    SDCard::setTrialName(arg);
-  } else {
-    SDCard::setTrialName(SDCard::DEFAULT_TRIALNAME);
-  }
-  sprintf(strbuffer, "Start record on SDCARD (trial:%s)", SDCard::getTrialName()); 
-  eriscommon::print(strbuffer); 
-  SDCard::StartRecording();
-
-  startTime = micros();
-  
-  #endif
+void StartRecording() {
+#if not SDCARD
+    eriscommon::print("SDCARD disabled in configuration.h");
+#else
+    char* arg = sCmd.next();
+    if (arg != NULL) {
+        SDCard::setTrialName(arg);
+    } else {
+        SDCard::setTrialName(SDCard::DEFAULT_TRIALNAME);
+    }
+    sprintf(strbuffer, "Start record on SDCARD (trial:%s)", SDCard::getTrialName());
+    eriscommon::print(strbuffer);
+    SDCard::StartRecording();
+#endif
 }
 
-
-void StopRecording(){
-  SDCard::StopRecording();
-  eriscommon::print("Stop record on SDCard");
+void StopRecording() {
+#if SDCARD
+    SDCard::StopRecording();
+#endif
+    eriscommon::print("Stop record on SDCard");
 }
 
-
-void StartThreads(){
-  Serial.println("Starting threads manually");
-  KillThreads(); 
+void registerCommands(SerialCommand& sCmd) {
+    sCmd.addCommand("EMG",     TransmitEMG);
+    sCmd.addCommand("FSR",     TransmitFSR);
+    sCmd.addCommand("ETI",     TransmitETI);
+    sCmd.addCommand("SD_REC",  StartRecording);
+    sCmd.addCommand("SD_NREC", StopRecording);
 }
 
-void StreamingStart(){  
-  stream_en=true;
-}
-
-void StreamingStop(){
-  stream_en=false;
-  Serial.println("Streaming off");
-}
-
-void StreamingSetFeatures(){   
-  char *arg;
-  ERIS_CRITICAL_ENTER();
-  Streaming::ClearFunctions();
-  // Select the streaming function based on names
-  arg = sCmd.next();
-  while(arg!= NULL){    
-      bool found=Streaming::AddFunction(arg);
-      if (!found){
-        Error::RaiseError(COMMAND,(char *)"StreamingSetFeatures");
-        Streaming::ClearFunctions();
-        ERIS_CRITICAL_EXIT();        
-        return;
-      }
-      arg = sCmd.next();
-  }      
-  ERIS_CRITICAL_EXIT();
-  Serial.println("Features Ready");   
-}
-
-void KillThreads(){
-  Serial.println("Killing threads");  
-}
-
-void stream(){
-  Streaming::Stream();
-}
-
-void LED_on() {
-  Serial.println("LED on");
-  digitalWrite(PIN_LED, HIGH);
-}
-
-void LED_off() {
-  Serial.println("LED off");
-  digitalWrite(PIN_LED, LOW);
-}
-
-void TransmitSineWave(){
-   ERIS_CRITICAL_ENTER();
-   floatSample_t samples[MEMBUFFERSIZE];   
-   int num=SineWave::buffer.FetchData(samples,(char*)"SINEWAVE",MEMBUFFERSIZE);
-   long missed=SineWave::buffer.missed();   
-   ERIS_CRITICAL_EXIT();   
-   Serial.print("SineWave:");   
-   // Show number of missed points
-   Serial.print("(missed:");
-   Serial.print(missed);
-   Serial.print(") ");   
-   // Show the data
-   if (num>0){
-     uint8_t i=0;
-     Serial.print("(@");
-     Serial.print(samples[0].timestamp,2);
-     Serial.print("ms)");         
-     for (i=0;i<num-1;i++){
-        Serial.print(samples[i].value,2);
-        Serial.print(",");
-     }     
-     Serial.print(samples[i].value,2);
-     Serial.print("(@");
-     Serial.print(samples[i].timestamp,2);
-     Serial.println("ms)");   
-   } 
-   else {
-     Serial.println();
-   }         
-}
-
-void TransmitETI(){
-
-   ERIS_CRITICAL_ENTER();
-   
-   TISample_t * samples=&tisamples[0];      
-   int num=SerialETI::buffer.FetchData(samples,(char*)"ETI",MEMBUFFERSIZE);
-   //Serial.println(SerialETI::temperatureBuffer[0] == NULL);
-   long missed=SerialETI::buffer.missed();      
-   
-   ERIS_CRITICAL_EXIT();
- 
-   // Show number of missed points
-   Serial.print("Temperature[ch0]:");
-   Serial.print("(missed:");
-   Serial.print(missed);
-   Serial.print(") "); 
-   // Show the data
-   if (num>0){
-     uint8_t i=0;
-     Serial.print("(@");
-     Serial.print(samples[0].timestamp,2);
-     Serial.print("ms)");         
-     for (i=0;i<num-1;i++){
-        Serial.print(samples[i].temperature[0],2);
-        Serial.print(",");
-     }     
-     Serial.print(samples[i].temperature[0],2);
-     Serial.print("(@");
-     Serial.print(samples[i].timestamp,2);
-     Serial.println("ms)");   
-   } 
-   else {
-     Serial.println();
-   }      
-
-   
-   // Show number of missed points
-   Serial.print("Impedance[ch0]:");
-   Serial.print("(missed:");
-   Serial.print(missed);
-   Serial.print(") "); 
-   // Show the data
-   if (num>0){
-     uint8_t i=0;
-     Serial.print("(@");
-     Serial.print(samples[0].timestamp,2);
-     Serial.print("ms)");         
-     for (i=0;i<num-1;i++){
-        Serial.print(samples[i].impedance[0],2);
-        Serial.print(",");
-     }     
-     Serial.print(samples[i].impedance[0],2);
-     Serial.print("(@");
-     Serial.print(samples[i].timestamp,2);
-     Serial.println("ms)");   
-   } 
-   else {
-     Serial.println();
-   }      
-   
-}
-
-
-void TransmitEMG(){
-   ERIS_CRITICAL_ENTER();  
-   EMGSample_t * samples=emgsamples;      
-   int num=EMG::buffer.FetchData(samples,(char*)"EMG",MEMBUFFERSIZE);
-   long missed=EMG::buffer.missed();   
-   ERIS_CRITICAL_EXIT();
-
-   // Show number of missed points
-   Serial.print("EMG[ch0]:");
-   Serial.print("(missed:");
-   Serial.print(missed);
-   Serial.print(") "); 
-   // Show the data
-   if (num>0){
-     uint8_t i=0;
-     Serial.print("(@");
-     Serial.print(samples[0].timestamp,2);
-     Serial.print("ms)");         
-     for (i=0;i<num-1;i++){
-        Serial.print(samples[i].ch[0],2);
-        Serial.print(",");
-     }     
-     Serial.print(samples[i].ch[0],2);
-     Serial.print("(@");
-     Serial.print(samples[i].timestamp,2);
-     Serial.println("ms)");   
-   } 
-   else {
-     Serial.println();
-   }      
-}
-   
-
-void TransmitFSR(){    
-  ERIS_CRITICAL_ENTER();
-  FSRSample_t *samples=&fsrsamples[0];
-  int num=FSR::buffer.FetchData(samples,(char*)"FSR",MEMBUFFERSIZE);
-  long missed=FSR::buffer.missed();   
-  ERIS_CRITICAL_EXIT();   
-  Serial.print("FSR[ch0]:");   
-  // Show number of missed points
-  Serial.print("(missed:");
-  Serial.print(missed);
-  Serial.print(") ");   
-  // Show the data
-   if (num>0){
-     uint8_t i=0;
-     Serial.print("(@");
-     Serial.print(samples[0].timestamp,2);
-     Serial.print("ms)");         
-     for (i=0;i<num-1;i++){
-        Serial.print(samples[i].ch[0],2);
-        Serial.print(",");
-     }     
-     Serial.print(samples[i].ch[0],2);
-     Serial.print("(@");
-     Serial.print(samples[i].timestamp,2);
-     Serial.println("ms)");   
-   } 
-   else {
-     Serial.println();
-   }      
-}
-
-void SayHello() {
-  char *arg;
-  arg = sCmd.next();    // Get the next argument from the //SerialCommand object buffer
-  if (arg != NULL) {    // As long as it existed, take it
-    Serial.print("Hello ");
-    Serial.println(arg);
-  }
-  else {
-    Serial.println("Hello!");
-  }
-}
-
-
-void GetID() {
-  Serial.print("Firmware:");
-  Serial.println(FIRMWARE_INFO);
-
-}
-
-// This gets set as the default handler, and gets called when no other command matches.
-void unrecognized(const char *command) {
-  Error::RaiseError(COMMAND);
-  Serial.println("What?");
-}
-
-
-}
+} // namespace SerialCom

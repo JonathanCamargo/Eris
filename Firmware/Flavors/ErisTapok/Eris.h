@@ -13,6 +13,4 @@
 
 extern const char firmwareInfo[];
 
-extern long t0; // Global start time for all modules
-
 #endif

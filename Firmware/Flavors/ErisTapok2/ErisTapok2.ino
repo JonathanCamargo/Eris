@@ -6,7 +6,7 @@
 #include "emg.h"
 #include "fsr.h"
 #include "sync.h"
-#include "sinewave.h"
+#include <modules/sinewave.h>
 #include "serialcommand.h"
 
 #if SDCARD
