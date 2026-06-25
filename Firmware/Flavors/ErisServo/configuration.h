@@ -4,6 +4,12 @@
 
 #include <Arduino.h>
 
+// On nRF52 boards, the core always links FreeRTOS. Using ChRt causes
+// SVC_Handler conflicts with the built-in FreeRTOS port.
+#if defined(NRF5) || defined(NRF52840_XXAA) || defined(NRF52)
+#define ERIS_USE_FREERTOS
+#endif
+
 #define FIRMWARE_VERSION "v3.0"
 
 /* Global configuration such as pins, rates etc */

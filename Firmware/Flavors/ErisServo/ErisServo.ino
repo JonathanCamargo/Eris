@@ -6,7 +6,7 @@
 #include "Eris.h"
 #include "servos.h"
 #include <modules/sinewave.h>
-#include "serialcommand.h"
+#include "servo_commands.h"
 
 eris_thread_ref_t thread1 = NULL;
 
@@ -29,7 +29,9 @@ ERIS_THREAD_FUNC(Thread1) {
 
 void start(){
   /*************** Start Threads ************************/
+  Serial.println("Creating threads...");
   thread1 = eris_thread_create(waThread1, ERIS_STACK_TINY, ERIS_NORMAL_PRIORITY, Thread1, NULL);
+  Serial.print("thread1="); Serial.println((uintptr_t)thread1, HEX);
   Error::start(); // Start error notification task (Do not disable)
 
   // start special tasks from external sources
@@ -37,6 +39,7 @@ void start(){
   Servos::start();
   // Command interfaces
   SerialCom::start();
+  Serial.println("start() done");
 
 }
 
@@ -54,7 +57,14 @@ void setup(){
   //Start threads
   eris_scheduler_start(start);
 
+#ifdef ERIS_USE_FREERTOS
+  // On FreeRTOS boards (nRF52), the scheduler is already running.
+  // setup() returns and the loop task yields to other threads.
+#else
+  // On ChibiOS (Teensy/SAMD), chBegin() starts the scheduler and
+  // setup() never returns.
   while(true){}
+#endif
 }
 
 
@@ -64,8 +74,9 @@ void loop(){
     eris_sleep_ms(10000);
 }
 
-// FreeRTOS static allocation callbacks (required when configSUPPORT_STATIC_ALLOCATION is enabled)
-#ifdef ERIS_USE_FREERTOS
+// FreeRTOS static allocation callbacks (required when configSUPPORT_STATIC_ALLOCATION is enabled).
+// On nRF52, the core's rtos.cpp already provides these, so skip them there.
+#if defined(ERIS_USE_FREERTOS) && !defined(NRF52_SERIES)
 extern "C" {
 
 static StaticTask_t xIdleTaskTCB;

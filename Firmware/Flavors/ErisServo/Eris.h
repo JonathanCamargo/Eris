@@ -2,9 +2,12 @@
 #define ERIS_H
 #include "configuration.h"
 
-// RTOS include: tells Arduino build system to link ChRt (ChibiOS for Teensy)
-// eris_rtos.h provides the portable API on top of this
+#ifdef ERIS_USE_FREERTOS
+#include <Arduino.h>
+#else
 #include <ChRt.h>
+#include <Arduino.h>
+#endif
 
 #include "customtypes.h"
 #include <eriscommon.h>

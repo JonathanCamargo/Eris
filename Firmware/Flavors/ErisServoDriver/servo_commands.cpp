@@ -1,5 +1,5 @@
 #include "Eris.h"
-#include "serialcommand.h"
+#include "servo_commands.h"
 #include "servos.h"
 
 namespace SerialCom {
@@ -64,9 +64,14 @@ void ServoSmoothMove() {
     }
 }
 
+void DemoOn()  { Servos::demoStart(); Serial.println("Demo on");  }
+void DemoOff() { Servos::demoStop();  Serial.println("Demo off"); }
+
 void registerCommands(SerialCommand& sCmd) {
     sCmd.addCommand("X", ServoMove);
     sCmd.addCommand("Y", ServoSmoothMove);
+    sCmd.addCommand("DEMO_ON",  DemoOn);
+    sCmd.addCommand("DEMO_OFF", DemoOff);
 }
 
 } // namespace SerialCom

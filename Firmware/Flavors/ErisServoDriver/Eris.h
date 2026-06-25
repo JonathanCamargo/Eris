@@ -2,9 +2,14 @@
 #define ERIS_H
 #include "configuration.h"
 
-// RTOS include: tells Arduino build system to link ChRt (ChibiOS for Teensy)
-// eris_rtos.h provides the portable API on top of this
+// RTOS include: on ChibiOS targets this tells the Arduino build system to link
+// ChRt. On nRF52 the core ships FreeRTOS and ChRt would clash (SVC_Handler),
+// so it is skipped. eris_rtos.h provides the portable API on top of either.
+#ifdef ERIS_USE_FREERTOS
+#include <Arduino.h>
+#else
 #include <ChRt.h>
+#endif
 
 #include "customtypes.h"
 #include <eriscommon.h>

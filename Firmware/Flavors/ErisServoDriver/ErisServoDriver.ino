@@ -6,7 +6,7 @@
 #include "Eris.h"
 #include "servos.h"
 #include <modules/sinewave.h>
-#include "serialcommand.h"
+#include "servo_commands.h"
 
 eris_thread_ref_t thread1 = NULL;
 
@@ -54,7 +54,12 @@ void setup(){
   //Start threads
   eris_scheduler_start(start);
 
+#ifdef ERIS_USE_FREERTOS
+  // On FreeRTOS boards (nRF52), the scheduler is already running.
+  // setup() returns and the loop task yields to other threads.
+#else
   while(true){}
+#endif
 }
 
 
@@ -65,7 +70,9 @@ void loop(){
 }
 
 // FreeRTOS static allocation callbacks (required when configSUPPORT_STATIC_ALLOCATION is enabled)
-#ifdef ERIS_USE_FREERTOS
+// On nRF52 the core's rtos.cpp already provides these — defining them here would
+// cause multiple-definition errors, so skip on NRF52_SERIES.
+#if defined(ERIS_USE_FREERTOS) && !defined(NRF52_SERIES)
 extern "C" {
 
 static StaticTask_t xIdleTaskTCB;

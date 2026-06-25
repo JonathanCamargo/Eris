@@ -4,6 +4,12 @@
 
 #include <Arduino.h>
 
+// On nRF52 boards, the core always links FreeRTOS. Using ChRt causes
+// SVC_Handler conflicts with the built-in FreeRTOS port.
+#if defined(NRF5) || defined(NRF52840_XXAA) || defined(NRF52)
+#define ERIS_USE_FREERTOS
+#endif
+
 #define FIRMWARE_VERSION "v3.0"
 
 /* Global configuration such as pins, rates etc */
@@ -36,6 +42,17 @@
 #define SERVO_SMOOTH_SPEED     180.0  // Cruise speed (deg/sec)
 #define SERVO_SMOOTH_DECEL_DEG 6.0   // Degrees from target where deceleration begins
 #define SERVO_SMOOTH_LOOP_MS   5     // Tick interval (200 Hz)
+
+// I2C bus speed for the PCA9685 (fast-mode; needed so a full NUM_SERVOS
+// update fits inside one smooth/demo tick).
+#define SERVO_I2C_CLOCK_HZ     400000
+
+// DEMO mode: sine-oscillate all servos (0..NUM_SERVOS-1) with a phase offset
+// per channel so they chase each other in a traveling wave. The demo sweeps
+// within its own sub-range (need not be the full SERVO_MIN/MAX_ANGLE travel).
+#define DEMO_MIN_ANGLE   70.0f     // demo lower bound (deg)
+#define DEMO_MAX_ANGLE   110.0f    // demo upper bound (deg)
+#define DEMO_FREQ_HZ     0.5f      // one full cycle / 2 s
 
 
 // DEBUGGING FLAGS

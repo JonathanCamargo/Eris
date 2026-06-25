@@ -1,5 +1,5 @@
 #include "Eris.h"
-#include "serialcommand.h"
+#include "servo_commands.h"
 #include "servos.h"
 
 namespace SerialCom {

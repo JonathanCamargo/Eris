@@ -13,10 +13,18 @@ namespace Servos{
   static constexpr float gain    = maxStep / SERVO_SMOOTH_DECEL_DEG;
   static constexpr float epsilon = 0.02f;
 
+  // Demo sweep derived from its configured sub-range
+  static constexpr float demoCenter = 0.5f * (DEMO_MIN_ANGLE + DEMO_MAX_ANGLE);
+  static constexpr float demoAmp    = 0.5f * (DEMO_MAX_ANGLE - DEMO_MIN_ANGLE);
+
   // Smooth movement state
   static float currentAngles[NUM_SERVOS];
   static float targetAngles[NUM_SERVOS];
   static eris_thread_ref_t smoothThread = NULL;
+
+  // Demo (sine oscillation) state
+  static volatile bool demoEnabled = false;
+  static uint32_t      demoT0      = 0;
 
   static float stepToward(float current, float target){
     float diff = target - current;
@@ -33,10 +41,25 @@ namespace Servos{
     pwm.setPWM(channel, 0, (uint16_t)(pulse + 0.5f));
   }
 
-  // Thread that steps servos toward their targets
+  // Thread that steps servos toward their targets (sole I2C writer for the loop).
+  // When demo is enabled it drives every channel with a phase-offset sine; the
+  // demo sets current==target so the smooth-stepping pass below skips them.
   ERIS_THREAD_WA(waSmoothServo_T, ERIS_STACK_MEDIUM);
   ERIS_THREAD_FUNC(SmoothServo_T) {
     while(1){
+      if (demoEnabled){
+        float t = (float)(micros() - demoT0) / 1.0e6f;   // seconds since DEMO_ON
+        for (uint8_t i = 0; i < NUM_SERVOS; i++){
+          float phase = (2.0f * M_PI * i) / NUM_SERVOS;   // traveling wave
+          float angle = demoCenter + demoAmp *
+                        sinf(2.0f * M_PI * DEMO_FREQ_HZ * t + phase);
+          if (angle < DEMO_MIN_ANGLE) angle = DEMO_MIN_ANGLE;
+          if (angle > DEMO_MAX_ANGLE) angle = DEMO_MAX_ANGLE;
+          currentAngles[i] = angle;   // keep state in sync so it won't snap on exit
+          targetAngles[i]  = angle;
+          applyAngle(i, angle);
+        }
+      }
       for (uint8_t i = 0; i < NUM_SERVOS; i++){
         float diff = targetAngles[i] - currentAngles[i];
         if (diff < -epsilon || diff > epsilon){
@@ -48,8 +71,12 @@ namespace Servos{
     }
   }
 
+  void demoStart(){ demoT0 = micros(); demoEnabled = true; }
+  void demoStop(){  demoEnabled = false; }
+
   void start(){
     Wire.begin();
+    Wire.setClock(SERVO_I2C_CLOCK_HZ); // fast-mode so a full NUM_SERVOS update fits one tick
     pwm.begin();
     pwm.setPWMFreq(50); // 50Hz for standard servos
     // Initialize smooth state to center position

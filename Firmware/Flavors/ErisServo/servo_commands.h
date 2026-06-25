@@ -1,5 +1,5 @@
-#ifndef serialCOMMAND_H
-#define serialCOMMAND_H
+#ifndef SERVO_COMMANDS_H
+#define SERVO_COMMANDS_H
 
 #include <modules/serialcom.h>
 
@@ -8,4 +8,4 @@ namespace SerialCom {
     void ServoSmoothMove();
 }
 
-#endif
+#endif // SERVO_COMMANDS_H
