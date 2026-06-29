@@ -20,7 +20,7 @@ ErisBuffer<uint8_tSample_t> buffer ;
 
 static void ISR_SYNC_CHANGE(){
   ERIS_CRITICAL_ENTER();
-  float timestamp = ((float)(micros() - SerialCom::startTime))/1.0e3;
+  float timestamp = ((float)(micros() - t0))/1.0e3;
   uint8_tSample_t thisSample;
   thisSample.timestamp=timestamp;
   thisSample.value=digitalRead(PIN_SYNC);

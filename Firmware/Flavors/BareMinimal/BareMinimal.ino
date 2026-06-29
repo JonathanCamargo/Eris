@@ -3,34 +3,19 @@
 
 #include "configuration.h"
 #include "Eris.h"
+#include <modules/heartbeat.h>
 #include <modules/sinewave.h>
 #include "serialcommands.h"
 
 #include <SPI.h>
 
-eris_thread_ref_t thread1 = NULL;
 const char firmwareInfo[]=FIRMWARE_INFO;
-
-/* ******************************** Global threads ************************************************** */
-
-// Mutex to enable or disable heartbeat
-ERIS_THREAD_WA(waThread1, ERIS_STACK_TINY);
-ERIS_THREAD_FUNC(Thread1) {
-  while (1) {
-    // Sleep for 1000 milliseconds.
-    // Toggle pin to show heartbeat    
-    //digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-    eris_sleep_ms(250);
-  }
-}
-/* ************************************************************************************************* */
 
 
 void start(){
-  // Initialize mutex for heartbeat
-  /*************** Start Threads ************************/    
+  /*************** Start Threads ************************/
   Serial.println("start() begin");
-  eris_thread_create(waThread1, ERIS_STACK_TINY, ERIS_NORMAL_PRIORITY, Thread1, NULL);
+  Heartbeat::start();
   Error::start(); // Start error notification task (Do not disable)
 
   // start special tasks from external sources
@@ -56,14 +41,7 @@ void setup(){
   analogWrite(3, 10);
   
   //Start threads
-  eris_scheduler_start(start);
-
-#ifdef ERIS_USE_FREERTOS
-  // On FreeRTOS boards (nRF52), the scheduler is already running.
-  // setup() returns and the loop task yields to other threads.
-#else
-  while(true){}
-#endif
+  ERIS_RUN(start);
 }
 
 

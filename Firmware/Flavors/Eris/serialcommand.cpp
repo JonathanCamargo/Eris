@@ -22,7 +22,7 @@ void TransmitSync() { transmitBuffer(Sync::buffer, "Sync",     printSyncFields);
 
 void StartRecording() {
 #if not SDCARD
-    eriscommon::printText("SDCARD disabled in configuration.h");
+    eriscommon::println("SDCARD disabled in configuration.h");
 #else
     char* arg = sCmd.next();
     if (arg != NULL) {
@@ -31,7 +31,7 @@ void StartRecording() {
         SDCard::setTrialName(SDCard::DEFAULT_TRIALNAME);
     }
     sprintf(strbuffer, "Start record on SDCARD (trial:%s)", SDCard::getTrialName());
-    eriscommon::printText(strbuffer);
+    eriscommon::println(strbuffer);
     SDCard::StartRecording();
 #endif
 }
@@ -40,7 +40,7 @@ void StopRecording() {
 #if SDCARD
     SDCard::StopRecording();
 #endif
-    eriscommon::printText("Stop record on SDCard");
+    eriscommon::println("Stop record on SDCard");
 }
 
 void registerCommands(SerialCommand& sCmd) {

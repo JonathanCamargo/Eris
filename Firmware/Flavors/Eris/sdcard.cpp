@@ -1,7 +1,5 @@
 #include "Eris.h"
 
-#include "sinewave.h"
-
 #include "sdcard.h"
 
 #include <SPI.h>
@@ -110,13 +108,13 @@ bool CreateFiles(void){
 
 bool initSD(void){
    if (!SD.begin(chipSelect)) {
-      eriscommon::printText("initialization failed. Things to check:");
-      eriscommon::printText("* is a card inserted?");
-      eriscommon::printText("* is your wiring correct?");
-      eriscommon::printText("* did you change the chipSelect pin to match your shield or module?");
+      eriscommon::println("initialization failed. Things to check:");
+      eriscommon::println("* is a card inserted?");
+      eriscommon::println("* is your wiring correct?");
+      eriscommon::println("* did you change the chipSelect pin to match your shield or module?");
       return false;
     } else {
-     eriscommon::printText("SD card is present.");
+     eriscommon::println("SD card is present.");
      isSDOK = true;
      return true;
     }
@@ -136,14 +134,14 @@ bool StartRecording(void){
   ERIS_CRITICAL_ENTER();
   // Check SD and create files
   if (!isSDOK){
-    Error::RaiseError(MEMORY,(char *)F("SDCARD:isSDOK"));
+    Error::RaiseError(Error::MEMORY,(char *)F("SDCARD:isSDOK"));
     recording=false;
     return recording;
   }
   bool filesOk=CreateFiles();
   if (!filesOk){
     recording=false;
-    Error::RaiseError(MEMORY,(char *)F("SDCARD:CREATEFILES"));
+    Error::RaiseError(Error::MEMORY,(char *)F("SDCARD:CREATEFILES"));
     return recording;
   }
   ResetTime();

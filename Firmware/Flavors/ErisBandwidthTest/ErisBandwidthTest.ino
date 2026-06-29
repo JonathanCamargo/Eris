@@ -3,6 +3,7 @@
 
 #include "configuration.h"
 #include "Eris.h"
+#include <modules/heartbeat.h>
 #include <modules/sinewave.h>
 #include "multiwave.h"
 #include "serialcommand.h"
@@ -10,27 +11,13 @@
 #include <SPI.h>
 
 
-eris_thread_ref_t thread1 = NULL;
 const char firmwareInfo[]=FIRMWARE_INFO;
 
-/* ******************************** Global threads ************************************************** */
-
-// Mutex to enable or disable heartbeat
-ERIS_THREAD_WA(waThread1, 32);
-ERIS_THREAD_FUNC(Thread1) {
-  while (1) {
-    // Sleep for 1000 milliseconds.
-    // Toggle pin to show heartbeat
-    //digitalWrite(PIN_LED,!digitalRead(PIN_LED));
-    eris_sleep_ms(250);
-  }
-}
-/* ************************************************************************************************* */
 
 
 void start(){
   /*************** Start Threads ************************/
-  eris_thread_create(waThread1, 32, ERIS_NORMAL_PRIORITY, Thread1, NULL);
+  Heartbeat::start();
   Error::start(); // Start error notification task (Do not disable)
   // start special tasks from external sources
   SineWave::start();
@@ -50,9 +37,7 @@ void setup(){
   /*************** Configure HW pins *******************/
 
   //Start threads
-  eris_scheduler_start(start);
-
-  //while(true){}
+  ERIS_RUN(start);
 }
 
 

@@ -5,6 +5,7 @@
 #include "Eris.h"
 #include "emg.h"
 #include "fsr.h"
+#include <modules/heartbeat.h>
 #include <modules/sinewave.h>
 #include "sync.h"
 #include "serialcommand.h"
@@ -14,28 +15,14 @@
 
 #include <SPI.h>
 
- eris_thread_ref_t thread1 = NULL;
-
 
  const char firmwareInfo[]=FIRMWARE_INFO;
-
-/* ******************************** Global threads ************************************************** */
-ERIS_THREAD_WA(waThread1, 32);
-ERIS_THREAD_FUNC(Thread1) {
-  while (1) {
-    // Sleep for 1000 milliseconds.
-    eris_sleep_ms(1000);
-    // Toggle pin to show heartbeat    
-    //digitalWrite(PIN_LED,!digitalRead(PIN_LED));           
-  }
-}
-/* ************************************************************************************************* */
 
 
 void start(){
 
-  /*************** Start Threads ************************/    
-  eris_thread_create(waThread1, 32, ERIS_NORMAL_PRIORITY, Thread1, NULL);
+  /*************** Start Threads ************************/
+  Heartbeat::start();
   Error::start(); // Start error notification task (Do not disable)
 
   #if SDCARD
@@ -76,8 +63,7 @@ void setup(){
 
   /******************************************************/
   //Start threads
-  eris_scheduler_start(start);
-  while(true){}
+  ERIS_RUN(start);
 }
 
 

@@ -174,6 +174,90 @@ arduino-cli compile --format json ...      # to see actually-linked "used_librar
 After a file rename, **clean-build**: the per-sketch cache can keep an old `.o`
 and produce phantom multiple-definition errors.
 
+**Two `arduino-cli`-only gotchas** — PlatformIO pins libraries via `lib_deps`, so
+it sidesteps both; these bite only the bundled-CLI path:
+
+- *Conditional includes defeat library discovery.* `arduino-cli` decides which
+  libraries land on the include path by scanning `#include`s. A header reached
+  only inside a conditional branch — e.g. `<ChRt.h>` behind the `#else` of
+  `ERIS_USE_FREERTOS` in `Eris.h` — can be missed, so `eris_rtos.h`'s
+  `__has_include(<ChRt.h>)` is false and you get *"No supported RTOS detected"*
+  even on a Teensy. Force it for a one-off build with
+  `--build-property compiler.cpp.extra_flags=-DERIS_USE_CHIBIOS` (or
+  `--library <path-to-ChRt>`), or just build that flavor with PlatformIO.
+- *Duplicate library copies.* If `eriscommon` exists twice on the search path
+  (the `C:/git/ArduinoLibraries` working copy **and** the IDE sketchbook
+  `Documents/Arduino/libraries`), `arduino-cli` may pick either, inconsistently
+  between flavors. Keep one source of truth — make the sketchbook copy a junction
+  to the git copy, not a second real directory.
+
+---
+
+## 9. New-flavor boilerplate lives in eriscommon — don't paste it
+
+The three things every flavor used to copy into its `.ino` were exactly the three
+things the lessons above say are easy to get wrong. They are now shared, so a new
+flavor should **use the helper, not re-paste the pattern**:
+
+- **`ERIS_RUN(start)`** (in `eris_rtos.h`) — replaces the
+  `eris_scheduler_start(start); #ifdef ERIS_USE_FREERTOS … #else while(true){} #endif`
+  idiom. It does the right per-RTOS thing: spins after `chBegin` on ChibiOS,
+  returns on nRF52 so the loop task yields (§4), starts the scheduler on other
+  FreeRTOS. One line, no `#ifdef` to get wrong.
+- **`Heartbeat::start()`** (in `<modules/heartbeat.h>`) — the sleep-only
+  "Thread1" placeholder, promoted to a module with an `ERIS_STACK_TINY` stack
+  (§1). Call it instead of re-declaring `waThread1`/`Thread1`. Drop it entirely
+  if the flavor has its own real heartbeat (e.g. ErisServoHand blinks an LED).
+- **FreeRTOS static-alloc callbacks** — `vApplicationGet{Idle,Timer}TaskMemory`
+  now live once in `eris_freertos_hooks.cpp`, guarded `ERIS_USE_FREERTOS &&
+  !NRF52_SERIES` (SAMD21 needs them, `configSUPPORT_STATIC_ALLOCATION=1`; nRF52's
+  core already provides them, §4). Do **not** redefine them in a flavor — that's
+  a multiple-definition (§6 in spirit).
+
+A minimal flavor `start()`/`setup()` is now just `Heartbeat::start(); Error::start();
+… SerialCom::start();` and `ERIS_RUN(start);`. See BareMinimal for the template.
+
+---
+
+## 10. A flavor left behind by a library refactor fails only at *link* time
+
+**Symptom:** The `Eris` flavor compiled file-by-file but the link cascaded —
+fix one error, hit the next: `undefined reference to eriscommon::printText`, then
+undefined `strbuffer`, then `multiple definition of SineWave::start()`.
+
+**Root cause:** It had drifted from a refactored `eriscommon`: `printText()` was
+dropped in favour of `print()/println()` (the declaration lingered in the header
+with no definition — a link error, not a compile error), `t0` moved into the
+library, and `sinewave` was promoted to a shared module while the flavor kept its
+local copy (§6). None of these show up in a per-translation-unit compile — only a
+full link surfaces removed symbols and duplicate definitions.
+
+**Fix / principle:** After changing `eriscommon`'s public surface (renaming or
+removing a function, promoting a module, moving a global), **full-*link* every
+flavor that touches it**, not just compile. A green per-file compile hides exactly
+these failures. When a flavor lags, the repair is usually: swap the dead API for
+its replacement, define any flavor-owned globals it expects (`strbuffer` lives in
+the flavor, e.g. in the `.ino`), and delete local copies of promoted modules.
+
+---
+
+## 11. A header included unconditionally must compile to nothing when its feature is off
+
+**Symptom:** `fatal error: SD.h: No such file or directory` from `eris_sd.h` on a
+board without SD — even with `SDCARD` disabled.
+
+**Root cause:** Every flavor's `Eris.h` includes `<eris_sd.h>` *unconditionally*,
+but the header did `#include <SD.h>` and declared a template whose signature names
+the SD `File` type — both outside any guard. A function template's parameter types
+are parsed even when it is never instantiated, so guarding only the `#include`
+isn't enough. It also had a half-written include guard: `#ifndef ERIS_SD_H` with
+no matching `#define`, so it never actually guarded.
+
+**Fix:** Wrap the **entire body** (includes *and* the template) in `#if SDCARD`,
+matching the same idiom flavors already use for their own SD code, and pair every
+`#ifndef GUARD` with a `#define GUARD`. A feature header pulled in by everyone must
+be a true no-op when its feature is off.
+
 ---
 
 ## Principles (the short version)
@@ -191,3 +275,11 @@ and produce phantom multiple-definition errors.
    block the loop task, mind the core-provided callbacks.
 9. **Compile-verify every change** with the bundled `arduino-cli`; clean-build
    after renames.
+10. **Use the shared helpers in new flavors** — `ERIS_RUN(start)`,
+    `Heartbeat::start()`, and the library's FreeRTOS callbacks. Don't re-paste
+    the scheduler/heartbeat/callback boilerplate.
+11. **After an `eriscommon` API change, full-*link* every dependent flavor** —
+    per-file compile hides removed-symbol and duplicate-symbol errors.
+12. **An unconditionally-included header must no-op when its feature is off** —
+    guard the whole body (template signatures too), and never leave a half-written
+    include guard.
