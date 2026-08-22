@@ -26,6 +26,7 @@ dependencies = [
     "construct",
     "cobs",
     "numpy",
+    "bleak",
 ]
 
 [project.optional-dependencies]

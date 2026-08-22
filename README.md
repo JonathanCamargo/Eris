@@ -51,8 +51,8 @@ Eris/
 
 ### Prerequisites
 
-- [Arduino IDE](https://www.arduino.cc/en/software) (1.8.x or 2.x)
-- A supported microcontroller board (Teensy 3.x/4.x or Arduino Due)
+- [Arduino IDE](https://www.arduino.cc/en/software) (1.8.x or 2.x), or PlatformIO
+- A supported board — see the [Supported Targets](#supported-targets) matrix (Teensy, XIAO nRF52840, XIAO SAMD21, Due, Nano)
 
 ### Step 1: Install Board Support
 
@@ -151,43 +151,89 @@ source devel/setup.bash
 
 Requires ROS 1 (Melodic/Noetic) with `catkin_tools`.
 
-## Supported Hardware
+## Supported Targets
 
-**Microcontrollers:**
-- Teensy 3.x / 4.x (ChibiOS via ChRt — primary target)
-- Arduino Due (FreeRTOS)
-- Seeeduino XIAO SAMD21 (FreeRTOS)
+Eris runs on any Arduino board with a ChibiOS or FreeRTOS port. **You never edit code
+to switch RTOS** — `eriscommon/eris_rtos.h` picks it at compile time from the libraries
+present (or, on boards that ship one, from the core).
+
+| Board | MCU / core | RTOS (auto-selected) | BLE | Selected by | Build |
+|-------|-----------|----------------------|-----|-------------|-------|
+| **Teensy 3.x / 4.x** | Cortex-M4F | **ChibiOS** (ChRt) | — | `__has_include(<ChRt.h>)` | IDE + PlatformIO |
+| **Seeed XIAO nRF52840** | Cortex-M4F | **FreeRTOS** (core-provided) | ✅ NUS | forced on nRF52 | Arduino IDE |
+| **Seeed XIAO SAMD21** | Cortex-M0+ | **FreeRTOS** (Seeed lib) | — | FreeRTOS header present | IDE + PlatformIO |
+| **Arduino Due** | Cortex-M3 | **ChibiOS** (ChRt) | — | `__has_include(<ChRt.h>)` | Arduino IDE |
+| **Arduino Nano (AVR)** | ATmega328 | **ChibiOS** (ChRt) | — | `__has_include(<ChRt.h>)` | Arduino IDE |
+
+Verified/primary targets: **Teensy** (ChibiOS), **XIAO nRF52840** (FreeRTOS + BLE),
+**XIAO SAMD21** (FreeRTOS). Due and Nano work through the same abstraction but are
+niche. Any other board with an `Arduino_FreeRTOS` / `STM32FreeRTOS` / `ChRt` port is
+detected too.
+
+### How the RTOS is chosen
+
+`eris_rtos.h` resolves in this order (override by `#define ERIS_USE_CHIBIOS` or
+`ERIS_USE_FREERTOS` before the include):
+
+1. **nRF52 → FreeRTOS, always** — the core already links it; ChRt would clash on `SVC_Handler`.
+2. else **`ChRt.h` present → ChibiOS**.
+3. else an `*FreeRTOS.h` header present → **FreeRTOS**.
+
+Stack tiers (`ERIS_STACK_*`) and heap/stack behavior differ per RTOS **and** CPU — read
+`lessons_learned.md` §1 and §13 before tuning threads.
+
+### Quick start
+
+**Arduino IDE**
+1. Install board support: Teensyduino · Seeed nRF52 Boards · Seeed SAMD Boards · Arduino SAM (Due).
+2. Install the RTOS library for your target: **ChRt** (Teensy / Due / Nano) or **Seeed Arduino FreeRTOS** (XIAO SAMD21). **nRF52840 needs no RTOS lib** — FreeRTOS ships with the core.
+3. Install the shared library: copy `../ArduinoLibraries/eriscommon` into your Arduino `libraries/` folder, plus **SerialCommand** and **PacketSerial** (Library Manager) and any sensor lib the flavor lists.
+4. Open the flavor's `.ino` (e.g. `Firmware/Flavors/Eris/Eris.ino`), select board + port, **Upload**. (Detailed step-by-step is under [Installation](#installation) above.)
+5. **BLE (nRF52 only):** uncomment `#define ERIS_USE_BLE` in the flavor's `configuration.h`; it advertises as `ERIS_BLE_NAME` and moves both data **and** commands onto Bluetooth. See `Firmware/NRF52_PORT_NOTES.md`.
+
+**PlatformIO** (Teensy / SAMD21 envs)
+```bash
+pio run -e BareMinimal            # build
+pio run -e ErisServo -t upload    # build + upload
+pio device monitor -e ErisMPU     # serial monitor @ 115200
+```
+Wired envs: `Eris`, `BareMinimal`, `ErisServo`, `ErisADS1299`, `ErisMPU`, `ErisServoHand`. `eriscommon` resolves from `../ArduinoLibraries` automatically; other flavors build from the Arduino IDE.
+
+**Host driver**
+```bash
+cd drivers/python && pip install -e .
+```
+Connect over USB serial, or — for nRF52 BLE builds — over Bluetooth (`drivers/python/eris/bleport.py`). See `drivers/python/README.md`.
 
 ## Flavors
 
 Status legend: ✅ Verified working · 🟡 Updated, awaiting verification · 🟠 Experimental · ⚪ Reference / template
 
+18 active flavors. RTOS is auto-selected per board (Teensy / Due / Nano → ChibiOS;
+SAMD21 / nRF52840 → FreeRTOS — see [Supported Targets](#supported-targets)).
+
 | Flavor | Status | Sensor / Purpose | Interface | Target board |
 |--------|--------|------------------|-----------|--------------|
-| `Eris` | 🟡 | Base reference (FSR + SineWave + Sync + optional SD logging) | Analog | Teensy |
-| `ErisServo` | ✅ | 16-channel servo control via PCA9685 | I2C | Teensy / SAMD21 |
-| `ErisMPU` | ✅ | 6-DOF IMU (MPU9250) | I2C | SAMD21 (TimerTc3) |
-| `ErisServoHand` | 🟡 | 5-DOF robotic hand (OPEN / CLOSE / SHAKA + DOF aperture) | I2C (PCA9685) | SAMD21 |
-| `ErisServoINA` | 🟡 | Servo control + INA219 current monitoring | I2C | Teensy |
-| `ErisADS1299` | ✅ | 8-channel 24-bit EMG/ECG bioamplifier (+ SD logging) | SPI | Teensy |
-| `ErisADS131` | 🟡 | 8-channel 24-bit low-power EMG | SPI | Teensy |
+| `Eris` | 🟡 | Base reference (FSR + SineWave + Sync + optional SD) | Analog | Teensy |
+| `BareMinimal` | ⚪ | Template — SineWave + serial/BLE only | — | Teensy / SAMD21 / nRF52 |
+| `ErisServo` | ✅ | 6-channel servo, direct GPIO PWM (`Servo.h`) | PWM | Teensy / SAMD21 / Due |
+| `ErisServoDriver` | 🟠 | 16-channel servo via PCA9685 (+ sine demo) | I2C | Teensy |
+| `ErisServoHand` | 🟡 | 5-DOF robotic hand via PCA9685 | I2C | SAMD21 |
+| `ErisServoINA` | 🟡 | PCA9685 servo + INA219 current monitor | I2C | Teensy |
+| `ErisMPU` | ✅ | 6-DOF IMU (MPU9250) | I2C | SAMD21 |
+| `ErisADS1299` | ✅ | 8-channel 24-bit EMG/ECG (+ SD) | SPI | Teensy |
 | `ErisAnalog` | 🟡 | Configurable-channel analog EMG | ADC | Teensy |
-| `ErisBiom` | 🟠 | Biomechanics motion capture | Mixed | Teensy |
 | `ErisBiom2` | 🟠 | Biomechanics + on-device feature extraction | Mixed | Teensy |
 | `ErisDCMotor` | 🟠 | DC motor feedback + control | PWM + ADC | Teensy |
-| `ErisLeg` | 🟠 | Leg exoskeleton sensors (FSR, IMU, load cell, joints) | Mixed | Teensy |
-| `ErisNextFlex` | 🟠 | Flex sensor (single channel) | Mixed | Teensy |
-| `ErisNextFlexAnalog` | 🟠 | Flex sensor (analog read) | ADC | Teensy |
-| `ErisNextFlexArray` | 🟠 | Flex sensor array | Mixed | Teensy |
-| `ErisNextFlexArrayAnalog` | 🟠 | Flex sensor array (analog) | ADC | Teensy |
-| `ErisTapok` | 🟠 | CAN bus integration | CAN (FlexCAN) | Teensy |
-| `ErisTapok2` | 🟠 | CAN bus + feature extraction + SD | CAN | Teensy |
+| `ErisNextFlex` | 🟠 | EMG (ADS1256, 2-ch) + FSR + ETI | SPI | Teensy |
+| `ErisNextFlexAnalog` | 🟠 | EMG (analog) + FSR + ETI | ADC | Teensy |
+| `ErisNextFlexArray` | 🟠 | EMG array (ADS1256, 8-ch) + selector + SD | SPI | Teensy |
+| `ErisNextFlexArrayAnalog` | 🟠 | EMG array (analog, 8-ch) + selector | ADC | Teensy |
+| `ErisTapok2` | 🟠 | Wireless EMG over CAN + SD | CAN | Teensy |
 | `ErisBici` | 🟠 | Bicycle interface (button + PWM) | Digital | Arduino Nano |
-| `Potentiometer` | 🟠 | Potentiometer position sensing | ADC | Teensy |
-| `BareMinimal` | ⚪ | Minimum viable Eris build (SineWave + serial only) | -- | Teensy / SAMD21 |
-| `ErisMinimal` | ⚪ | Minimal portable foundation (no Teensy-specific code) | -- | Any |
-| `ErisFreeRTOSBase` | ⚪ | FreeRTOS-only baseline reference | -- | SAMD21 / Due |
-| `ErisBandwidthTest` | ⚪ | Serial throughput benchmark | -- | Teensy |
+| `ErisBandwidthTest` | ⚪ | Serial throughput benchmark | — | Teensy |
+
+**Archived** (moved to `Firmware/Flavors/old/`, superseded): `ErisADS131` → `ErisADS1299`, `ErisBiom` → `ErisBiom2`, `ErisTapok` → `ErisTapok2`, `ErisLeg` (dormant exo hardware).
 
 See each flavor's `README.md` for pin assignments, sensor wiring, and the full per-flavor command set.
 
@@ -199,8 +245,8 @@ Most flavors also include FSR (force sensitive resistor) support on analog pins 
 
 Eris uses real-time operating systems for deterministic sensor sampling. All flavors are **RTOS-agnostic** and compile against either ChibiOS or FreeRTOS with no code changes required.
 
-- **ChibiOS** -- Mature, well-tested on Teensy 3.x/4.x
-- **FreeRTOS** -- Lightweight alternative, works on Teensy and Arduino Due
+- **ChibiOS** — primary on Teensy 3.x/4.x (also Due and AVR/Nano) via ChRt
+- **FreeRTOS** — on SAMD21 (Seeed lib) and nRF52840 (core-provided, forced); the nRF52 build also adds optional BLE. See [Supported Targets](#supported-targets) for the full matrix.
 
 #### RTOS Abstraction Layer
 

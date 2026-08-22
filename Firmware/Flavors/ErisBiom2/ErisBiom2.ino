@@ -11,7 +11,6 @@
 
 
  const char firmwareInfo[]=FIRMWARE_INFO;
- char strbuffer[STRBUFFERSIZE]="\0";
 
 
 

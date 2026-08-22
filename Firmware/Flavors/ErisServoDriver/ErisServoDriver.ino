@@ -28,9 +28,12 @@ void start(){
 }
 
 void setup(){
-  Serial.begin(115200);
-  // Wait for USB Serial.
-  while (!Serial) {}
+  Serial.begin(ERIS_SERIAL_BAUD);
+  // Wait for the USB host, but bounded: on a board whose Serial is a plain UART
+  // (ESP32 via CP2102/CH340) `!Serial` never clears, so an unbounded wait would
+  // hang a board that has no host attached.
+  unsigned long t0_wait = millis();
+  while (!Serial && (millis() - t0_wait) < 2000) {}
   delay(1000);
   // Setup the initial configuration
   Serial.println("HELLO, This is Eris");

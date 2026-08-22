@@ -3,6 +3,7 @@
 
 
 #include <Arduino.h>
+#include <eris_board.h>   // board detection + PIN_LED / ERIS_ADC / STRINGIFY
 
 #define FIRMWARE_VERSION "v2.0"
 
@@ -44,9 +45,6 @@ const uint8_t PINS_EMG[8]={A0,A1,A2,A3,A4,A5,A6,A7};
 //#define DEBUG_TIME false
 #define DEBUG_SYSCLK 180000000.0
 
-// FIRMWARE INFO STRING
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
 #define FIRMWARE_INFO TOSTRING(FIRMWARE_VERSION) "NFEris by ossip"
 
 #define PIN_LED 13

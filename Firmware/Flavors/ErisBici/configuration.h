@@ -3,6 +3,7 @@
 
 
 #include <Arduino.h>
+#include <eris_board.h>   // board detection + PIN_LED / ERIS_ADC / STRINGIFY
 
 #define FIRMWARE_VERSION "v3.0" 
 
@@ -38,9 +39,6 @@
 //#define DEBUG_TIME false
 #define DEBUG_SYSCLK 180000000.0
 
-// FIRMWARE INFO STRING
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
 #define FIRMWARE_INFO TOSTRING(FIRMWARE_VERSION) "Eris by ossip"
 
 

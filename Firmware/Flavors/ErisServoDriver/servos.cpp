@@ -75,7 +75,7 @@ namespace Servos{
   void demoStop(){  demoEnabled = false; }
 
   void start(){
-    Wire.begin();
+    ERIS_I2C_BEGIN();   // per-board; ESP32 needs explicit SDA/SCL pins
     Wire.setClock(SERVO_I2C_CLOCK_HZ); // fast-mode so a full NUM_SERVOS update fits one tick
     pwm.begin();
     pwm.setPWMFreq(50); // 50Hz for standard servos

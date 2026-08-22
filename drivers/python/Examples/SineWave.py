@@ -33,7 +33,7 @@ def main():
                         help="Read polling rate in Hz (default: 10)")
     args = parser.parse_args()
 
-    e = Eris(['SineWave'], ['float'], [5], args.port)
+    e = Eris(['SineWave'], ['float'], args.port)
 
     def print_data(data):
         d = e.parse(data)

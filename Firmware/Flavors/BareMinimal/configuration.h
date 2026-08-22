@@ -2,13 +2,12 @@
 #define CONFIGURATION_H
 
 #include <Arduino.h>
-
-// RTOS selection (nRF52 -> FreeRTOS) is handled automatically by eris_rtos.h.
+#include <eris_board.h>   // board detection + PIN_LED / ERIS_ADC / STRINGIFY
 
 #define FIRMWARE_VERSION "v3.0"
 
+/***********************************************/
 /* Global configuration such as pins, rates etc */
-
 /***********************************************/
 
 ////////////////////////////////////////////////
@@ -27,40 +26,17 @@
 #define SDBUFFERSIZE_FSR 100
 #define STRBUFFERSIZE 64
 
-
-
-////////////////////////////////////////////////
-/// FSR analog input
-///
-#define FSR_TXBUFFERSIZE 10 // Max samples to transmit in streaming
-#define FSR_NUMCHANNELS 2
-#define PIN_FSR_0 A0
-#define PIN_FSR_1 A1
-#define FSR_FREQUENCY_HZ 1000
-#define FSR_PERIOD_US ((1.0/FSR_FREQUENCY_HZ)*1000000)
-
-///////////////////////////////////////////////////
-/// 
-/// EMG CONFIGURATION
-#define EMG_TXBUFFERSIZE 24 // Max samples to transmit in streaming
-#define EMG_NUMCHANNELS 8
-#define EMG_GAIN 2
-#define CANTAPOK Can0
-
-////////////////////////////////////////////////////
-///
-///  IMU CONFIGURATION
-#define IMU_TXBUFFERSIZE 10
-#define PIN_IMU_TRUNK 8
-#define PIN_IMU_THIGH 7
-#define PIN_IMU_SHANK 6
-#define PIN_IMU_FOOT  5
-#define IMU_FREQUENCY_HZ 250.0
-#define IMU_PERIOD_US ((1.0/IMU_FREQUENCY_HZ)*1000000)
-
 /////////////////////////////////////////////////////
-/// STREAMING
-#define STREAMING_PERIOD_MS 10
+/// BLE TRANSPORT (nRF52 only)
+/// Uncomment ERIS_USE_BLE to stream over Bluetooth LE (Nordic UART Service)
+/// instead of USB serial. Works from the Arduino IDE -- the .ino reads these
+/// defines and calls SerialCom::useBLE() (the eriscommon library is compiled
+/// separately and never sees this header, so it can't be gated by a #define).
+/// ERIS_BLE_NAME is the advertised device name the host scans for.
+#define ERIS_USE_BLE
+#ifndef ERIS_BLE_NAME
+#define ERIS_BLE_NAME "Eris-Bare"
+#endif
 
 /////////////////////////////////////////////////////
 //
@@ -75,9 +51,6 @@
 //#define DEBUG_TIME false
 #define DEBUG_SYSCLK 180000000.0
 
-// FIRMWARE INFO STRING
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
 #define FIRMWARE_INFO TOSTRING(FIRMWARE_VERSION) "Eris by ossip"
 
 

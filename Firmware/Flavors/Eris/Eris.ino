@@ -17,7 +17,6 @@
 
 
 const char firmwareInfo[]=FIRMWARE_INFO;
-char strbuffer[STRBUFFERSIZE]="\0";   // shared scratch buffer (declared extern in Eris.h)
 
 
 void start(){

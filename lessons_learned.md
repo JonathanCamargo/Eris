@@ -185,6 +185,20 @@ it sidesteps both; these bite only the bundled-CLI path:
   even on a Teensy. Force it for a one-off build with
   `--build-property compiler.cpp.extra_flags=-DERIS_USE_CHIBIOS` (or
   `--library <path-to-ChRt>`), or just build that flavor with PlatformIO.
+- *`__has_include`-guarded modules need a literal include to bootstrap the path.*
+  Same root cause, nastier shape: the BLE transport in eriscommon is gated on
+  `__has_include(<bluefruit.h>)`, but `bluefruit.h` is only on the include path
+  if some source *literally* `#include`s it. Guarding the include behind the very
+  `__has_include` that's supposed to find it is circular — the path is never
+  added, the guard is always false, and the module compiles to **nothing**. The
+  build *succeeds* and the firmware just never advertises (no error to chase).
+  Fix: the flavor's `.ino` must carry a real `#include <bluefruit.h>` (under
+  `#ifdef ERIS_USE_BLE`); that puts Bluefruit on the path for every TU, flipping
+  the guard true. The literal include is mandatory even though the sketch never
+  calls Bluefruit directly. Symptom that fingerprints this: referencing the
+  guarded namespace (e.g. `BLETransport`) from the sketch fails with
+  *"'BLETransport' has not been declared"* while the same code "compiled fine"
+  before the reference existed.
 - *Duplicate library copies.* If `eriscommon` exists twice on the search path
   (the `C:/git/ArduinoLibraries` working copy **and** the IDE sketchbook
   `Documents/Arduino/libraries`), `arduino-cli` may pick either, inconsistently
@@ -260,6 +274,264 @@ be a true no-op when its feature is off.
 
 ---
 
+## 12. BLE saturation shreds COBS framing — back-pressure the stream, don't drop bytes
+
+**Symptom:** Over the BLE (nRF52 NUS) transport the host decoded **0 of N** COBS
+frames — every frame "bad" — while the same firmware over USB serial was fine. A
+raw byte dump showed clean-looking float data and the right `0x00` delimiters, but
+each frame's leading COBS code byte (e.g. `0x83` = 131) pointed past the end of a
+truncated ~42 B frame.
+
+**Root cause:** Two compounding problems. (1) The link was massively
+under-provisioned: MTU stuck at the 23 B default (20 B payload) and a slow
+connection interval delivered only ~180 B/s, while SineWave at 100 Hz × 8 B plus
+framing wanted ~800+ B/s. (2) `Packet::send` → `PacketSerial::send` writes each
+COBS packet in one `write()` and **never checks the return value**; Adafruit
+`BLEUart::write()` returns *short* when the SoftDevice notification queue is full,
+so the tail of every oversized packet was silently dropped — corrupting the COBS
+frame. The `0x83 44 10 …` header decodes correctly: it is a *valid* code byte for a
+130 B zero-free `D`-packet (`'D'` + count `16` + 16×8). The encoder was never
+wrong; the wire was lossy.
+
+**Confirmation method:** Throttle the *generation* rate (the real byte-rate driver,
+not the streaming period — batching changes packet size, not total volume) to
+10 Hz. Frames jumped to 13/21 ok and a decoded packet showed real 99.7 ms-spaced
+timestamps. Decreasing per-packet `count` (`16,16,16,6,3`) was the startup backlog
+draining: big packets truncated, small ones survived → saturation proven.
+
+**Fix (in `ble_transport.cpp`):**
+- `Bluefruit.configPrphBandwidth(BANDWIDTH_MAX)` **before** `begin()` → MTU 247, so a
+  whole packet fits one notification.
+- `Bluefruit.Periph.setConnInterval(6, 12)` → request a 7.5–15 ms interval.
+- A `Stream` wrapper (`BackpressureUart`) whose `write()` **loops until every byte is
+  accepted**, yielding (`delay(1)`) between attempts so the radio drains its queue on
+  the next connection event; bails only on disconnect / multi-second stall. This is
+  the byte-loss cure — PacketSerial's unchecked single `write()` needs a stream that
+  can't truncate.
+- Drop `bufferTXD()`: with a large MTU it buys nothing and would hold a packet's
+  sub-MTU tail until the next packet, stalling command replies.
+
+**Result:** MTU 247, 131 B notifications, **30/30 frames ok**, ~102 Hz on the wire,
+0 dropped packets at full 100 Hz.
+
+---
+
+## 13. Memory & starvation model — what actually bounds this firmware
+
+A tour of where RAM and CPU time go, and the failure modes to expect. Ties together
+§1 (stacks), §2 (heap-tail corruption) and §4 (nRF52 scheduling).
+
+**Stacks (the primary hazard).** Thread stacks are sized by `ERIS_STACK_*` tiers whose
+byte value changes per **RTOS *and* CPU** — a literal that fits Teensy overflows nRF52:
+
+| Tier | ChibiOS/Teensy M4F | FreeRTOS/SAMD21 M0+ | FreeRTOS/nRF52 M4F |
+|------|--------------------|---------------------|--------------------|
+| TINY / SMALL / MEDIUM / LARGE | 32 / 128 / 256 / 1024 | 256 / 512 / 512 / 1024 | 256 / 512 / 1024 / 2048 |
+
+Core threads always present: Heartbeat (TINY), Error (SMALL), SineWave (MEDIUM),
+ReadSerial (LARGE), StreamSerial (LARGE) — ≈ 5.9 KB (nRF52) / 3.3 KB (SAMD21) /
+2.5 KB (Teensy) before any sensor thread. ReadSerial is LARGE because **float→string
+formatting (`Serial.print(aFloat)` ≈ 200–500 B) + I²C in a command handler** is the
+top stack hog (§2). Two gotchas:
+- **On ChibiOS the `eris_thread_create` stack arg is *ignored*** — the real size is
+  the `ERIS_THREAD_WA(name, size)` declaration (`chThdCreateStatic` uses
+  `sizeof(wa)`). On FreeRTOS it's the reverse (`ERIS_THREAD_WA` is empty; the
+  create-call arg is used). **To resize portably, change *both*.** (This is how the
+  ErisBiom2 feature thread hid a 256 B stack behind a create call — fixed 2026-07-01.)
+- `sizeof(waXxx_T)` as the stack arg only compiles on ChibiOS (that symbol doesn't
+  exist under FreeRTOS) → those flavors are Teensy-only.
+
+**Heap is a boot-time budget, not runtime churn.** The print path is char-buffer
+based (no `String` in the hot path) so there's **no runtime fragmentation**. But on
+FreeRTOS everything dynamic is `pvPortMalloc`'d **once at boot** from
+`configTOTAL_HEAP_SIZE`: every task's stack+TCB (`xTaskCreate`), every `ErisBuffer`
+queue (`xQueueCreate`, depth `MEMBUFFERSIZE`=64), semaphores, and the `SerialCommand`
+list. The real ceiling is **SAMD21 (32 KB RAM)** — a few threads + buffers is most of
+the heap. Worst part: nobody checked the return, so an out-of-heap `xTaskCreate` /
+`xQueueCreate` returns **NULL silently** → the thread/buffer just never runs, looking
+like a dead feature. Fixed 2026-07-01: `eriscommon::checkAlloc(handle != NULL, name)`
++ `eris_mb_valid(mb)` now report a `<<FATAL>>` line + `Error::MEMORY` at every core
+creation and in `ErisBuffer::init()`.
+
+**Backpressure is lossy, not blocking.** `ErisBuffer::append` never stalls a producer —
+when full it drops the **oldest** sample and bumps `droppedCounter` (`missed()`). So a
+starved *consumer* shows up as counted dropped samples, never a hang.
+
+**Scheduling / starvation.** Priority map (FreeRTOS `NORMAL = tskIDLE+1`):
+```
+NORMAL+3 StreamSerial   > +2 ReadSerial   > +1 SineWave/sensors/servo/FSR   > NORMAL Heartbeat/Error   > 0 idle
+```
+On nRF52 `configUSE_TIME_SLICING = 0` → equal-priority tasks do **not** round-robin; a
+task holds the CPU until it blocks/yields. So **every thread must `eris_sleep_ms()`**,
+and a busy loop at ≥ its neighbours' priority starves them (that was §4). Comms sit
+*above* acquisition on purpose (link stays responsive; starved sensors just drop). The
+BLE back-pressure loop (§12) is safe here because it yields via `delay(1)`. **Don't put
+a compute thread above the comms threads** — ErisBiom2's feature thread was at
+`NORMAL+5` (highest in the system), so a heavy feature pass preempted and stalled the
+stream; moved to `NORMAL+1` (2026-07-01). Separately, the BLE SoftDevice runs at a HW
+IRQ priority above all tasks (can't be starved), but `ErisBuffer::append`/`FetchData`
+scan up to `MEMBUFFERSIZE` entries inside a `taskENTER_CRITICAL` — keep `MEMBUFFERSIZE`
+modest on BLE builds or that IRQs-off window grows.
+
+---
+
+## 14. ESP32 is a third RTOS dialect, not "just FreeRTOS"
+
+`eris_rtos.h` treated FreeRTOS as one thing. ESP32 (arduino-esp32 3.3.0 /
+ESP-IDF v5.5) breaks that in five separate places, and four of them fail
+*silently or at runtime* rather than at the build:
+
+1. **Detection never fires.** IDF's header is `<freertos/FreeRTOS.h>`; the bare
+   `__has_include(<FreeRTOS.h>)` probe is false, so the old header fell through
+   to `#error "No supported RTOS detected"`. ESP32 must be detected by
+   `defined(ESP32)` *before* the `__has_include(<ChRt.h>)` probe — ChRt is
+   Cortex-M only, and a copy installed for the Teensy flavors would otherwise
+   win the race and produce nonsense.
+2. **`taskENTER_CRITICAL()` does not exist in the no-arg form.** IDF's FreeRTOS
+   is SMP and wants a `portMUX_TYPE` spinlock. Use `portENTER_CRITICAL_SAFE()`
+   (picks ISR vs task automatically — `ErisBuffer::append()` is called from
+   both) with **one global mux defined in a `.cpp`**. A `static` mux per
+   translation unit compiles fine and silently protects nothing across TUs.
+3. **Stack depth is in BYTES, not words.** `xTaskCreate(..., bytes/4, ...)` —
+   the portable idiom everywhere else — hands every thread a quarter of the
+   stack it asked for. Pass the tier through unscaled on ESP32, and size the
+   tiers several times larger than the Cortex-M ones (~768 B is IDF's own floor;
+   anything touching float printf wants 4 K).
+4. **The scheduler is already running**, exactly as on nRF52: `ERIS_RUN()` must
+   call `start()` and *return*. Additionally `loop()` must yield — it shares a
+   core with the Eris threads and a busy `loop()` starves the idle task that
+   feeds the task watchdog, which reboots the board.
+5. **It is dual-core.** Eris's buffers and critical sections assume single-core.
+   Pin every Eris thread (`xTaskCreatePinnedToCore`, `ERIS_ESP32_CORE`, default
+   core 1) so the concurrency model matches the other ports. Single-core parts
+   (S2/C3/C6/H2) need core 0 — key off `CONFIG_FREERTOS_NUMBER_OF_CORES`.
+
+Also: `xTaskCreatePinnedToCore` lives in `freertos/idf_additions.h`. FreeRTOS.h
+includes it implicitly, but only under `ESP_PLATFORM` and only "for
+compatibility reasons" — IDF's own comment schedules that for removal in v6.0.
+Include it explicitly.
+
+**ESP8266 is not portable to.** Its Arduino core is bare-metal with no RTOS;
+`eris_rtos.h` now says so with an explicit `#error` instead of a confusing
+cascade of missing types.
+
+### Two latent bugs ESP32 exposed in existing code
+
+Both had been dormant on every other board:
+
+- **`Eris.h` tested `ERIS_USE_FREERTOS` before `eris_rtos.h` was included** —
+  i.e. before detection had run — so it *always* took the `#else` branch and
+  `#include <ChRt.h>`. It only ever "worked" because ChRt is installed for the
+  Teensy flavors. Include `<eris_rtos.h>` first, then branch on the result.
+  Fixed in `ErisESP32/Eris.h`; **the other flavors still have the old order.**
+- **`eriscommon::printText()` was declared in `eriscommon.h` but never
+  defined**, and `error.cpp` calls the `F()` overload four times. The reference
+  only resolved on cores where `--gc-sections` happened to discard those
+  handlers. Now implemented (emits a TEXT packet, matching `error.cpp`'s use of
+  TEXT as the resting packet type).
+
+### Per-flavor pin mapping: `eris_board.h`
+
+Porting a flavor's *pins* is a bigger job than porting its RTOS calls, and the
+trap is not the pin numbers -- it is the `A*` aliases. The ESP32 variant defines
+`A0, A3..A7, A10..A15`: there is **no `A1`, `A2`, `A8` or `A9`**. Nine flavors
+used `A1`, so they fail to compile. And of the aliases that do exist, `A10..A15`
+are ADC2 pins whose `analogRead()` returns garbage the moment WiFi is enabled.
+
+`eriscommon/src/eris_board.h` holds the board-wide facts (it is a header, so a
+flavor's `configuration.h` can include it -- unlike eriscommon's `.cpp` files,
+which never see flavor defines):
+
+- `ERIS_BOARD_ESP32 / TEENSY / NRF52 / SAMD / OTHER` -- detection
+- `PIN_LED`, `ERIS_SERIAL_BAUD`, `ERIS_I2C_BEGIN()` -- the universal three
+- `ERIS_ADC(n)` -- channel *n* -> a real, WiFi-safe pin (ESP32: ADC1 only, six
+  channels 36/39/32/33/34/35; Teensy: `A0..A9`). **Use this instead of `A1`.**
+- `ERIS_PIN_ASSERT_OUTPUT(p)` / `ERIS_PIN_ASSERT_ADC1(p)` -- `static_assert`s
+  that reject the three silent-failure classes at build time: flash pins
+  (6..11, board will not boot), input-only pins (34..39, `digitalWrite` is a
+  no-op), and ADC2 pins. They compile to nothing on non-ESP32 boards.
+
+Everything is `#ifndef`-guarded, so a flavor overrides one value by defining it
+*before* the include. Flavor-specific signals stay in `configuration.h` behind
+`#if defined(ERIS_BOARD_ESP32)`, because those are wiring decisions.
+
+Hard constraint worth knowing up front: **ESP32 has six WiFi-safe analog
+inputs**, not eight. Flavors wanting `A0..A7` must drop to six channels, give up
+WiFi, or add an external ADC.
+
+Reference conversions: `Eris` (analog path) and `ErisESP32` (trivial path).
+
+### Verifying an ESP32 build without arduino-cli or a PlatformIO download
+
+The Board Manager core carries everything needed to compile out-of-tree — no
+toolchain download required:
+
+```
+CORE=$LOCALAPPDATA/Arduino15/packages/esp32
+IDF=$CORE/tools/esp32-arduino-libs/idf-release_v5.5-*/esp32
+$CORE/tools/esp-x32/*/bin/xtensa-esp-elf-g++.exe -c file.cpp   $(cat $IDF/flags/cpp_flags) -iprefix $IDF/include/ $(cat $IDF/flags/includes)   -I$IDF/qio_qspi/include -I$CORE/hardware/esp32/*/cores/esp32   -I$CORE/hardware/esp32/*/variants/esp32 -DESP32 -DARDUINO_ARCH_ESP32
+```
+
+Compile every `eriscommon` + flavor TU this way, then `nm -C *.o`, subtract
+defined symbols from undefined ones, and grep for Eris-level names — that catches
+link breakage (like `printText`) without linking the whole IDF. Preprocessing the
+old and new header side by side with `-E -nostdinc` against stub headers proves a
+shared-header change is a no-op for the boards you did not touch.
+
+## 15. Shared-name headers: the duplication cleanup, and what it exposed
+
+Consolidation pass (2026-08-21). Four things were duplicated into every flavor
+and one of them was actively broken:
+
+- **`strbuffer`** was declared `extern char strbuffer[STRBUFFERSIZE]` in 18
+  `Eris.h` files and **defined in only three flavors**. `ErisADS1299`,
+  `ErisNextFlex` and `ErisTapok2` `sprintf()` into it from their SD-record
+  handlers -- those only ever linked because `--gc-sections` discarded the
+  handler. Exactly the `printText` failure mode from §14. It now lives in
+  `eriscommon` (`ERIS_STRBUFFER_SIZE`, 128 = the largest any flavor asked for);
+  flavors must not re-declare it. `ErisNextFlexArray` additionally had a
+  file-local `static char strbuffer[128]` shadowing the extern -- renamed
+  `sdWriteBuf`.
+- **`mtxhb`** was declared in 10 `Eris.h` files and referenced **zero** times.
+  Deleted.
+- **`Eris.h` itself** collapsed onto `<eris_flavor.h>`, which owns the include
+  order that §14 got wrong (eris_rtos.h first, then the guarded ChRt, then
+  Arduino/eriscommon/eris_streaming). Flavor `Eris.h` files went from 17-30
+  lines to 10-14 and are now uniform.
+- **`STRINGIFY`/`TOSTRING`** were pasted into 18 `configuration.h` files. They
+  live in `eris_board.h`, which `configuration.h` includes -- note it must be
+  *there* and not in `eris_flavor.h`, which is included too late to help build
+  `FIRMWARE_INFO`.
+
+### Same-name headers are a Windows trap (twice over)
+
+Windows filename lookup is **case-insensitive**, so a header in the sketch
+folder can hijack a library header whose name differs only in case or path:
+
+1. Each flavor's `customtypes.h` did `#include <customtypes.h>` to reach
+   eriscommon's file *of the same name* -- self-shadowing whenever the sketch
+   dir precedes the library on the include path. eriscommon's is now
+   `eris_customtypes.h`. Fixed.
+2. **Still open:** 14 flavors have `serialcommand.h`, which collides
+   case-insensitively with the `SerialCommand.h` *library*. Put the sketch dir
+   first on the include path and `eriscommon/modules/serialcom.h`'s
+   `#include <SerialCommand.h>` resolves to the flavor's file, and the whole
+   command layer fails with `'SerialCommand' does not name a type`. It builds
+   today only because the toolchain happens to search the library path first.
+   `BareMinimal` and `ErisESP32` already dodge it by spelling the file
+   `serialcommands.h` (plural) -- that is the fix for the other 14.
+
+**Rule: never name a flavor header the same as a library header, in any
+casing.** These bugs are invisible until an include path is reordered.
+
+### CI
+
+`.github/` had been empty -- no workflow at all, which is why every bug in §14
+and §15 survived. `compile.yml` now builds a matrix (ErisESP32 + ErisServoDriver
+on esp32, ErisServo + ErisServoDriver on teensy36) and runs `check_drift.py`
+informationally. It needs an `ARDUINO_LIBS_TOKEN` secret with read access to the
+separate `ArduinoLibraries` repo where `eriscommon` lives.
+
 ## Principles (the short version)
 
 1. **No magic numbers for stacks.** Use `ERIS_STACK_*`; remember the value means
@@ -283,3 +555,19 @@ be a true no-op when its feature is off.
 12. **An unconditionally-included header must no-op when its feature is off** —
     guard the whole body (template signatures too), and never leave a half-written
     include guard.
+13. **A lossy transport needs back-pressure, not a faster encoder.** PacketSerial's
+    single unchecked `write()` truncates on a full BLE queue; wrap the stream so
+    `write()` can't drop a packet's tail, and size the link (MTU + conn interval) to
+    the data rate. COBS "all frames bad" = byte loss, not a framing bug.
+14. **Know the memory & starvation budget.** Stacks are RTOS+CPU-specific and, on
+    ChibiOS, set by the `ERIS_THREAD_WA` decl not the create arg (change both).
+    FreeRTOS task stacks + queues are heap-allocated once at boot and fail *silently*
+    on OOM — `checkAlloc`/`eris_mb_valid` them. Threads must yield (`eris_sleep_ms`);
+    keep comms above acquisition and never a compute thread above comms.
+15. **ESP32 is a separate RTOS dialect.** IDF headers are `<freertos/...>`,
+    critical sections need a global spinlock, stack depths are in *bytes*, the
+    scheduler is already running, and it is dual-core — pin Eris threads to one.
+    ESP8266 has no RTOS at all.
+16. **Never give a flavor header a library header's name** (any casing --
+    Windows lookup is case-insensitive). `customtypes.h` and `serialcommand.h`
+    both collide; symptoms appear only when the include order changes.

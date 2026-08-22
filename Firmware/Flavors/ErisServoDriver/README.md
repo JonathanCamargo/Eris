@@ -6,9 +6,41 @@ PCA9685 servo control flavor. Drives up to 16 servos via I2C using the Adafruit 
 Verified working (per project memory)
 
 ## Hardware
-- **Target board:** Any I2C-capable Arduino board (Teensy, Due, SAMD21 — verified across `eris_rtos.h` targets)
-- **RTOS:** Auto-detected ChibiOS or FreeRTOS via `eris_rtos.h`. The `.ino` does not include the FreeRTOS static-allocation callbacks (Teensy/ChibiOS path is the verified one).
+- **Target board:** Teensy (ChibiOS) and **ESP32** (FreeRTOS) are both supported from
+  one source tree; other I2C-capable boards (Due, SAMD21, nRF52) fall through to a
+  generic default. See *Board configuration* below.
+- **RTOS:** Auto-detected ChibiOS or FreeRTOS via `eris_rtos.h`. The `.ino` does not include the FreeRTOS static-allocation callbacks (they live in `eriscommon`).
 - **Sensor / interface:** PCA9685 16-channel PWM driver over I2C @ `0x40`
+
+## Board configuration
+
+`configuration.h` detects the target and selects the pin map. Nothing else in the
+flavor is board-specific — `servos.cpp` calls `ERIS_I2C_BEGIN()` rather than
+`Wire.begin()` directly.
+
+| | ESP32 | Teensy | Other |
+|---|---|---|---|
+| `PIN_LED` | `2` (DevKitC LED; no `LED_BUILTIN` on the generic variant) | `13` | `LED_BUILTIN` |
+| `ERIS_I2C_BEGIN()` | `Wire.begin(21, 22)` | `Wire.begin()` | `Wire.begin()` |
+| `ERIS_SERIAL_BAUD` | `921600` (UART-bridge ceiling) | `115200` (USB CDC ignores it) | `115200` |
+
+Detection keys off `ESP32` / `TEENSYDUINO`. To force a target, define
+`ERIS_BOARD_ESP32`, `ERIS_BOARD_TEENSY` or `ERIS_BOARD_OTHER` before
+`configuration.h`. Every individual macro is `#ifndef`-guarded, so you can
+override just one (e.g. `-DPIN_I2C_SDA=25`) without taking the whole block.
+
+**ESP32 wiring:** PCA9685 `SDA`→GPIO21, `SCL`→GPIO22, `VCC`→3V3, `GND`→GND.
+Any free GPIO works — the ESP32 routes I2C through the GPIO matrix — so change
+`PIN_I2C_SDA` / `PIN_I2C_SCL` to match your board. Servo power (`V+`) must come
+from a separate supply with its ground tied to the ESP32's; 16 servos will brown
+out a USB rail.
+
+**Teensy** pins I2C in hardware, so there is nothing to pass to `Wire.begin()`.
+Use `Wire.setSDA()` / `Wire.setSCL()` before `Servos::start()` for an alternate bus.
+
+Both targets are compile-verified (ESP32 against arduino-esp32 3.3.11 / ESP-IDF
+v5.5.5; Teensy 3.6 against Teensyduino 1.59 + ChRt). Neither has been run on
+hardware since the port.
 
 ## Pin assignments
 - `PIN_LED 13` (heartbeat)

@@ -16,7 +16,9 @@ static eris_binary_sem_t xbufferFullSemaphore;
 static bool recording=false;  
 static bool isSDOK=false;
 static uint8_t lastEtiChan=-1; 
-static char strbuffer[128];
+static char sdWriteBuf[128];   // binary staging for SD writes. Renamed off the
+                               // name 'strbuffer' so it no longer shadows the
+                               // shared scratch buffer in eriscommon.
 long startTime=0;
 char * DEFAULT_TRIALNAME = (char*)"test";;
 char * trialname=DEFAULT_TRIALNAME;
@@ -79,8 +81,8 @@ ERIS_THREAD_FUNC(WriteFiles_T) {
         int buffersize=sineDataBuffer.size();
         float * data=sineDataBuffer.read();  
         for (uint8_t i=0;i<buffersize;i++){          
-          memcpy(&strbuffer[0], &data[i], sizeof(float));   
-          currFile->write(strbuffer, sizeof(float) + 1);   
+          memcpy(&sdWriteBuf[0], &data[i], sizeof(float));   
+          currFile->write(sdWriteBuf, sizeof(float) + 1);   
         }          
         //Close File             
         currFile->flush();                                
@@ -104,15 +106,15 @@ ERIS_THREAD_FUNC(WriteFiles_T) {
 
           for (int i=0;i<buffersize;i++){                       
             int num=0;
-            memcpy(&strbuffer[0], &dataTime[i], sizeof(float));
+            memcpy(&sdWriteBuf[0], &dataTime[i], sizeof(float));
             num += sizeof(float);   
             for (uint8_t emgChan = 0; emgChan < NUMEMGCHANNELS; emgChan++){
-              memcpy(&strbuffer[num], &data[emgChan][i], sizeof(float)); 
+              memcpy(&sdWriteBuf[num], &data[emgChan][i], sizeof(float)); 
               num += sizeof(float);
             } 
-            memcpy(&strbuffer[num], &newLine, sizeof(char)); 
+            memcpy(&sdWriteBuf[num], &newLine, sizeof(char)); 
             num++;                 
-            currFile->write(strbuffer, num);                           
+            currFile->write(sdWriteBuf, num);                           
           }          
           //Close File             
           currFile->flush();
@@ -138,15 +140,15 @@ ERIS_THREAD_FUNC(WriteFiles_T) {
           }          
           for (int i=0;i<buffersize;i++){                       
             int num=0;    
-            memcpy(&strbuffer[0], &dataTime[i], sizeof(float));  
+            memcpy(&sdWriteBuf[0], &dataTime[i], sizeof(float));  
             num += sizeof(float);  
             for (uint8_t fsrChan=0;fsrChan<NUMFSRCHANNELS;fsrChan++){
-              memcpy(&strbuffer[num], &data[fsrChan][i], sizeof(float));
+              memcpy(&sdWriteBuf[num], &data[fsrChan][i], sizeof(float));
               num += sizeof(float);             
             } 
-            memcpy(&strbuffer[3*NUMFSRCHANNELS*sizeof(float)], &newLine, sizeof(char)); 
+            memcpy(&sdWriteBuf[3*NUMFSRCHANNELS*sizeof(float)], &newLine, sizeof(char)); 
             num++;      
-            currFile->write(strbuffer,num);    
+            currFile->write(sdWriteBuf,num);    
           }          
           //Close File             
           currFile->flush();         

@@ -45,7 +45,6 @@
 #define FSR_TXBUFFERSIZE 10 // To reduce bandwith transmit fewer FSR samples
 #define EMG_TXBUFFERSIZE 24 
 #define SYNC_TXBUFFERSIZE 10 //
-#define STREAMING_PERIOD_MS 10 // Period of
 
 // DEBUGGING FLAGS
 #define DEBUG true

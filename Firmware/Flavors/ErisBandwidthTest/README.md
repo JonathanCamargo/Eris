@@ -13,7 +13,7 @@ Experimental (used as a benchmarking harness, not a sensor flavor)
 ## Pin assignments
 - `PIN_LED 13`
 - `NUMCHANNELS 10` (multi-sample fanout for stress-testing packet size)
-- `STREAMING_PERIOD_MS 10` (100 Hz packet rate)
+- Stream rate: 100 Hz (the `eriscommon` default — owned by `serialcom.cpp`, not a per-flavor `configuration.h` setting)
 - `TXBUFFERSIZE 16`
 
 ## Dependencies

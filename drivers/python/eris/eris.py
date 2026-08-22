@@ -72,13 +72,19 @@ class Eris:
         if (sys.version_info > (3, 0)):
             ispython2=False
 
-        def __init__(self,features,format,port='/dev/ttyACM0'):
-            """Create an Eris object (features, format, port).
-            features: list of feature names to activate in the streaming, matching the
-                      names accepted by S_F in the firmware's streaming.cpp.
-            format:   list of construct/struct format strings used to decode each feature.
-            port:     serial port. Default '/dev/ttyACM0'. On Windows use 'COM3' etc.
+        def __init__(self,features,format,port='/dev/ttyACM0',transport='serial'):
+            """Create an Eris object (features, format, port, transport).
+            features:  list of feature names to activate in the streaming, matching the
+                       names accepted by S_F in the firmware's streaming.cpp.
+            format:    list of construct/struct format strings used to decode each feature.
+            port:      transport endpoint. For transport='serial' this is the serial port
+                       ('/dev/ttyACM0', 'COM3', ...). For transport='ble' it is the BLE
+                       device address or advertised name (e.g. 'Eris-Bare').
+            transport: 'serial' (default, USB/UART) or 'ble' (Bluetooth LE NUS, for nRF52
+                       firmware built with -DERIS_USE_BLE). 'ble' uses the
+                       'bleak' dependency (installed with the driver).
             e.g. Eris(['SineWave'], ['float'], '/dev/ttyACM0')
+                 Eris(['SineWave'], ['float'], 'Eris-Bare', transport='ble')
             """
 
             if type(features) != list:
@@ -87,7 +93,14 @@ class Eris:
             if type(format) != list:
                 format=[format]
             self.features=features
-            self.port=Serial(port,baudrate=12000000,timeout=1.0)
+            if transport=='ble':
+                # COBS framing and the command protocol are transport-agnostic, so the
+                # BLE NUS link drops in behind the same pyserial-style interface.
+                from .bleport import BLEPort
+                self.port=BLEPort(port)
+            else:
+                print("Using serial transport on port %s" % port)
+                self.port=Serial(port,baudrate=12000000,timeout=1.0)
 
 	    # Generate the full DFormat according to the requested features and their individual
 	    #format
@@ -153,6 +166,11 @@ class Eris:
             a D packet contains data with format defined in self._Dformat
             use that to parse.
             '''
+            # An empty D body means the firmware streamed with no features
+            # registered (e.g. S_F not applied / name mismatch) or a start/stop
+            # race. Don't let it crash the read loop -- return empty per feature.
+            if not decodedPacket:
+                return {feature: [] for feature in self.features}
             content=self._Dformat.parse(decodedPacket)
             out=dict()
             for i,feature in enumerate(self.features):

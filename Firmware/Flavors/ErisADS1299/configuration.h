@@ -3,6 +3,7 @@
 
 
 #include <Arduino.h>
+#include <eris_board.h>   // board detection + PIN_LED / ERIS_ADC / STRINGIFY
 
 /*
 #if defined(__MK20DX256__) || defined(__MK20DX128__) || \
@@ -46,9 +47,6 @@
 #define DEBUG_SYSCLK 180000000.0
 #define DEBUG_ADS1256
 
-// FIRMWARE INFO STRING
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
 #define FIRMWARE_INFO TOSTRING(FIRMWARE_VERSION) "Eris by ossip"
 
 //////////////////////////////////////////////////

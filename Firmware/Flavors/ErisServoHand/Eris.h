@@ -2,10 +2,8 @@
 #define ERIS_H
 
 #include "configuration.h"
+#include <eris_flavor.h>   // RTOS detect + ChRt + Arduino + eriscommon + streaming
 #include "customtypes.h"
-#include <eriscommon.h>
-#include <eris_rtos.h>
-#include <Arduino.h>
 
 // Project Includes
 #include "serialcommand.h"

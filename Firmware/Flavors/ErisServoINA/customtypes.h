@@ -2,7 +2,7 @@
 #define CUSTOMTYPES_H
 
 #include <stdint.h>
-#include <customtypes.h>  // eriscommon: floatSample_t, uint8_tSample_t, AnalogSample<N>
+#include <eris_customtypes.h>  // eriscommon: floatSample_t, uint8_tSample_t, AnalogSample<N>
 
 // INA219 current sensor sample (bus voltage, shunt voltage, current, power)
 typedef struct __attribute((__packed__)) inaSample{

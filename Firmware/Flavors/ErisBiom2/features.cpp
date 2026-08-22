@@ -41,7 +41,11 @@ namespace Features{
   bool en_features = false;//Flag that enables features
   volatile bool extractingFeatures = false; // Flag to show if features are being extracted at this moment
 
-  ERIS_THREAD_WA(waExtractFeatures_T, 256);
+  // Float feature extraction (FeatureExtractor math + packet build + Serial) needs
+  // a real stack; raw 256 B was ~1 tier short and would overflow into the heap on
+  // M4F. On ChibiOS this WA size is what actually applies (the create-call arg is
+  // ignored), so it must match the ERIS_STACK_LARGE passed in start(). See §13.
+  ERIS_THREAD_WA(waExtractFeatures_T, ERIS_STACK_LARGE);
   ERIS_THREAD_FUNC(ExtractFeatures_T) {
     //Thread dedicated to feature extraction to be activated when all channels are ready
     systime_t nextTime = eris_get_time(); // T0
@@ -149,7 +153,11 @@ namespace Features{
     memset(mask, 1, 2*BIOM_NUMCHANNELS*6*FEATS_NUM);
 
     // create tasks
-    extractFeatures=eris_thread_create(waExtractFeatures_T, 256, ERIS_NORMAL_PRIORITY+5, ExtractFeatures_T, NULL);
+    // Priority at the compute tier (NORMAL+1), alongside the sensors -- NOT above
+    // the comms threads (ReadSerial +2 / StreamSerial +3). At the old NORMAL+5 a
+    // heavy feature pass preempted and stalled the data stream. See §13.
+    extractFeatures=eris_thread_create(waExtractFeatures_T, ERIS_STACK_LARGE, ERIS_NORMAL_PRIORITY+1, ExtractFeatures_T, NULL);
+    eriscommon::checkAlloc(extractFeatures != NULL, "Features");
   }
 
 }

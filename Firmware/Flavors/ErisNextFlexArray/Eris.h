@@ -1,15 +1,10 @@
 #ifndef ERIS_H
 #define ERIS_H
 #include "configuration.h"
+#include <eris_flavor.h>   // RTOS detect + ChRt + Arduino + eriscommon + streaming
 
 #include "customtypes.h"
-#include <eriscommon.h>
-
-#include <Arduino.h>
-
-#include <eris_rtos.h>
 
 extern const char firmwareInfo[];
-extern char strbuffer[STRBUFFERSIZE]; // Buffer for str data for use across all files
 
 #endif

@@ -1,6 +1,5 @@
 #include "Eris.h"
 
-char strbuffer[STRBUFFERSIZE];
 
 namespace SerialCom{
 

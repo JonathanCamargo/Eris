@@ -16,7 +16,6 @@ Experimental (per `Flavors/README.txt`: "Untouched... awaiting update")
 - `EMG_NUMCHANNELS 8`, `EMG_TXBUFFERSIZE 24`
 - `PIN_FSR A2` — `FSR_NUMCHANNELS 1` @ `FSR_ADC_FREQUENCY_HZ 100`
 - `PIN_SYNC 28`, `SYNC_FREQUENCY_US 5000000` (0.2 Hz)
-- `STREAMING_PERIOD_MS 10`
 
 ## Dependencies
 - eriscommon

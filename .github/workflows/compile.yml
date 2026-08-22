@@ -1,0 +1,89 @@
+name: compile
+
+# Builds representative flavors on every push/PR so the class of bug that went
+# unnoticed while there was no CI -- undefined symbols that only linked because
+# --gc-sections dropped the caller, and per-board include breakage -- fails here
+# instead of on someone's bench.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # --- ESP32 (FreeRTOS from the core) ---
+          - flavor: ErisESP32
+            fqbn: esp32:esp32:esp32
+            platform: esp32:esp32
+            index: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - flavor: ErisServoDriver
+            fqbn: esp32:esp32:esp32
+            platform: esp32:esp32
+            index: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          # --- Teensy 3.6 (ChibiOS) ---
+          - flavor: ErisServo
+            fqbn: teensy:avr:teensy36
+            platform: teensy:avr
+            index: https://www.pjrc.com/teensy/package_teensy_index.json
+          - flavor: ErisServoDriver
+            fqbn: teensy:avr:teensy36
+            platform: teensy:avr
+            index: https://www.pjrc.com/teensy/package_teensy_index.json
+
+    name: ${{ matrix.flavor }} @ ${{ matrix.fqbn }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # eriscommon lives in a separate repo. Needs a PAT in secrets with read
+      # access to it; without the secret the job fails early and says so.
+      - name: Check out shared Arduino libraries
+        uses: actions/checkout@v4
+        with:
+          repository: JonathanCamargo/ArduinoLibraries
+          token: ${{ secrets.ARDUINO_LIBS_TOKEN }}
+          path: ArduinoLibraries
+
+      - uses: arduino/setup-arduino-cli@v1
+
+      - name: Install core
+        run: |
+          arduino-cli config init --additional-urls "${{ matrix.index }}"
+          arduino-cli core update-index
+          arduino-cli core install "${{ matrix.platform }}"
+
+      - name: Install libraries
+        run: |
+          arduino-cli lib install "PacketSerial" "SerialCommand" "Adafruit PWM Servo Driver Library"
+          # ChRt is only needed by the ChibiOS (Teensy) targets.
+          case "${{ matrix.fqbn }}" in
+            teensy:*) arduino-cli lib install "ChRt" ;;
+          esac
+          # Link the repo-local shared library into the sketchbook.
+          mkdir -p "$HOME/Arduino/libraries"
+          ln -s "$GITHUB_WORKSPACE/ArduinoLibraries/eriscommon" "$HOME/Arduino/libraries/eriscommon"
+
+      - name: Compile
+        run: |
+          arduino-cli compile \
+            --fqbn "${{ matrix.fqbn }}" \
+            --warnings default \
+            "Firmware/Flavors/${{ matrix.flavor }}"
+
+  drift:
+    runs-on: ubuntu-latest
+    name: check_drift
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      # Reports only -- flavor divergence is often intentional, so this is
+      # informational and must not fail the build.
+      - run: python tools/check_drift.py || true
