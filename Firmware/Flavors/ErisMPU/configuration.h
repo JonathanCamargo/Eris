@@ -32,6 +32,9 @@
 #define IMU_TXBUFFERSIZE 10
 #define IMU_FREQUENCY_HZ 250.0
 #define IMU_PERIOD_US ((1.0/IMU_FREQUENCY_HZ)*1000000)
+// Sampling is driven by an RTOS thread, so the period must be a whole number of
+// scheduler ticks. Keep IMU_FREQUENCY_HZ a divisor of 1000 (1000/250 = 4 ms).
+#define IMU_PERIOD_MS ((uint32_t)(1000.0/IMU_FREQUENCY_HZ))
 
 // DEBUGGING FLAGS
 #define DEBUG true

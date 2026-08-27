@@ -532,6 +532,57 @@ on esp32, ErisServo + ErisServoDriver on teensy36) and runs `check_drift.py`
 informationally. It needs an `ARDUINO_LIBS_TOKEN` secret with read access to the
 separate `ArduinoLibraries` repo where `eriscommon` lives.
 
+## 16. `__has_include()` cannot discover an Arduino library
+
+The 2026-08-21 consolidation moved `#include <ChRt.h>` out of every flavor's
+`Eris.h` and into `eris_flavor.h`, behind `#ifdef ERIS_USE_CHIBIOS`. That looks
+strictly better -- the ESP32 fix in §14 required exactly that ordering. It
+silently broke **every ChibiOS flavor in the Arduino IDE**, while PlatformIO
+kept working, which is why it went unnoticed.
+
+The Arduino builder discovers libraries by **failing**: it preprocesses the
+sketch, catches `fatal error: X.h: No such file or directory`, maps `X.h` to a
+library, adds that library's `src/` to the include path, and retries. The loop
+is driven entirely by unresolved-include errors.
+
+`__has_include(<ChRt.h>)` never produces that error. It evaluates to 0 and moves
+on. So on the first pass ChRt is not on the include path, the probe is false,
+detection falls through to `#error "No supported RTOS detected"`, and the build
+dies **before the builder ever learns it needed ChRt** -- with an error message
+pointing at the RTOS layer rather than at library discovery.
+
+Before the consolidation the unconditional `#include <ChRt.h>` in each `Eris.h`
+was doing double duty: selecting the RTOS *and* feeding the discovery loop. Only
+the first job was obvious, so only the first was preserved.
+
+**Rule: a probe can test for a library that is already on the path; only a
+literal `#include` can put it there.** Detection that must *find* a library has
+to key off something known on the first pass -- a core-supplied `-D` macro --
+and then include the header literally:
+
+```c
+#elif defined(TEENSYDUINO)
+  #include <ChRt.h>                    // literal: makes the builder add ChRt
+  #define ERIS_USE_CHIBIOS
+#elif defined(ARDUINO_ARCH_SAMD)
+  #include <Seeed_Arduino_FreeRTOS.h>
+  #define ERIS_USE_FREERTOS
+```
+
+`__has_include` probes stay as the fallback for cores that bundle their RTOS
+(nRF52, ESP32) and for PlatformIO, which resolves `lib_deps` up front and never
+needed the discovery loop.
+
+This is the same failure as the `bluefruit.h` rule in the BLE work (§12): the
+flavor `.ino` must *literally* include it or Arduino never adds the path. That
+was written down as a BLE quirk. It is not -- it is a general property of the
+Arduino build system, and it applies to every optional dependency Eris has.
+
+**Corollary for testing:** PlatformIO and the Arduino IDE resolve dependencies
+by different mechanisms, so a green PlatformIO build proves nothing about the
+IDE. Any change to conditional includes needs a first-pass preprocess check with
+*only* the core + sketch dir on the include path.
+
 ## Principles (the short version)
 
 1. **No magic numbers for stacks.** Use `ERIS_STACK_*`; remember the value means
@@ -571,3 +622,6 @@ separate `ArduinoLibraries` repo where `eriscommon` lives.
 16. **Never give a flavor header a library header's name** (any casing --
     Windows lookup is case-insensitive). `customtypes.h` and `serialcommand.h`
     both collide; symptoms appear only when the include order changes.
+17. **`__has_include()` cannot discover an Arduino library** -- the builder only
+    adds a library when a *literal* include fails. Probe to test, include to
+    find. A green PlatformIO build does not prove the Arduino IDE builds.

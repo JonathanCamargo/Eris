@@ -4,7 +4,6 @@
 #include "Eris.h"
 
 #include <Arduino.h>
-#include "TimerTC3.h"
 
 namespace IMU{
 

@@ -1,5 +1,5 @@
-#ifndef serialCOMMAND_H
-#define serialCOMMAND_H
+#ifndef SERIALCOMMANDS_H
+#define SERIALCOMMANDS_H
 
 #include <modules/serialcom.h>
 
@@ -9,4 +9,4 @@ namespace SerialCom {
     void ShowFailures();
 }
 
-#endifc:\git\Eris\Firmware\Flavors\ErisMPU\serialcommand.cpp
+#endif

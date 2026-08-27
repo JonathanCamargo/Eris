@@ -6,7 +6,7 @@
 #include "imu.h"
 #include <modules/heartbeat.h>
 #include <modules/sinewave.h>
-#include "serialcommand.h"
+#include "serialcommands.h"
 
 #include <Wire.h>
 
