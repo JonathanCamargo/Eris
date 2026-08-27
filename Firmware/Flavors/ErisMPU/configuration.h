@@ -30,11 +30,10 @@
 ///
 ///  IMU CONFIGURATION
 #define IMU_TXBUFFERSIZE 10
-#define IMU_FREQUENCY_HZ 250.0
-#define IMU_PERIOD_US ((1.0/IMU_FREQUENCY_HZ)*1000000)
-// Sampling is driven by an RTOS thread, so the period must be a whole number of
-// scheduler ticks. Keep IMU_FREQUENCY_HZ a divisor of 1000 (1000/250 = 4 ms).
-#define IMU_PERIOD_MS ((uint32_t)(1000.0/IMU_FREQUENCY_HZ))
+#define IMU_COUNT 2            // MPU9250s on the bus: 0x68 and 0x69
+// Integer Hz, and it must divide 1000 evenly -- ERIS_SENSOR_MULTI static_asserts
+// this, because the period has to land on a whole scheduler tick. 250 -> 4 ms.
+#define IMU_FREQUENCY_HZ 250
 
 // DEBUGGING FLAGS
 #define DEBUG true

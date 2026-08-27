@@ -24,10 +24,16 @@ void start(){
 
   // start special tasks from external sources
   SineWave::start();
-  IMU::start();  
+  IMU::begin();  
   
   // Serial command interface   
   SerialCom::start();
+
+  // Boot streaming both IMUs as plain text, so plugging the board in and
+  // opening the Serial Monitor (or Plotter) shows data with nothing typed.
+  // The Python driver sends "S_MODE BIN" on connect to switch to the binary
+  // protocol. Pass false here to boot straight into binary instead.
+  SerialCom::bootDefaults("IMU_0 IMU_1", true);
 
 }
 

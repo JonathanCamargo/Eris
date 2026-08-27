@@ -18,20 +18,15 @@ void ShowFailures() {
 void TransmitIMU() {
     // IMU [<idx>] — picks buffer 0 or 1; default is buffer 0.
     char *arg = sCmd.next();
-    ErisBuffer<IMUSample_t>* imubuffer;
+    int imuidx = 0;
     if (arg != NULL) {
         Serial.print("IMU[");
         Serial.print(arg);
         Serial.print("] ");
-        int imuidx = atoi(arg);
-        switch (imuidx) {
-            case 0:  imubuffer = &IMU::buffer0; break;
-            case 1:  imubuffer = &IMU::buffer1; break;
-            default: imubuffer = &IMU::buffer0; break;
-        }
-    } else {
-        imubuffer = &IMU::buffer0;
+        imuidx = atoi(arg);
+        if (imuidx < 0 || imuidx >= IMU_COUNT) imuidx = 0;
     }
+    ErisBuffer<IMUSample_t>* imubuffer = &IMU::buffer[imuidx];
 
     ERIS_CRITICAL_ENTER();
     int num = imubuffer->FetchData(imusamples, (char*)"IMU", MEMBUFFERSIZE);

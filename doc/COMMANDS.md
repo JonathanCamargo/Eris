@@ -2,6 +2,8 @@
 
 Eris flavors expose ASCII commands over the USB CDC serial port. Send each command on its own line (newline-terminated). Responses come back either as plain `Serial.print` text or as COBS-framed packets when streaming is active (see the [protocol section in the main README](../README.md#serial-protocol)).
 
+Adding a sensor of your own? See [ADDING_A_SENSOR.md](ADDING_A_SENSOR.md).
+
 This document is the union of commands across all active flavors. Not every flavor implements every command — see the per-flavor `README.md` for what each one accepts.
 
 ## Core commands (present in every flavor)
@@ -12,12 +14,52 @@ This document is the union of commands across all active flavors. Not every flav
 | `S_F <feat1> <feat2> ...` | Set streaming features (must match names registered in flavor's `streaming.cpp`). | `S_F SINE FSR` |
 | `S_ON` | Start the streaming thread. | `S_ON` |
 | `S_OFF` | Stop streaming. | `S_OFF` |
+| `S_MODE ASCII [TIME]` | Stream plain text (`label:value` pairs) instead of binary. The Arduino Serial Plotter graphs it directly. Add `TIME` to include timestamps (off by default: a rising trace wrecks the Plotter's autoscale). | `S_MODE ASCII` |
+| `S_MODE BIN` | Stream the COBS binary protocol. What the Python driver uses; the default unless a flavor calls `SerialCom::bootDefaults(..., true)`. | `S_MODE BIN` |
+| `S_MODE` | Report the current mode. | `S_MODE` |
+| `DESC` | Firmware describes its own wire format for the features `S_F` selected. One TEXT packet per feature, then `DESC END`. | `DESC` |
 | `S_TIME` | Reset `t0` so subsequent timestamps are zero-based. Some flavors use `TIME0` instead. | `S_TIME` |
 | `ON` / `OFF` | LED on/off. | `ON` |
 | `START` / `KILL` | Start / stop sensor threads. *Experimental, not implemented in all flavors.* | `START` |
 | `HELLO [name]` | Echo (used as a liveness check; only some flavors). | `HELLO world` |
 
 ## Streaming features
+
+## Self-describing wire format (`DESC`)
+
+`DESC` reports the binary layout of the currently selected features:
+
+```
+DESC IMU_0 timestamp:f32:t,ax:f32,ay:f32,az:f32,wx:f32,wy:f32,wz:f32
+DESC END
+```
+
+Each field is `name:type[:role]` — types `f32 u8 i8 u16 i16 u32 i32 pad`, roles
+`:t` time, `:m` meta, `:p` padding (absent = plain signal). The list covers every
+byte of the struct, so a host can build a decoder from it directly:
+
+```python
+e = Eris(['IMU_0','IMU_1'], port='COM3')   # layout fetched via DESC
+```
+
+The schema is emitted through the same `StreamSamples()` calls, in the same
+order, as the data itself — so it cannot drift from the bytes on the wire.
+
+A feature whose sample type has no `ERIS_DESCRIBE` block reports
+`UNDESCRIBED`; the host then needs an explicit `format=`. See
+`eriscommon/src/eris_descriptor.h`.
+
+## ASCII mode
+
+`S_MODE ASCII` renders samples as text lines:
+
+```
+IMU_0.ax:0.123,IMU_0.ay:-0.045,IMU_0.az:9.791,IMU_1.ax:0.020
+```
+
+**It is a monitor, not a log**: only the newest sample per feature is printed,
+at 20 Hz, so Serial Monitor stays readable and the Plotter keeps up. Use binary
+mode for a complete record.
 
 The `S_F` command activates one or more features whose names are matched against the `strncmp(...)` ladder in each flavor's `streaming.cpp`. Common features:
 

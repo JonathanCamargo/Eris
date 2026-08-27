@@ -61,31 +61,43 @@ bool AddFunction(char * arg){
 }
 
  void IMU_byIdx(int imuidx){
-  ErisBuffer<IMUSample_t> * imubuffer;
-    switch (imuidx){
-      case 0:
-        imubuffer=&IMU::buffer0;
-        break;
-      case 1:
-        imubuffer=&IMU::buffer1;
-        break;
-      default:
-        imubuffer=&IMU::buffer0;
-        break;
-    }
+    // IMU::buffer is an array now (ERIS_SENSOR_MULTI), so the old per-device
+    // switch is just an index. Out-of-range falls back to device 0.
+    if (imuidx < 0 || imuidx >= IMU_COUNT) imuidx = 0;
 
-    StreamSamples<IMUSample_t,IMU_TXBUFFERSIZE>(*imubuffer,packet);
+    // The feature label keeps the two devices apart in the Serial Plotter
+    // legend: "IMU_0.ax" vs "IMU_1.ax". Ignored on the binary path.
+    StreamSamples<IMUSample_t,IMU_TXBUFFERSIZE>(IMU::buffer[imuidx],packet,
+                                                imuidx==0 ? "IMU_0" : "IMU_1");
     //StreamSamplesMemoryEfficient<IMUSample_t,IMU_TXBUFFERSIZE>(*imubuffer,packet,imusamples);
     
 }
 
  void SineWave(){
     //StreamSamplesMemoryEfficient<floatSample_t,TXBUFFERSIZE>(SineWave::buffer,packet,floatsamples);
-    StreamSamples<floatSample_t,TXBUFFERSIZE>(SineWave::buffer,packet);
+    StreamSamples<floatSample_t,TXBUFFERSIZE>(SineWave::buffer,packet,"SINE");
 }
 
 void Stream(){
   //Fetch data from desired buffers and send via serial
+  if (ErisAscii::describing()){
+    // DESC: each feature emits its own TEXT packet, so no framing here.
+    for (uint8_t i=0;i<Nfunctions;i++){
+       (*streamfnc[i])();
+    }
+    return;
+  }
+
+  if (ErisAscii::isAscii()){
+    // One text line per tick, no COBS framing.
+    ErisAscii::frameBegin();
+    for (uint8_t i=0;i<Nfunctions;i++){
+       (*streamfnc[i])();
+    }
+    ErisAscii::frameEnd();
+    return;
+  }
+
   packet.start(Packet::PacketType::DATA); 
   for (uint8_t i=0;i<Nfunctions;i++){
      (*streamfnc[i])();

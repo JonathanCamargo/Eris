@@ -6,7 +6,7 @@ import struct
 
 import math
 
-from time import sleep
+from time import sleep, time
 
 import struct
 
@@ -72,7 +72,7 @@ class Eris:
         if (sys.version_info > (3, 0)):
             ispython2=False
 
-        def __init__(self,features,format,port='/dev/ttyACM0',transport='serial'):
+        def __init__(self,features,format=None,port='/dev/ttyACM0',transport='serial'):
             """Create an Eris object (features, format, port, transport).
             features:  list of feature names to activate in the streaming, matching the
                        names accepted by S_F in the firmware's streaming.cpp.
@@ -90,9 +90,10 @@ class Eris:
             if type(features) != list:
                 features=[features]
 
-            if type(format) != list:
+            if format is not None and type(format) != list:
                 format=[format]
             self.features=features
+            self.schemas=None       # filled by describe() when format is None
             if transport=='ble':
                 # COBS framing and the command protocol are transport-agnostic, so the
                 # BLE NUS link drops in behind the same pyserial-style interface.
@@ -102,10 +103,7 @@ class Eris:
                 print("Using serial transport on port %s" % port)
                 self.port=Serial(port,baudrate=12000000,timeout=1.0)
 
-	    # Generate the full DFormat according to the requested features and their individual
-	    #format
             self._DFormat=None
-            self._setDformat(features,format)
 
             self.buffer=b'' #Buffer to store incomplete packet data in the serial-RX
             self.packetTypes=['D','T','E']
@@ -130,13 +128,120 @@ class Eris:
                     #TODO parse info on firmware and enable disable functionality?
                     break
 
+            # Firmware may boot in ASCII mode (see SerialCom::bootDefaults) so a
+            # student sees data in the Serial Monitor without a host script.
+            # The driver speaks the COBS binary protocol, so switch it back.
+            self.sendCommand('S_MODE BIN')
+            sleep(0.1)
+
             cmd='S_F '+' '.join(features)
             self.sendCommand(cmd)
             sleep(0.1)
             print(self._readString())
             sleep(0.1)
             print(self._readString())
+
+            # Build the record layout. If the caller did not hand us one, ask the
+            # firmware to describe itself (DESC) -- that removes the standing risk
+            # of a host-side struct definition drifting from the firmware's.
+            if format is None:
+                self.schemas=self.describe()
+                missing=[f for f in features if f not in self.schemas]
+                if missing:
+                    raise RuntimeError(
+                        "DESC did not describe %s. Older firmware without the DESC "
+                        "command, or an undescribed sample type (see "
+                        "eris_descriptor.h) -- pass an explicit format= instead."
+                        % missing)
+                format=[self.schemas[f]['construct'] for f in features]
+                for f in features:
+                    print('  %s: %s' % (f, self.schemas[f]['summary']))
+
+            self._setDformat(features,format)
             print('Eris initialized')
+
+        # Wire type tag -> construct type. Little-endian throughout: the firmware
+        # memcpy's the struct natively and every supported MCU is little-endian.
+        _DESC_TYPES={
+            'f32': Float32l,
+            'u8':  Int8ub,   'i8':  Int8sb,
+            'u16': Int16ul,  'i16': Int16sl,
+            'u32': Int32ul,  'i32': Int32sl,
+        }
+
+        def describe(self,timeout=2.0):
+            '''Ask the firmware to describe its own wire format (DESC command).
+
+            Returns {feature: {'fields': [(name,tag,role),...],
+                               'construct': <Struct>,
+                               'summary': 'ax:f32, ay:f32, ...'}}
+
+            The firmware emits the schema through the same code path that emits
+            data, so the field order here is exactly the order the D packet
+            concatenates. That is what makes it safe to decode with.
+
+            Requires firmware with the DESC command and sample types carrying an
+            ERIS_DESCRIBE block (see eriscommon/src/eris_descriptor.h).
+            '''
+            self.sendCommand('DESC')
+
+            lines=[]
+            deadline=time()+timeout
+            while time()<deadline:
+                for packet in self._readPort():
+                    if not packet:
+                        continue
+                    ptype=packet[0] if self.ispython2 else chr(packet[0])
+                    if ptype not in ('T','E'):
+                        continue
+                    text=packet[1:].decode('ascii','replace').strip()
+                    if text.startswith('DESC'):
+                        lines.append(text)
+                if lines and lines[-1]=='DESC END':
+                    break
+                sleep(0.02)
+
+            if not lines or lines[-1]!='DESC END':
+                raise RuntimeError(
+                    'No complete DESC response (got %d line(s)). The firmware may '
+                    'predate the DESC command -- pass an explicit format= instead.'
+                    % len(lines))
+
+            schemas=dict()
+            for line in lines[:-1]:                 # drop the DESC END terminator
+                parts=line.split(' ',2)
+                if len(parts)<3:
+                    continue
+                _,feature,body=parts
+                if body=='UNDESCRIBED':
+                    continue                        # no ERIS_DESCRIBE for that type
+                schemas[feature]=self._parseDescBody(feature,body)
+            return schemas
+
+        def _parseDescBody(self,feature,body):
+            '''Parse "timestamp:f32:t,ax:f32,..." into fields + a construct Struct.'''
+            fields=[]
+            members=[]
+            for i,spec in enumerate(body.split(',')):
+                bits=spec.split(':')
+                if len(bits)<2:
+                    raise RuntimeError('Malformed DESC field %r for %s' % (spec,feature))
+                name,tag=bits[0],bits[1]
+                role=bits[2] if len(bits)>2 else ''
+                fields.append((name,tag,role))
+
+                if tag=='pad':
+                    # Padding carries no value; consume the byte so following
+                    # offsets stay right. ERIS_PAD is one byte per entry.
+                    members.append(Padding(1))
+                    continue
+                if tag not in self._DESC_TYPES:
+                    raise RuntimeError(
+                        'DESC reported unknown type %r for %s.%s' % (tag,feature,name))
+                members.append(name / self._DESC_TYPES[tag])
+
+            summary=', '.join('%s:%s' % (n,t) for n,t,_ in fields)
+            return {'fields':fields,'construct':Struct(*members),'summary':summary}
 
         def _setDformat(self,features,format):
             ''' The full format of a D packet consists of a struct of

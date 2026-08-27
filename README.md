@@ -45,6 +45,8 @@ Eris/
       mypkg/              ROS2 package with COBS/SLIP encoding
   demos/                  End-to-end demos (e.g. servo_joystick)
   doc/                    Documentation and notes
+                          - ADDING_A_SENSOR.md: how to add a sensor to a flavor
+                          - COMMANDS.md: serial command reference
 ```
 
 ## Installation

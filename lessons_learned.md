@@ -468,7 +468,9 @@ toolchain download required:
 
 ```
 CORE=$LOCALAPPDATA/Arduino15/packages/esp32
-IDF=$CORE/tools/esp32-arduino-libs/idf-release_v5.5-*/esp32
+# Layout changed in core 3.3.11: per-chip `esp32-libs`, no idf-release_* level.
+# Older cores used $CORE/tools/esp32-arduino-libs/idf-release_v5.5-*/esp32
+IDF=$CORE/tools/esp32-libs/<core-version>
 $CORE/tools/esp-x32/*/bin/xtensa-esp-elf-g++.exe -c file.cpp   $(cat $IDF/flags/cpp_flags) -iprefix $IDF/include/ $(cat $IDF/flags/includes)   -I$IDF/qio_qspi/include -I$CORE/hardware/esp32/*/cores/esp32   -I$CORE/hardware/esp32/*/variants/esp32 -DESP32 -DARDUINO_ARCH_ESP32
 ```
 
@@ -583,6 +585,29 @@ by different mechanisms, so a green PlatformIO build proves nothing about the
 IDE. Any change to conditional includes needs a first-pass preprocess check with
 *only* the core + sketch dir on the include path.
 
+## 17. Arduino's Print.h owns BIN, DEC, HEX and OCT
+
+`enum Mode : uint8_t { BIN = 0, ASCII = 1 };` does not compile on Teensy. Print.h
+defines `BIN` as a macro (it is the second argument to `Serial.print(x, BIN)`),
+so the enumerator expands to `2 = 0` and the error lands on *Print.h*, several
+frames from the header that actually has the problem:
+
+```
+Print.h:44:13: error: expected identifier before numeric constant
+eris_ascii.h:57:1: error: 'Mode' does not name a type; did you mean 'mode_t'?
+```
+
+`DEC`, `HEX`, `OCT` and `BIN` are all taken, in every Arduino core. They are
+plain `#define`s, so no namespace or enum class protects you -- the preprocessor
+runs first. The Eris ASCII mode enum is `{ Binary, Text }` for this reason; the
+user-facing `S_MODE` command still spells them `BIN` and `ASCII`, because the
+command parser compares strings, which the preprocessor cannot touch.
+
+The general rule: a name that is a macro anywhere in the include graph cannot be
+an identifier anywhere in the translation unit. When an error appears *inside a
+core header* right after you add an enum or a variable, suspect a macro
+collision before suspecting the core.
+
 ## Principles (the short version)
 
 1. **No magic numbers for stacks.** Use `ERIS_STACK_*`; remember the value means
@@ -625,3 +650,5 @@ IDE. Any change to conditional includes needs a first-pass preprocess check with
 17. **`__has_include()` cannot discover an Arduino library** -- the builder only
     adds a library when a *literal* include fails. Probe to test, include to
     find. A green PlatformIO build does not prove the Arduino IDE builds.
+18. **Arduino's `Print.h` owns `BIN`/`DEC`/`HEX`/`OCT`** as macros -- never use
+    them as identifiers. The error surfaces inside the core header, not yours.
