@@ -4,7 +4,16 @@
 
 namespace SerialCom {
 
+// Every servo command is a no-op when the driver never came up, so say so
+// instead of acking a move that cannot happen.
+static bool servosAvailable() {
+    if (Servos::ready()) return true;
+    Serial.println("Error: PCA9685 not available");
+    return false;
+}
+
 void ServoMove() {
+    if (!servosAvailable()) return;
     // X <ch> <angle>  OR  X <a0> <a1> ... <a15>
     char *arg;
     float args[NUM_SERVOS];
@@ -35,6 +44,7 @@ void ServoMove() {
 }
 
 void ServoSmoothMove() {
+    if (!servosAvailable()) return;
     // Y <ch> <angle>  OR  Y <a0> <a1> ... <a15>
     char *arg;
     float args[NUM_SERVOS];
@@ -64,7 +74,7 @@ void ServoSmoothMove() {
     }
 }
 
-void DemoOn()  { Servos::demoStart(); Serial.println("Demo on");  }
+void DemoOn()  { if (!servosAvailable()) return; Servos::demoStart(); Serial.println("Demo on");  }
 void DemoOff() { Servos::demoStop();  Serial.println("Demo off"); }
 
 void registerCommands(SerialCommand& sCmd) {

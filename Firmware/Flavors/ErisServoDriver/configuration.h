@@ -83,7 +83,7 @@
 #define SERVO_MAX_PULSE 600   // ~180 degrees
 #define SERVO_MIN_ANGLE 0
 #define SERVO_MAX_ANGLE 180
-#define PCA9685_I2C_ADDR 0x40 // Default PCA9685 address
+#define PCA9685_I2C_ADDR 0x40 // Default PCA9685 address (A0..A5 solder jumpers add to it)
 
 // Smooth movement (rate-limited stepping with ease-out)
 #define SERVO_SMOOTH_SPEED     180.0  // Cruise speed (deg/sec)
@@ -93,6 +93,11 @@
 // I2C bus speed for the PCA9685 (fast-mode; needed so a full NUM_SERVOS
 // update fits inside one smooth/demo tick).
 #define SERVO_I2C_CLOCK_HZ     400000
+
+// Consecutive failed PCA9685 writes before the driver reports the bus as dead.
+// One tick touches NUM_SERVOS channels, so this is well under a second of
+// outage -- but high enough that a single glitched transaction is not an error.
+#define SERVO_I2C_FAIL_LIMIT   32
 
 // DEMO mode: sine-oscillate all servos (0..NUM_SERVOS-1) with a phase offset
 // per channel so they chase each other in a traveling wave. The demo sweeps

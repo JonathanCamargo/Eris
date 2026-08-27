@@ -26,6 +26,13 @@ namespace Servos{
   static volatile bool demoEnabled = false;
   static uint32_t      demoT0      = 0;
 
+  // I2C health. `pcaPresent` is latched by start() from the address probe;
+  // while it is false nothing is written to the bus at all. `failStreak` /
+  // `faultLatched` catch a board that answers at boot and is unplugged later.
+  static bool     pcaPresent  = false;
+  static uint16_t failStreak  = 0;
+  static bool     faultLatched = false;
+
   static float stepToward(float current, float target){
     float diff = target - current;
     if (diff > -epsilon && diff < epsilon) return target;
@@ -36,9 +43,24 @@ namespace Servos{
   }
 
   static void applyAngle(uint8_t channel, float angle){
+    if (!pcaPresent) return;   // no driver on the bus; nothing to write to
     // Float math for full 12-bit PCA9685 resolution (~4096 steps)
     float pulse = SERVO_MIN_PULSE + (angle - SERVO_MIN_ANGLE) * (float)(SERVO_MAX_PULSE - SERVO_MIN_PULSE) / (SERVO_MAX_ANGLE - SERVO_MIN_ANGLE);
-    pwm.setPWM(channel, 0, (uint16_t)(pulse + 0.5f));
+    // setPWM() returns 0 on success, 1 when the I2C transaction was not
+    // acknowledged. Report a sustained outage once, not once per failed
+    // write -- at 200 Hz x NUM_SERVOS that would flood the serial link.
+    if (pwm.setPWM(channel, 0, (uint16_t)(pulse + 0.5f)) != 0){
+      if (failStreak < SERVO_I2C_FAIL_LIMIT) failStreak++;
+      if (failStreak >= SERVO_I2C_FAIL_LIMIT && !faultLatched){
+        faultLatched = true;
+        Error::RaiseError(Error::SENSOR, (char *)"PCA9685 stopped acknowledging (check wiring/power)");
+      }
+    }
+    else {
+      if (faultLatched) eriscommon::println("PCA9685 I2C recovered");
+      failStreak   = 0;
+      faultLatched = false;
+    }
   }
 
   // Thread that steps servos toward their targets (sole I2C writer for the loop).
@@ -71,13 +93,30 @@ namespace Servos{
     }
   }
 
+  bool ready(){ return pcaPresent; }
+
   void demoStart(){ demoT0 = micros(); demoEnabled = true; }
   void demoStop(){  demoEnabled = false; }
 
   void start(){
     ERIS_I2C_BEGIN();   // per-board; ESP32 needs explicit SDA/SCL pins
-    Wire.setClock(SERVO_I2C_CLOCK_HZ); // fast-mode so a full NUM_SERVOS update fits one tick
-    pwm.begin();
+
+    // begin() probes the address (Adafruit_I2CDevice::detected() -- a real
+    // ACK test) and returns false when nothing answers. Without this check a
+    // missing or mis-addressed board looks exactly like a working one: every
+    // later setPWM() just NACKs in silence.
+    pcaPresent = pwm.begin();
+    if (!pcaPresent){
+      sprintf(strbuffer, "PCA9685 not found at I2C 0x%02X", (unsigned)PCA9685_I2C_ADDR);
+      Error::RaiseError(Error::SENSOR, strbuffer);
+      Serial.println("Servos DISABLED (no PCA9685 on the bus)");
+      return;   // no smooth thread, no bus traffic
+    }
+
+    // After begin(): it calls Wire.begin() itself, which on some cores resets
+    // the bus back to 100 kHz. Fast-mode is what lets a full NUM_SERVOS
+    // update fit inside one tick.
+    Wire.setClock(SERVO_I2C_CLOCK_HZ);
     pwm.setPWMFreq(50); // 50Hz for standard servos
     // Initialize smooth state to center position
     for (uint8_t i = 0; i < NUM_SERVOS; i++){
