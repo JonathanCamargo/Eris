@@ -1,0 +1,306 @@
+'''Eris''' es un framework de adquisición de datos (DAQ) y streaming en tiempo real para microcontroladores tipo Arduino. Le das un sensor y una frecuencia de muestreo, y te devuelve muestras con timestamp llegando a un computador host, de forma determinista, sin que tengas que escribir un scheduler, un buffer circular, un protocolo de framing ni un decodificador.
+
+Fue construido para trabajo de investigación — bioseñales, biomecánica, control robótico — donde "más o menos 100 Hz, casi siempre" no es suficiente, y donde quien conecta el sensor no suele ser quien quiere escribir firmware.
+
+{| class="wikitable"
+! Ítem !! Valor
+|-
+| Autor || Jonathan Camargo (Georgia Tech)
+|-
+| Licencia || MIT
+|-
+| Versión del firmware || v3.0
+|-
+| Repositorio || [https://github.com/JonathanCamargo/Eris JonathanCamargo/Eris]
+|-
+| Librería Arduino compartida (<code>eriscommon</code>, repo aparte) || [https://github.com/Robiolab/ArduinoLibraries Robiolab/ArduinoLibraries]
+|-
+| Instalación y matriz de boards || [https://github.com/JonathanCamargo/Eris/blob/master/README.md README.md]
+|-
+| Referencia de comandos || [https://github.com/JonathanCamargo/Eris/blob/master/doc/COMMANDS.md doc/COMMANDS.md]
+|-
+| Cómo agregar tu propio sensor || [https://github.com/JonathanCamargo/Eris/blob/master/doc/ADDING_A_SENSOR.md doc/ADDING_A_SENSOR.md]
+|}
+
+__TOC__
+
+== El problema que resuelve Eris ==
+
+El data logger ingenuo de Arduino es un <code>loop()</code> que lee un sensor y llama a <code>Serial.print</code>. Funciona hasta que aparece cualquiera de estas situaciones, y en investigación aparecen todas:
+
+* '''Dos sensores a distinta frecuencia.''' Un canal analógico a 1 kHz y una IMU a 100 Hz no pueden compartir un mismo <code>loop()</code> sin que uno de los dos sufra jitter.
+* '''Timestamps confiables.''' <code>millis()</code> dentro de un loop que además hace I/O registra cuándo el loop llegó a la muestra, no cuándo la muestra ocurrió.
+* '''Datos binarios sobre un enlace serial.''' Los valores de los sensores contienen bytes en cero; el salto de línea no es un delimitador de trama seguro; y un byte perdido te desincroniza para siempre.
+* '''Un host que tiene que conocer el layout.''' Las definiciones de struct escritas a mano en ambos extremos se desfasan la primera vez que alguien agrega un canal.
+
+Eris responde a cada uno con un mecanismo, y esos cuatro mecanismos son básicamente todo el framework.
+
+{| class="wikitable"
+! Problema !! Mecanismo de Eris
+|-
+| Muestreo concurrente a distintas frecuencias || Un thread de RTOS por sensor, con periodo fijo
+|-
+| Timestamps honestos || La muestra se estampa en el thread de muestreo, a partir de un <code>t0</code> reiniciable
+|-
+| Framing binario seguro || Paquetes COBS con delimitador <code>0x00</code>
+|-
+| Desfase de layout entre host y firmware || El firmware describe su propio formato en el cable (<code>DESC</code>)
+|}
+
+== El modelo mental ==
+
+<pre>
+   ┌──────────────┐   muestras   ┌──────────────┐  paquetes   ┌───────────────┐
+   │ thread sensor│ ───────────► │  ErisBuffer  │ ──────────► │   Streaming   │
+   │  (Hz fijos)  │              │  (circular)  │             │    thread     │
+   └──────────────┘              └──────────────┘             └───────┬───────┘
+   ┌──────────────┐              ┌──────────────┐                     │
+   │ thread sensor│ ───────────► │  ErisBuffer  │ ──────────►         │
+   └──────────────┘              └──────┬───────┘                     ▼
+                                        │                     COBS → Serial / BLE
+                                        ▼                             │
+                                thread escritor SD                    ▼
+                                  (.bin en la SD)             Python / Matlab / ROS
+</pre>
+
+Cuatro ideas:
+
+# '''Un sensor es un thread.''' Despierta con un periodo fijo, lee el dispositivo, estampa la muestra y la agrega a su propio buffer. Nunca imprime, nunca espera al host y nunca comparte un bus con otro thread.
+# '''Un buffer desacopla al productor del consumidor.''' <code>ErisBuffer&lt;T&gt;</code> es un buffer circular thread-safe que además lleva la cuenta de las muestras ''perdidas'' — así un overrun queda visible en los datos en vez de descartarse en silencio.
+# '''El streaming es un asunto aparte y seleccionable.''' Un solo thread vacía los buffers que hayas pedido y arma los paquetes. Qué se transmite se elige en tiempo de ejecución con un comando, no en tiempo de compilación.
+# '''El transporte es intercambiable.''' USB serial, Bluetooth (NUS en nRF52) o una tarjeta SD — las mismas muestras, los mismos paquetes.
+
+Todo lo demás en el repositorio es o bien una implementación de alguna de esas cuatro cosas, o bien un conjunto particular de sensores conectado a ellas.
+
+== Flavors: un firmware por montaje, no un firmware lleno de switches ==
+
+Eris no distribuye un único binario configurable. Distribuye '''flavors''' — directorios de sketch pequeños y autocontenidos, uno por montaje de hardware, bajo <code>Firmware/Flavors/</code>. Hay 18 activos más un archivo histórico en <code>old/</code>.
+
+Un flavor es:
+
+<pre>
+Firmware/Flavors/ErisMPU/
+  ErisMPU.ino          setup(), configuración de pines, ERIS_RUN(start)
+  configuration.h      pines, frecuencias, número de canales, tamaños de buffer
+  customtypes.h        los structs de muestra + sus descriptores
+  imu.cpp / imu.h      el sensor propiamente dicho
+  streaming.cpp        qué nombre de feature corresponde a qué buffer
+  serialcommand.cpp    los comandos ASCII propios del flavor
+  README.md            cableado, pines, set de comandos
+</pre>
+
+Esto es deliberado. Arduino compila un directorio de sketch, así que el código compartido se duplica en vez de incluirse con <code>#include</code> entre flavors — el costo es el drift, y para detectarlo existe <code>tools/check_drift.py</code>. La ventaja es que un estudiante puede copiar un directorio, cambiar tres archivos y tener firmware funcionando sin entender los otros diecisiete.
+
+'''Por dónde empezar:''' <code>BareMinimal</code> (plantilla — solo seno y serial), <code>Eris</code> (referencia base), o <code>ErisMPU</code> / <code>ErisServo</code> / <code>ErisADS1299</code> (verificados, con sensores reales). La tabla de flavors del README marca cada uno como ✅ verificado, 🟡 actualizado pendiente de verificar, 🟠 experimental o ⚪ referencia.
+
+== Agnóstico al RTOS por construcción ==
+
+Eris corre sobre ChibiOS ''o'' FreeRTOS, y '''el código de los flavors nunca nombra a ninguno de los dos'''. Todas las llamadas al RTOS pasan por los macros <code>eris_*</code> de <code>eriscommon/src/eris_rtos.h</code>, que elige el RTOS en tiempo de compilación según el board y las librerías presentes:
+
+{| class="wikitable"
+! Board !! RTOS elegido !! Por qué
+|-
+| Teensy 3.x / 4.x || ChibiOS (ChRt) || Target principal
+|-
+| XIAO nRF52840 || FreeRTOS (provisto por el core) || Forzado — ChRt chocaría en <code>SVC_Handler</code>
+|-
+| XIAO SAMD21 || FreeRTOS (librería de Seeed) || El header está presente
+|-
+| ESP32 || FreeRTOS (ESP-IDF) || El scheduler ya está corriendo; las tasks se fijan a un core
+|-
+| Due / Nano || ChibiOS (ChRt) || La misma abstracción, targets de nicho
+|}
+
+Se puede forzar con <code>#define ERIS_USE_CHIBIOS</code> o <code>#define ERIS_USE_FREERTOS</code> antes del include. La abstracción cubre threads, secciones críticas, semáforos binarios, mutexes, mailboxes, sleeps y arranque del scheduler:
+
+<syntaxhighlight lang="cpp">
+ERIS_RUN(start);            // arranca el scheduler desde setup(), según el RTOS
+eris_sleep_ms(10);          // delay de thread portable
+ERIS_CRITICAL_ENTER();      // sección crítica segura desde ISR
+</syntaxhighlight>
+
+'''Regla para quien contribuye:''' nunca llames <code>chThdSleepMilliseconds</code> ni <code>vTaskDelay</code> directamente desde un flavor. Si a la abstracción le falta algo, agrégalo a <code>eris_rtos.h</code> — así todos los flavors siguen siendo portables, en vez de quedar uno amarrado a un RTOS.
+
+Ten en cuenta que <code>eriscommon</code> vive ''fuera'' del repositorio de Eris, en [https://github.com/Robiolab/ArduinoLibraries Robiolab/ArduinoLibraries], y hay que instalarlo en tu carpeta <code>libraries/</code> de Arduino antes de que algo compile. Clónalo como hermano del checkout de Eris — la build de PlatformIO lo resuelve en <code>../ArduinoLibraries</code>:
+
+<syntaxhighlight lang="bash">
+git clone https://github.com/JonathanCamargo/Eris.git
+git clone https://github.com/Robiolab/ArduinoLibraries.git
+</syntaxhighlight>
+
+== Declarar un sensor ==
+
+La mayoría de los sensores son un poll periódico, y para esos el boilerplate se genera solo. Dos bloques — un struct descrito y una declaración de sensor — producen un thread funcionando:
+
+<syntaxhighlight lang="c">
+// customtypes.h — el struct y su descriptor, pegados a propósito
+typedef struct {
+  float timestamp;
+  float fx, fy, fz;
+} ForceSample_t;
+
+ERIS_DESCRIBE_BEGIN(ForceSample_t)
+  ERIS_TIME (ForceSample_t, timestamp)
+  ERIS_FLOAT(ForceSample_t, fx)
+  ERIS_FLOAT(ForceSample_t, fy)
+  ERIS_FLOAT(ForceSample_t, fz)
+ERIS_DESCRIBE_END(ForceSample_t)
+</syntaxhighlight>
+
+<syntaxhighlight lang="c">
+// force.cpp — tú escribes las lecturas del dispositivo; el macro escribe el resto
+ERIS_SENSOR(Force, ForceSample_t, 100) {
+  s.fx = analogRead(ERIS_ADC(0)) * FORCE_SCALE;
+  s.fy = analogRead(ERIS_ADC(1)) * FORCE_SCALE;
+  s.fz = analogRead(ERIS_ADC(2)) * FORCE_SCALE;
+  return true;              // false = saltar este tick, no agregar nada
+}
+</syntaxhighlight>
+
+<code>ERIS_SENSOR</code> genera <code>Force::buffer</code>, <code>Force::start()</code>, el working area, el stack tier, la prioridad, un loop a 100 Hz sin drift y el timestamp. Para N dispositivos en un mismo bus, <code>ERIS_SENSOR_MULTI(Force, ForceSample_t, 100, 2)</code> los consulta en secuencia desde un ''solo'' thread — los dispositivos que comparten un bus deben tener un único dueño, o sus transacciones se corrompen entre sí.
+
+Para la forma <code>float timestamp; float ch[N];</code>, que es la más común en Eris, hay una sola línea: <code>ERIS_DESCRIBE_CHANNELS(ForceSample_t, ch, FORCE_NUMCHANNELS)</code>, que lee la misma constante que el struct — así, subir el número de canales actualiza el descriptor automáticamente.
+
+Hay dos cosas que se verifican en tiempo de compilación, en vez de dejarlas para que las descubras en los datos:
+
+* <code>ERIS_DESCRIBE_END</code> comprueba que los campos descritos cubran '''todos los bytes''' del struct. Si olvidas un campo, o aparece padding silencioso del compilador, la build se detiene.
+* La frecuencia debe dividir exactamente a 1000 (250, 200, 125, 100, 50, 20, 10 — pero no 300 ni 60), para que el periodo caiga en un tick entero del scheduler.
+
+Los sensores por interrupción, por DMA o multi-frecuencia ''no'' encajan en el macro y se siguen escribiendo a mano; <code>ErisADS1299</code> es la referencia para esa forma.
+
+Guía completa, incluyendo el registro para streaming: [https://github.com/JonathanCamargo/Eris/blob/master/doc/ADDING_A_SENSOR.md doc/ADDING_A_SENSOR.md].
+
+== El protocolo en el cable ==
+
+Las muestras salen del dispositivo como paquetes codificados en '''COBS''' y delimitados por <code>0x00</code>. COBS garantiza que ningún byte en cero aparezca dentro del payload, así que el delimitador no es ambiguo y el receptor siempre puede resincronizarse tras un byte perdido. Cada paquete lleva un byte de tipo:
+
+{| class="wikitable"
+! Tipo !! Significado
+|-
+| <code>'D'</code> || Muestras binarias del sensor
+|-
+| <code>'T'</code> || Texto — info y depuración
+|-
+| <code>'E'</code> || Error
+|}
+
+El control viaja en sentido contrario como ASCII plano terminado en salto de línea, así que puedes manejar el dispositivo desde una terminal serial sin ninguna librería en el host:
+
+<pre>
+INFO                 info del firmware
+S_F IMU_0 SINE       selecciona qué features transmitir
+S_ON / S_OFF         inicia / detiene el streaming
+S_TIME               reinicia t0 para que los timestamps arranquen en cero
+DESC                 el firmware describe su propio formato en el cable
+S_MODE ASCII         salida legible por humanos en vez de binario
+SD_REC trial01       inicia grabación en la SD
+</pre>
+
+La consola trabaja a 115200 baudios; el driver de Python lleva el enlace a 12 Mbps sobre USB CDC.
+
+=== Dos modos de salida ===
+
+'''Binario''' es el modo real — todas las muestras, con framing COBS, decodificadas por el driver del host.
+
+'''ASCII''' (<code>S_MODE ASCII</code>) imprime <code>IMU_0.ax:0.123,IMU_0.ay:-0.045,...</code>, que el Serial Plotter de Arduino etiqueta y grafica solo, sin nada de código en el host. Es deliberadamente '''un monitor, no un registro''': solo la muestra más reciente de cada feature, a 20 Hz, y sin timestamps por defecto, porque una traza que crece monótonamente destruye la autoescala del Plotter. Úsalo para confirmar que un sensor está vivo; usa el modo binario para los datos que vas a conservar.
+
+=== DESC — el firmware es el esquema ===
+
+El modo de falla que esto elimina: alguien agrega un canal al firmware, el struct del host sigue diciendo seis floats, y todas las grabaciones siguientes quedan calladamente desalineadas.
+
+<code>DESC</code> hace que el dispositivo reporte el layout en bytes de las features actualmente seleccionadas:
+
+<pre>
+DESC IMU_0 timestamp:f32:t,ax:f32,ay:f32,az:f32,wx:f32,wy:f32,wz:f32
+DESC END
+</pre>
+
+Los campos son <code>nombre:tipo[:rol]</code> — tipos <code>f32 u8 i8 u16 i16 u32 i32 pad</code>, roles <code>:t</code> tiempo, <code>:m</code> meta, <code>:p</code> padding. Lo clave: la descripción se emite a través de las ''mismas'' llamadas a <code>StreamSamples()</code> y en el ''mismo'' orden que los datos, así que el esquema no puede desfasarse de los bytes sin que los datos se desfasen también.
+
+Por eso al host ya no hay que decirle el formato:
+
+<syntaxhighlight lang="python">
+from eris import Eris
+
+e = Eris(['IMU_0', 'IMU_1'], port='COM3')   # el layout se obtiene vía DESC
+e.start()
+while True:
+    data = e.read()          # {'IMU_0': [...], 'IMU_1': [...]}
+e.stop()
+</syntaxhighlight>
+
+Un tipo de muestra sin bloque <code>ERIS_DESCRIBE</code> responde <code>UNDESCRIBED</code>, y entonces el host tiene que caer de vuelta en un <code>format=</code> explícito — que es justamente el peaje que motiva describir tus tipos.
+
+== Lado del host ==
+
+{| class="wikitable"
+! Host !! Ubicación !! Uso
+|-
+| '''Python''' || <code>drivers/python/</code> (<code>pip install -e .</code>) || Driver principal; streaming en vivo, autoconfiguración por <code>DESC</code>, ejemplos y notebooks
+|-
+| '''BLE''' || <code>drivers/python/eris/bleport.py</code> || Puerto compatible con pyserial sobre <code>bleak</code>, para builds nRF52
+|-
+| '''Matlab''' || <code>drivers/matlab/+eris/</code> || Lee las grabaciones <code>.bin</code> de la tarjeta SD
+|-
+| '''C / ROS2''' || <code>drivers/c/</code> || Librería serial + plantilla de nodo ROS2
+|-
+| '''ROS 1''' || <code>drivers/python/ros_ws/</code> || Workspace de catkin, publicación de tópicos
+|}
+
+El BLE está verificado a 100 Hz completos en el nRF52840, pero solo con los ajustes de enlace correctos — MTU de 247 bytes, un intervalo de conexión corto y un <code>write()</code> que respeta la contrapresión (backpressure). Si de repente todas las tramas COBS empiezan a fallar sobre Bluetooth, es pérdida de bytes en el enlace, no un bug de framing. El detalle está en <code>lessons_learned.md</code> §12.
+
+== Los primeros datos ==
+
+# Instala el soporte del board y la librería del RTOS de tu target (Teensy → '''ChRt'''; XIAO SAMD21 → '''Seeed Arduino FreeRTOS'''; nRF52840 → nada, el core ya trae FreeRTOS).
+# Clona [https://github.com/Robiolab/ArduinoLibraries Robiolab/ArduinoLibraries] junto a tu checkout de Eris y copia <code>ArduinoLibraries/eriscommon</code> a tu carpeta <code>libraries/</code> de Arduino, además de '''SerialCommand''' y '''PacketSerial'''.
+# Abre <code>Firmware/Flavors/BareMinimal/BareMinimal.ino</code>, selecciona board y puerto, y sube el sketch.
+# Abre el Serial Monitor a 115200 y envía <code>S_F SINE</code>, luego <code>S_MODE ASCII</code> y luego <code>S_ON</code>. Cambia al Serial Plotter para ver el seno.
+# <code>pip install -e drivers/python</code>, y luego corre <code>drivers/python/Examples/SineWave.py</code> para probar el camino binario.
+
+Con PlatformIO hay seis flavors cableados como entornos:
+
+<syntaxhighlight lang="bash">
+pio run -e BareMinimal
+pio run -e ErisServo -t upload
+pio device monitor -e ErisMPU
+</syntaxhighlight>
+
+La instalación paso a paso, la tabla de librerías de terceros y la lista de dependencias por flavor están en el [https://github.com/JonathanCamargo/Eris#installation README].
+
+== Convenciones que conviene interiorizar ==
+
+* '''Toda muestra empieza con <code>float timestamp</code>''', en milisegundos desde <code>t0</code>, estampado por el thread de muestreo. <code>S_TIME</code> reinicia <code>t0</code>.
+* '''Un namespace por módulo''': <code>FSR::</code>, <code>EMG::</code>, <code>SineWave::</code>, <code>Streaming::</code>, <code>SerialCom::</code>, <code>SDCard::</code>, <code>Sync::</code>.
+* '''Un thread por sensor, un solo dueño por bus.'''
+* '''<code>ERIS_ADC(n)</code>, nunca <code>A1</code>/<code>A2</code>.''' El ESP32 no tiene <code>A1</code>; el código que usa esos alias compila en Teensy y luego falla o lee el pin equivocado en otro board.
+* '''<code>ERIS_NORMAL_PRIORITY</code>, no el <code>NORMALPRIO</code> crudo.'''
+* '''El código compartido está duplicado entre flavors a propósito''' — corre <code>python tools/check_drift.py</code> antes de confiar en que dos flavors coinciden.
+
+== Dónde seguir ==
+
+{| class="wikitable"
+! Pregunta !! Dónde
+|-
+| ¿Cómo instalo y compilo? || [https://github.com/JonathanCamargo/Eris/blob/master/README.md README.md]
+|-
+| ¿Qué comandos acepta el firmware? || [https://github.com/JonathanCamargo/Eris/blob/master/doc/COMMANDS.md doc/COMMANDS.md]
+|-
+| ¿Cómo agrego mi propio sensor? || [https://github.com/JonathanCamargo/Eris/blob/master/doc/ADDING_A_SENSOR.md doc/ADDING_A_SENSOR.md]
+|-
+| ¿Por qué el RTOS / BLE / ESP32 se comporta así? || [https://github.com/JonathanCamargo/Eris/blob/master/lessons_learned.md lessons_learned.md]
+|-
+| ¿Cómo se cablea este flavor? || <code>Firmware/Flavors/&lt;Nombre&gt;/README.md</code>
+|-
+| ¿Qué puedo cambiar en cada flavor? || <code>Firmware/Flavors/&lt;Nombre&gt;/configuration.h</code>
+|-
+| ¿Dónde está el código fuente? || [https://github.com/JonathanCamargo/Eris JonathanCamargo/Eris]
+|-
+| ¿Dónde está <code>eriscommon</code>? || [https://github.com/Robiolab/ArduinoLibraries Robiolab/ArduinoLibraries]
+|}
+
+Para averiguar qué soporta realmente un flavor, la fuente autoritativa es el código:
+
+<syntaxhighlight lang="bash">
+grep addCommand Firmware/Flavors/<Flavor>/serialcommand.cpp
+grep strncmp    Firmware/Flavors/<Flavor>/streaming.cpp
+</syntaxhighlight>

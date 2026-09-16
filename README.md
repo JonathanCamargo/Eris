@@ -24,6 +24,7 @@ Eris/
       ErisMPU/            6-DOF IMU
       ErisNextFlex*/      Flex sensor variants (4 flavors)
       ErisServoHand/      5-DOF robotic hand control
+      ErisStepper/        Stepper axis via TMC2209 (STEP/DIR + UART, G0)
       ErisBici/           Bicycle interface (Arduino Nano)
       ErisTapok*/         CAN bus integration (2 flavors)
       BareMinimal/        Template for custom flavors
@@ -199,7 +200,7 @@ pio run -e BareMinimal            # build
 pio run -e ErisServo -t upload    # build + upload
 pio device monitor -e ErisMPU     # serial monitor @ 115200
 ```
-Wired envs: `Eris`, `BareMinimal`, `ErisServo`, `ErisADS1299`, `ErisMPU`, `ErisServoHand`. `eriscommon` resolves from `../ArduinoLibraries` automatically; other flavors build from the Arduino IDE.
+Wired envs: `Eris`, `BareMinimal`, `ErisServo`, `ErisADS1299`, `ErisMPU`, `ErisServoHand`, `ErisStepper`, `ErisESP32`. `eriscommon` resolves from `../ArduinoLibraries` automatically; other flavors build from the Arduino IDE.
 
 **Host driver**
 ```bash
@@ -211,7 +212,7 @@ Connect over USB serial, or — for nRF52 BLE builds — over Bluetooth (`driver
 
 Status legend: ✅ Verified working · 🟡 Updated, awaiting verification · 🟠 Experimental · ⚪ Reference / template
 
-18 active flavors. RTOS is auto-selected per board (Teensy / Due / Nano → ChibiOS;
+19 active flavors. RTOS is auto-selected per board (Teensy / Due / Nano → ChibiOS;
 SAMD21 / nRF52840 → FreeRTOS — see [Supported Targets](#supported-targets)).
 
 | Flavor | Status | Sensor / Purpose | Interface | Target board |
@@ -227,6 +228,7 @@ SAMD21 / nRF52840 → FreeRTOS — see [Supported Targets](#supported-targets)).
 | `ErisAnalog` | 🟡 | Configurable-channel analog EMG | ADC | Teensy |
 | `ErisBiom2` | 🟠 | Biomechanics + on-device feature extraction | Mixed | Teensy |
 | `ErisDCMotor` | 🟠 | DC motor feedback + control | PWM + ADC | Teensy |
+| `ErisStepper` | 🟡 | Stepper axis via TMC2209 (G0 G-code, StallGuard hard-stop detection) | STEP/DIR + UART | Teensy / SAMD21 / ESP32 |
 | `ErisNextFlex` | 🟠 | EMG (ADS1256, 2-ch) + FSR + ETI | SPI | Teensy |
 | `ErisNextFlexAnalog` | 🟠 | EMG (analog) + FSR + ETI | ADC | Teensy |
 | `ErisNextFlexArray` | 🟠 | EMG array (ADS1256, 8-ch) + selector + SD | SPI | Teensy |

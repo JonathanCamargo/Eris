@@ -1,0 +1,5 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Brand color variables are injected by the @robiolab/native-ui Tailwind preset. */

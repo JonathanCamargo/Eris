@@ -111,6 +111,36 @@ Flavors that include `eris_sd.h` and a `sdcard.cpp` add:
 | `JOINT` | Print joint angles (`ErisLeg`). |
 | `IPK` / `IPA` / `IP?` / `IP` | PID-tuning helpers (gains, query). |
 
+## Stepper / G-code commands (`ErisStepper`)
+
+A TMC2209 axis: STEP/DIR for motion, UART for configuration. Coordinates are
+absolute millimetres; `F` is millimetres per **minute**, the G-code convention,
+and persists until changed. Words are space-separated (`G0 X10 F600`) because
+Eris tokenizes on whitespace — `G0X10` will not parse. `G1` is deliberately not
+implemented; see the flavor README.
+
+| Command | Purpose |
+|---------|---------|
+| `G0 X<mm>` | Move to an absolute position at the current feedrate. |
+| `G0 X<mm> F<mm/min>` | Set the feedrate, then move at it. |
+| `G0 F<mm/min>` | Set the feedrate only; nothing moves. |
+| `G0` | Report position, target, feedrate, velocity and moving/idle. |
+| `STEP` | Print the buffered axis telemetry as text. |
+| `TMC` | Driver status: UART link, chip version, decoded `DRV_STATUS`. |
+| `TMC I <mA>` | Set motor RMS current over UART, live. |
+| `TMC U <n>` | Set microsteps (power of two, 1..256) over UART, live. |
+| `TMC S <0\|1>` | SpreadCycle / StealthChop over UART, live. |
+| `SG` | Report the live StallGuard4 load reading, its threshold, and whether the hard-stop detector is armed / tripped. |
+| `SG <0..255>` | Set the stall threshold (`SGTHRS`) live. Higher trips earlier; must be tuned per machine. |
+| `SG CLR` | Clear the latched stall flag (a new `G0`, `ZERO` or `EN 1` also clears it). |
+| `EN <0\|1>` | Release / energize the motor (releasing also cancels the move). |
+| `ZERO` | Define the current position as 0 mm. |
+| `STOP` | Decelerate to a halt and cancel the move. |
+
+Hard-stop detection is StallGuard4-based, not current-based: a chopper driver
+holds coil current constant, so hitting a stop does not raise it. See the flavor
+README for how to tune `SGTHRS`.
+
 ## NextFlex commands
 
 | Command | Purpose |

@@ -126,6 +126,15 @@ sketch dir is early on the include path — so `<SerialCommand.h>` resolved to t
 distinct name: `servo_commands.{h,cpp}` (ErisServo, ErisServoDriver) or
 `serialcommands.h` with the trailing 's' (BareMinimal).
 
+**It is board-dependent, which makes it worse** (found writing ErisStepper,
+2026-09-15). The same flavor, with a local `serialcommand.h`, compiled clean for
+`teensy:avr:teensy36` and `Seeeduino:samd:seeed_XIAO_m0` and failed on
+`esp32:esp32:esp32` with exactly the symptom above — the include-path order the
+core builds differs, so the shadow only wins on some targets. A flavor can
+therefore carry this bug for years and look fine. Note `ErisDCMotor` still has a
+`serialcommand.h`; only the `.cpp` may keep that name, because discovery
+resolves headers, not sources.
+
 ---
 
 ## 6. Don't keep a local copy of a promoted shared module
@@ -607,6 +616,137 @@ The general rule: a name that is a macro anywhere in the include graph cannot be
 an identifier anywhere in the translation unit. When an error appears *inside a
 core header* right after you add an enum or a variable, suspect a macro
 collision before suspecting the core.
+
+## 18. On SAMD FreeRTOS, `start()` ran with interrupts permanently masked
+
+**Symptom:** SAMD21 prints `HELLO, This is Eris` from `setup()` and freezes.
+No further output, no threads, no assert. Nothing in `start()` ever completes.
+Found bringing up ErisStepper, 2026-09-15.
+
+**Root cause:** `eris_scheduler_start()` used to be
+
+```c
+#define eris_scheduler_start(fn)  do { fn(); vTaskStartScheduler(); } while(0)
+```
+
+so `start()` ran on the bare metal, before the scheduler. That is fatal on this
+port because of how it handles critical sections (`tasks.c`, under
+`portCRITICAL_NESTING_IN_TCB`):
+
+```c
+void vTaskEnterCritical( void ) {
+    portDISABLE_INTERRUPTS();                       /* ALWAYS */
+    if( xSchedulerRunning != pdFALSE ) { ...nesting++... }
+}
+void vTaskExitCritical( void ) {
+    if( xSchedulerRunning != pdFALSE ) { ...nesting--; if 0 -> portENABLE_INTERRUPTS(); }
+    /* scheduler not running: does NOTHING */
+}
+```
+
+Enter always masks interrupts; exit only unmasks them once the scheduler is
+running. **So the first critical section taken before `vTaskStartScheduler()`
+masks interrupts for good** -- and `xTaskCreate()` takes one internally, in
+`prvAddNewTaskToReadyList()` (`tasks.c:1072`).
+
+Every Eris `start()` opens with `Heartbeat::start()`. Interrupts therefore died
+on line one of `start()` and stayed dead for the whole of it:
+
+- SysTick stopped, so `millis()`, `micros()` and `delay()` stopped advancing --
+  any timeout loop spins forever and `delay()` never returns;
+- UART, I2C and USB interrupts stopped firing, so interrupt-driven driver
+  bring-up and `Serial.flush()` hang.
+
+ErisStepper froze in `delay(10)` inside `TMC::begin()`. Flavors whose `start()`
+only creates threads never noticed, which is why this survived this long.
+
+**The corroborating clue:** disabling the flavor's threads made the firmware get
+*further* (all the way to `bootDefaults()`), not less far. Removing the
+`xTaskCreate` calls removed the thing that was masking interrupts. If chopping
+out code makes a hang move later, suspect global machine state, not the code
+you removed.
+
+**Fix:** `start()` now gets a task of its own and the scheduler runs it --
+which is what the other three platforms already did (ChibiOS runs it as the
+main thread via `chBegin()`; nRF52/ESP32 call it from an already-scheduled
+task). All four now agree: **`start()` always runs with the scheduler up and
+interrupts enabled.** The bootstrap task runs above every Eris thread so
+`start()` still finishes before its threads run, and deletes itself afterwards.
+
+This also retires a hazard worth remembering on its own: `eris_sleep_ms()` is
+`vTaskDelay()`, which walks `pxCurrentTCB` with no NULL guard
+(`prvAddCurrentTaskToDelayedList`), so calling it before the scheduler hard-
+faults on Cortex-M0+. Legal under ChibiOS, fatal here -- another reason
+`start()` had no business running bare-metal.
+
+**Fingerprint:** dies after the last `Serial.print` in `setup()`, with nothing
+from `start()`. Note §3 -- with USB CDC a crash can swallow output that was
+already queued, so "silent" does not prove "got no further".
+
+---
+
+## 19. `vTaskDelayUntil()` takes a PERIOD, not a deadline -- and asserts on 0
+
+**Symptom:** a 1 ms periodic thread kills the board instantly; a 4 ms one
+"works" but runs at the wrong rate. On SAMD21 the config's `configASSERT`
+prints `ASSERT: <fn> :#<line>` and calls `assertBlink()`.
+
+**Root cause:** `eris_sleep_until()` in `eris_rtos.h` was
+
+```c
+TickType_t period = *next - xTaskGetTickCount();
+vTaskDelayUntil(next, period);          // WRONG
+```
+
+against callers that had already done `next += ERIS_MS_TO_TICKS(p)` and expect
+"sleep until this absolute time" (the ChibiOS `chThdSleepUntil()` contract).
+Three things go wrong at once:
+
+- `vTaskDelayUntil()` advances `*next` itself, so the increment is counted
+  twice and the period drifts;
+- if the tick has already *reached* the deadline, `period == 0` and
+  `configASSERT( xTimeIncrement > 0U )` at the top of `vTaskDelayUntil()` fires
+  -- firmware dead;
+- if the tick has already *passed* it, the unsigned subtraction underflows to
+  ~2^32 and the task sleeps until the tick counter wraps.
+
+A 4 ms thread (ErisMPU) usually finishes its work inside the period and only
+suffers the drift, which is why this survived unnoticed. A 1 ms thread hits the
+`== 0` case on essentially every tick.
+
+**Fix:** honour the absolute-deadline contract with a signed comparison, which
+also handles tick wrap:
+
+```c
+int32_t remaining = (int32_t)(*next - xTaskGetTickCount());
+if (remaining > 0) vTaskDelay((TickType_t)remaining);
+```
+
+**Corollary -- the starvation trap.** "Return immediately if the deadline
+passed" is right (ChibiOS does the same), but it means a thread whose work
+overruns its period never sleeps at all. At a priority above everything else
+that locks the whole firmware. A periodic thread that runs hot should resync
+rather than try to catch up: see `paceTick()` in ErisStepper's `motion.cpp`.
+
+---
+
+## 20. `ErisBuffer` used before `init()` = `ASSERT: uxQueueMessagesWaiting`
+
+**Symptom:** `ASSERT: uxQueueMessagesWaiting :#1985` on SAMD21.
+
+**Root cause:** that line is `configASSERT( xQueue )` -- the queue handle is
+`NULL`, i.e. `xQueueCreate()` was never called for it. `ErisBuffer::init()` is
+what creates it, and `init()` lives inside the sensor's `start()`. So the way
+in is mundane: **select a streaming feature whose sensor thread is not
+started** (comment out a `start()` call, or have `bootDefaults()` name a
+feature that never came up) and the first `StreamSamples()` asserts.
+
+`ErisBuffer` already had a `ready` flag for exactly this, declared and never
+read. It is now set by `init()` and checked by `append`, `FetchData`, `missed`
+and `clear`, so an uninitialised buffer streams nothing instead of stopping the
+firmware.
+
+---
 
 ## Principles (the short version)
 

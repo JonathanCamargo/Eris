@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Eris BLE",
+    "slug": "eris-ble",
+    "scheme": "erisble",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./node_modules/@robiolab/native-ui/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./node_modules/@robiolab/native-ui/assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#142430"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./node_modules/@robiolab/native-ui/assets/adaptive-icon.png",
+        "backgroundColor": "#142430"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "org.eris.bledemo"
+    },
+    "plugins": [
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "modes": [],
+          "bluetoothAlwaysPermission": "Eris BLE uses Bluetooth to connect to Eris boards.",
+          "neverForLocation": true
+        }
+      ]
+    ]
+  }
+}
