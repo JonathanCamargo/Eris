@@ -25,6 +25,7 @@ Eris/
       ErisNextFlex*/      Flex sensor variants (4 flavors)
       ErisServoHand/      5-DOF robotic hand control
       ErisStepper/        Stepper axis via TMC2209 (STEP/DIR + UART, G0)
+      ErisFSRCalibrator/  FSR calibration rig: A4988 stepper + HX711 load cell
       ErisBici/           Bicycle interface (Arduino Nano)
       ErisTapok*/         CAN bus integration (2 flavors)
       BareMinimal/        Template for custom flavors
@@ -229,6 +230,7 @@ SAMD21 / nRF52840 → FreeRTOS — see [Supported Targets](#supported-targets)).
 | `ErisBiom2` | 🟠 | Biomechanics + on-device feature extraction | Mixed | Teensy |
 | `ErisDCMotor` | 🟠 | DC motor feedback + control | PWM + ADC | Teensy |
 | `ErisStepper` | 🟡 | Stepper axis via TMC2209 (G0 G-code, StallGuard hard-stop detection) | STEP/DIR + UART | Teensy / SAMD21 / ESP32 |
+| `ErisFSRCalibrator` | 🟡 | FSR calibration rig: A4988 stepper presses the FSR, HX711 load cell reads true force; streams voltage + force | STEP/DIR + HX711 + ADC | Teensy / SAMD21 / ESP32 |
 | `ErisNextFlex` | 🟠 | EMG (ADS1256, 2-ch) + FSR + ETI | SPI | Teensy |
 | `ErisNextFlexAnalog` | 🟠 | EMG (analog) + FSR + ETI | ADC | Teensy |
 | `ErisNextFlexArray` | 🟠 | EMG array (ADS1256, 8-ch) + selector + SD | SPI | Teensy |
