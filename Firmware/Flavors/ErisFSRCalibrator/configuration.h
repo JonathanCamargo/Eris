@@ -3,10 +3,10 @@
 
 
 #include <Arduino.h>
-#include <eris_board.h>   // board detection + PIN_LED / ERIS_ADC / STRINGIFY
+#include <eris_board.h>  // board detection + PIN_LED / ERIS_ADC / STRINGIFY
 
 #define FIRMWARE_VERSION "v3.0"
-#define MAXSTRCMP 8 // Maximum length for string comparison
+#define MAXSTRCMP 8  // Maximum length for string comparison
 
 /* Global configuration such as pins, rates etc */
 
@@ -17,11 +17,11 @@
 /// (classic arduino led)
 ///
 #ifndef PIN_LED
-#define PIN_LED 13   //(Already defined in Arduino.h)
+#define PIN_LED 13  //(Already defined in Arduino.h)
 #endif
 
 /////////// MEMORY CONFIGURATION
-#define TXBUFFERSIZE 16 // Default size for transmision buffer for streaming
+#define TXBUFFERSIZE 16  // Default size for transmision buffer for streaming
 #define STRBUFFERSIZE 64
 
 ////////////////////////////////////////////////
@@ -44,14 +44,20 @@
 /// console RX. motion.cpp runs ERIS_PIN_ASSERT_OUTPUT on all three, which
 /// catches flash and input-only pins at compile time.
 #ifndef PIN_A4988_STEP
-#if defined(ERIS_BOARD_ESP32)
+#if defined(ERIS_BOARD_ESP32S3)
+// XIAO ESP32S3 silk: D8 / D9 / D10. The classic-ESP32 25/26/27 below would be
+// fatal here: 26/27 are the S3's SPI flash pins (TG1WDT reset loop).
+#define PIN_A4988_STEP 7
+#define PIN_A4988_DIR 8
+#define PIN_A4988_EN 9
+#elif defined(ERIS_BOARD_ESP32)
 #define PIN_A4988_STEP 25
-#define PIN_A4988_DIR  26
-#define PIN_A4988_EN   27
+#define PIN_A4988_DIR 26
+#define PIN_A4988_EN 27
 #else
 #define PIN_A4988_STEP 2
-#define PIN_A4988_DIR  3
-#define PIN_A4988_EN   4
+#define PIN_A4988_DIR 3
+#define PIN_A4988_EN 4
 #endif
 #endif
 
@@ -68,9 +74,9 @@
 /// Default: a 1.8 deg motor on an 8 mm lead screw, 16 microsteps -> 400 steps/mm.
 /// A 2 mm lead (T8x2) screw would be 1600; a direct-drive M5 thread (0.8 mm) 4000.
 #define STEPPER_FULL_STEPS_PER_REV 200
-#define STEPPER_MM_PER_REV         8.0f
+#define STEPPER_MM_PER_REV 8.0f
 #define STEPPER_STEPS_PER_MM \
-    ((float)STEPPER_FULL_STEPS_PER_REV * A4988_MICROSTEPS / STEPPER_MM_PER_REV)
+  ((float)STEPPER_FULL_STEPS_PER_REV * A4988_MICROSTEPS / STEPPER_MM_PER_REV)
 
 /// Motion tick. Step pulses for one tick are emitted as a burst at the top of
 /// the tick, so the RTOS stays in charge of the CPU -- see motion.cpp.
@@ -85,9 +91,9 @@
 /// Feedrates are G-code feedrates: millimetres per MINUTE.
 /// Calibration is slow by nature: you want the FSR and the load cell to settle
 /// at every point, and you do not want to overshoot into the load cell.
-#define STEPPER_DEFAULT_FEED 60.0f     // 1 mm/s
-#define STEPPER_MAX_FEED     600.0f    // 10 mm/s
-#define STEPPER_MIN_FEED     1.0f
+#define STEPPER_DEFAULT_FEED 60.0f  // 1 mm/s
+#define STEPPER_MAX_FEED 600.0f     // 10 mm/s
+#define STEPPER_MIN_FEED 1.0f
 /// Acceleration in mm/s^2 (trapezoidal ramp on every move).
 #define STEPPER_ACCEL 50.0f
 
@@ -96,7 +102,7 @@
 /// accept any target.
 #define STEPPER_SOFT_LIMITS 1
 #define STEPPER_MIN_POS_MM -50.0f
-#define STEPPER_MAX_POS_MM  50.0f
+#define STEPPER_MAX_POS_MM 50.0f
 
 ////////////////////////////////////////////////
 /// HX711 load cell amplifier
@@ -111,12 +117,16 @@
 /// LOADCELL_SPS must say which, only so the startup banner and the tare time
 /// are right -- the firmware follows whatever the chip produces.
 #ifndef PIN_HX711_DOUT
-#if defined(ERIS_BOARD_ESP32)
+#if defined(ERIS_BOARD_ESP32S3)
+// XIAO ESP32S3 silk: D4 / D5. (19 is the S3's native USB D-.)
+#define PIN_HX711_DOUT 5
+#define PIN_HX711_SCK 6
+#elif defined(ERIS_BOARD_ESP32)
 #define PIN_HX711_DOUT 18
-#define PIN_HX711_SCK  19
+#define PIN_HX711_SCK 19
 #else
 #define PIN_HX711_DOUT 5
-#define PIN_HX711_SCK  6
+#define PIN_HX711_SCK 6
 #endif
 #endif
 
@@ -131,7 +141,7 @@
 /// reported in raw counts (tared) and the overload guard is OFF, because a
 /// limit in newtons means nothing without a scale.
 #define LOADCELL_COUNTS_PER_N 1.0f
-#define LOADCELL_CALIBRATED   0
+#define LOADCELL_CALIBRATED 0
 
 /// Readings averaged by TARE and LCAL. At 10 SPS, 20 samples = 2 s.
 #define LOADCELL_AVG_SAMPLES 20
@@ -151,11 +161,11 @@
 ///
 /// Set it below your load cell's rated capacity AND below what the FSR can
 /// take. Only active when the load cell is calibrated (see above).
-#define CAL_FORCE_LIMIT_N  50.0f
-#define CAL_FORCE_RELEASE  0.9f
+#define CAL_FORCE_LIMIT_N 50.0f
+#define CAL_FORCE_RELEASE 0.9f
 /// Which way presses: +1 if increasing X moves the probe INTO the FSR,
 /// -1 if decreasing X does.
-#define CAL_PRESS_DIR      1
+#define CAL_PRESS_DIR 1
 
 ////////////////////////////////////////////////
 /// FSR voltage divider
@@ -173,10 +183,11 @@
 ///
 /// Power the divider from the board's ANALOG reference (3V3 on every Eris
 /// board), never from 5 V -- the ADC pin would see more than it can take.
+/// ERIS_ADC(0) = GPIO 36 on a classic ESP32, GPIO 1 (A0 / D0) on a XIAO ESP32S3.
 #define PIN_FSR ERIS_ADC(0)
-#define FSR_VREF       3.3f
-#define FSR_R_FIXED    10000.0f    // ohms, documented in the stream's README
-#define FSR_ADC_BITS   12          // Teensy/SAMD/nRF52/ESP32 all do 12 bits
+#define FSR_VREF 3.3f
+#define FSR_R_FIXED 10000.0f  // ohms, documented in the stream's README
+#define FSR_ADC_BITS 12       // Teensy/SAMD/nRF52/ESP32 all do 12 bits
 /// analogRead()s averaged per sample. An FSR is slow; noise is not.
 #define FSR_OVERSAMPLE 8
 
