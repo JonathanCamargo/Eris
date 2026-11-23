@@ -17,6 +17,7 @@ Eris/
       ErisADS1299/        8-channel 24-bit EMG/ECG
       ErisADS131/         8-channel 24-bit low-power EMG
       ErisAnalog/         Configurable-channel analog EMG
+      ErisEMGPill/        Analog EMG Pill front-ends (XIAO ESP32S3)
       ErisBiom/           Biomechanics motion capture
       ErisBiom2/          Biomechanics v2 (with feature extraction)
       ErisDCMotor/        DC motor feedback and control
@@ -201,7 +202,7 @@ pio run -e BareMinimal            # build
 pio run -e ErisServo -t upload    # build + upload
 pio device monitor -e ErisMPU     # serial monitor @ 115200
 ```
-Wired envs: `Eris`, `BareMinimal`, `ErisServo`, `ErisADS1299`, `ErisMPU`, `ErisServoHand`, `ErisStepper`, `ErisESP32`. `eriscommon` resolves from `../ArduinoLibraries` automatically; other flavors build from the Arduino IDE.
+Wired envs: `Eris`, `BareMinimal`, `ErisServo`, `ErisADS1299`, `ErisMPU`, `ErisServoHand`, `ErisStepper`, `ErisESP32`, `ErisEMGPill`. `eriscommon` resolves from `../ArduinoLibraries` automatically; other flavors build from the Arduino IDE.
 
 **Host driver**
 ```bash
@@ -227,6 +228,7 @@ SAMD21 / nRF52840 → FreeRTOS — see [Supported Targets](#supported-targets)).
 | `ErisMPU` | ✅ | 6-DOF IMU (MPU9250) | I2C | SAMD21 |
 | `ErisADS1299` | ✅ | 8-channel 24-bit EMG/ECG (+ SD) | SPI | Teensy |
 | `ErisAnalog` | 🟡 | Configurable-channel analog EMG | ADC | Teensy |
+| `ErisEMGPill` | 🟡 | Analog EMG Pill front-ends, 2 ch @ 500 Hz | ADC | XIAO ESP32S3 |
 | `ErisBiom2` | 🟠 | Biomechanics + on-device feature extraction | Mixed | Teensy |
 | `ErisDCMotor` | 🟠 | DC motor feedback + control | PWM + ADC | Teensy |
 | `ErisStepper` | 🟡 | Stepper axis via TMC2209 (G0 G-code, StallGuard hard-stop detection) | STEP/DIR + UART | Teensy / SAMD21 / ESP32 |
